@@ -1,16 +1,16 @@
 // Adaptive critbit tree
 
+typedef struct acbt {
+  union acbt_ptr top;
+} acbt;
+
 typedef uintptr_t acbt_index; // bit indices
 typedef unsigned char byte;
 
-typedef enum acbt_type {
-  acbt_t_mask = 3,
-  acbt_t_n0 = 0,
-  acbt_t_n1 = 1,
-  acbt_t_n2 = 2,
-  acbt_t_n4 = 3,
-} acbt_type;
-
+// Node pointers
+//
+// The bottom bits determine which type of node is the target of the pointer.
+//
 typedef union acbt_ptr {
   uintptr_t t;
   struct acbt_n0 *n0;
@@ -19,30 +19,64 @@ typedef union acbt_ptr {
   struct acbt_n4 *n4;
 } acbt_ptr;
 
+enum {
+  acbt_t_mask = 3,
+  acbt_t_n0 = 0,
+  acbt_t_n1 = 1,
+  acbt_t_n2 = 2,
+  acbt_t_n4 = 3,
+};
+
+static unsigned acbt_type(acbt_ptr p) {
+  return(p.t & acbt_t_mask);
+}
+
+// Leaf nodes
+//
+// 'len' is the length of the key in bits. The key is implicitly
+// followed by a one bit then an infinite string of zero bits. These
+// implicit bits are not stored. The one bit ensures that keys of
+// different lengths compare differently.
+//
 struct acbt_n0 {
   acbt_index len;
   void *val;
-  byte key[1];
+  byte key[];
 };
 
+// Single bit nodes
+//
+// If the key is present in the tree it will be in the subtree
+// n.sub[acbt_i1(key, len, n.i)]
+//
 struct acbt_n1 {
   acbt_index i;
   acbt_ptr sub[2];
 };
 
+// Double bit nodes
+//
+// The index must be a multiple of two.
+//
+// If the key is present in the tree it will be in the subtree
+// n.sub[acbt_i2(key, len, n.i)]
+//
 struct acbt_n2 {
   acbt_index i;
   acbt_ptr sub[4];
 };
 
+// Quad bit nodes
+//
+// The index must be a multiple of four.
+//
+// If the key is present in the tree it will be in the subtree
+// n.sub[acbt_i4(key, len, n.i)]
+//
 struct acbt_n4 {
   acbt_index i;
   acbt_ptr sub[16];
 };
-
-typedef struct acbt {
-  acbt_ptr top;
-} acbt;
 
 // What is the memory cost (counted in pointer-sized words) excluding
 // the copies of the keys and the value pointers? Each leaf includes
@@ -108,3 +142,36 @@ static acbt_index acbt_clz(byte b) {
 }
 
 #endif
+
+// Extract the key byte in which the bit index falls.
+// The result includes the implicit trailing bits.
+static inline byte acbt_ib(byte *key, acbt_index len, acbt_index i) {
+  unsigned trail = len % 8;
+  unsigned blen = len / 8;
+  unsigned bi = i / 8;
+  if(bi < blen)
+    return(key[bi]);
+  if(bi > blen)
+    return(0);
+  if(trail == 0)
+    return(0x80);
+  else
+    return(key[bi] & (0xFF00 >> trail) | (0x80 >> trail));
+}
+
+// Extract a single bit from a key.
+static unsigned acbt_i1(byte *key, acbt_index len, acbt_index i) {
+  return(acbt_ib(key, len, i) & (0x80 >> i % 8));
+}
+
+// Extract a double bit from a key.
+static unsigned acbt_i2(byte *key, acbt_index len, acbt_index i) {
+  assert(i % 2 == 0);
+  return(acbt_ib(key, len, i) & (0xC0 >> i % 8));
+}
+
+// Extract a quad bit from a key.
+static unsigned acbt_i4(byte *key, acbt_index len, acbt_index i) {
+  assert(i % 4 == 0);
+  return(acbt_ib(key, len, i) & (0xF0 >> i % 8));
+}
