@@ -39,8 +39,8 @@ static unsigned acbt_type(acbt_ptr p) {
 // different lengths compare differently.
 //
 struct acbt_n0 {
-  acbt_index len;
   void *val;
+  acbt_index len;
   byte key[];
 };
 
@@ -161,19 +161,17 @@ static inline byte acbt_i8(byte *key, acbt_index len, acbt_index i) {
 
 // Extract a single bit from a key.
 static byte acbt_i1(byte *key, acbt_index len, acbt_index i) {
-  return(acbt_i8(key, len, i) & (0x80 >> i % 8));
+  return(acbt_i8(key, len, i) & (0x80 >> (i&7)));
 }
 
 // Extract a double bit from a key.
 static byte acbt_i2(byte *key, acbt_index len, acbt_index i) {
-  assert(i % 2 == 0);
-  return(acbt_i8(key, len, i) & (0xC0 >> i % 8));
+  return(acbt_i8(key, len, i) & (0xC0 >> (i&6)));
 }
 
 // Extract a quad bit from a key.
 static byte acbt_i4(byte *key, acbt_index len, acbt_index i) {
-  assert(i % 4 == 0);
-  return(acbt_i8(key, len, i) & (0xF0 >> i % 8));
+  return(acbt_i8(key, len, i) & (0xF0 >> (i&4)));
 }
 
 // Find the leaf that is most similar to this key.
@@ -209,11 +207,51 @@ static acbt_index acbt_cb(byte *k1, acbt_index l1, byte *k2, acbt_index l2) {
   return(~0);
 }
 
-void *acbt_query(acbt *t, byte *key, acbt_index len, void *def) {
-  struct acbt_n0 *n0 = acbt_walk(t->top, key, len);
-  acbt_index cb = acbt_cb(n0, key, len);
+static struct acbt_ptr acbt_new0(byte *key, acbt_index len, void *val) {
+  acbt_index blen = (len + 7) / 8;
+  acbt_ptr p;
+  p.n0 = malloc(sizeof(*p.n0) + blen);
+  memcpy(p.n0->key, key, blen);
+  p.n0->len = len;
+  p.n0->val = val;
+  return(p);
 }
 
-void *acbt_alter(acbt *t, byte *key, acbt_index len, void *def) {
+static void *acbt_first(acbt *t, byte *key, acbt_index len, void *val) {
+  if(val != NULL)
+    t->top = acbt_new0(key, len, val);
+  return(val);
+}
+
+static void *acbt_delete(acbt *t, byte *key, acbt_index len) {
+}
+
+static struct acbt_n0 *acbt_insert(acbt *t, acbt_index cb, byte *key, acbt_index len, void *val) {
+}
+
+static struct acbt_n0 *acbt_find(acbt *t, byte *key, acbt_index len, void *val) {
   struct acbt_n0 *n0 = acbt_walk(t->top, key, len);
+  acbt_index cb = acbt_cb(n0->key, n0->len, key, len);
+  if(cb == ~0)
+    return(n0);
+  else
+    return(acbt_insert(t, cb, key, len, val));
+}
+
+void *acbt_alter(acbt *t, void *key, acbt_index len, void *val) {
+  if(t->top == NULL)
+    return(acbt_first(t, key, len, val));
+  if(val == NULL)
+    return(acbt_delete(t, key, len));
+  struct acbt_n0 *n0 = acbt_find(t, key, len, val);
+  void *old = n0->val;
+  n0->val = val;
+  return(old);
+}
+
+void *acbt_query(acbt *t, void *key, acbt_index len, void *val) {
+  if(t->top == NULL)
+    return(acbt_first(t, key, len, val));
+  else
+    return(acbt_find(t, key, len, val)->val);
 }
