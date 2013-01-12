@@ -9,18 +9,10 @@
 typedef acbt_index acbt_i; // brevity
 typedef unsigned char byte;
 
-// Node pointers
+// Node pointer types
 //
 // The bottom bits determine which type of node is the target of the pointer.
 //
-typedef union acbt_ptr {
-  uintptr_t t;
-  struct acbt_n0 *n0;
-  struct acbt_n1 *n1;
-  struct acbt_n2 *n2;
-  struct acbt_n4 *n4;
-} acbt_ptr;
-
 enum {
   acbt_t_mask = 3,
   acbt_t_n0 = 0,
@@ -32,10 +24,6 @@ enum {
 static inline unsigned acbt_type(acbt_ptr p) {
   return(p.t & acbt_t_mask);
 }
-
-struct acbt {
-  union acbt_ptr top;
-};
 
 // Leaf nodes
 //
@@ -252,7 +240,7 @@ static acbt_n0 *acbt_find(acbt *t, byte *key, acbt_i len, void *val) {
 }
 
 void *acbt_alter(acbt *t, void *key, acbt_index len, void *val) {
-  if(t->top.n0 == NULL)
+  if(t->top.p == NULL)
     return(acbt_first(t, key, len, val));
   if(val == NULL)
     return(acbt_delete(t, key, len));
@@ -263,10 +251,56 @@ void *acbt_alter(acbt *t, void *key, acbt_index len, void *val) {
 }
 
 void *acbt_query(acbt *t, void *key, acbt_index len, void *val) {
-  if(t->top.n0 == NULL)
+  if(t->top.p == NULL)
     return(acbt_first(t, key, len, val));
   else
     return(acbt_find(t, key, len, val)->val);
+}
+
+static void acbt_free_ptr(acbt_ptr p);
+
+static void acbt_free_four(acbt_ptr sub[4]) {
+  for(int i = 0; i < 4; i++) {
+    void *p = sub[i].p;
+    for(int j = i; i < 4; i++)
+      if(sub[j].p == p)
+	sub[j].p = NULL;
+    free(p);
+  }
+}
+
+static void acbt_free_ptr(acbt_ptr p) {
+  for(;;) {
+    switch(acbt_type(p)) {
+    case(acbt_t_n0):
+      free(p.n0);
+      return;
+    case(acbt_t_n1):
+      acbt_free_ptr(p.n1->sub[0]);
+      acbt_free_ptr(p.n1->sub[1]);
+      free(p.n1);
+      return;
+    case(acbt_t_n2):
+      acbt_free_four(p.n2->sub);
+      free(p.n2);
+      return;
+    case(acbt_t_n4):
+      acbt_free_four(p.n4->sub+0);
+      acbt_free_four(p.n4->sub+4);
+      acbt_free_four(p.n4->sub+8);
+      acbt_free_four(p.n4->sub+12);
+      free(p.n4);
+      return;
+    default:
+      abort();
+    }
+  }
+}
+
+void acbt_free(acbt *t) {
+  if(t->top.p != NULL)
+    acbt_free_ptr(t->top);
+  t->top.p = NULL;
 }
 
 // eof
