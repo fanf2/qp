@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef uintptr_t acbt_i; // bit indices
+#include "acbt.h"
+
+typedef acbt_index acbt_i; // brevity
 typedef unsigned char byte;
 
 // Node pointers
@@ -27,13 +29,13 @@ enum {
   acbt_t_n4 = 3,
 };
 
-static unsigned acbt_type(acbt_ptr p) {
+static inline unsigned acbt_type(acbt_ptr p) {
   return(p.t & acbt_t_mask);
 }
 
-typedef struct acbt {
+struct acbt {
   union acbt_ptr top;
-} acbt;
+};
 
 // Leaf nodes
 //
@@ -51,7 +53,7 @@ typedef struct acbt_n0 {
 // Single bit nodes
 //
 // If the key is present in the tree it will be in the subtree
-// p.n1->sub[acbt_i1(key, len, p.n1->i)]
+// n1->sub[acbt_i1(key, len, n1->i)]
 //
 typedef struct acbt_n1 {
   acbt_i i;
@@ -63,7 +65,7 @@ typedef struct acbt_n1 {
 // The index must be a multiple of two.
 //
 // If the key is present in the tree it will be in the subtree
-// p.n2->sub[acbt_i2(key, len, p.n2->i)]
+// n2->sub[acbt_i2(key, len, n2->i)]
 //
 typedef struct acbt_n2 {
   acbt_i i;
@@ -75,7 +77,7 @@ typedef struct acbt_n2 {
 // The index must be a multiple of four.
 //
 // If the key is present in the tree it will be in the subtree
-// p.n4->sub[acbt_i4(key, len, p.n4->i)]
+// n4->sub[acbt_i4(key, len, n4->i)]
 //
 typedef struct acbt_n4 {
   acbt_i i;
@@ -127,12 +129,13 @@ typedef struct acbt_n4 {
 // at least 5, and at least one of them must be an n2.
 
 
-// Two versions of count leading zeroes
+// Two versions of byte-wide count leading zeroes.
+// The input value must be between 1 and 255 inclusive.
 
 #ifdef __GNUC__
 
 static acbt_i acbt_clz(unsigned b) {
-  return(b & 0xFF ? __builtin_clz(b) - __builtin_clz(0xFF) : 8);
+  return(acbt_i)(__builtin_clz(b) - __builtin_clz(0xFF));
 }
 
 #else
@@ -142,7 +145,7 @@ static acbt_i acbt_clz(unsigned b) {
   if(b & 0xF0) b &= 0xF0; else i += 4;
   if(b & 0xCC) b &= 0xCC; else i += 2;
   if(b & 0xAA) b &= 0xAA; else i += 1;
-  return(b & 0xFF ? i : 8);
+  return(i);
 }
 
 #endif
@@ -162,6 +165,10 @@ static inline byte acbt_i8(byte *key, acbt_i len, acbt_i i) {
   else
     return((key[bi] & (0xFF00 >> trail)) | (0x80 >> trail));
 }
+
+// These indexing functions are somewhat awkward because we are
+// numbering bits in big endian fashion, with most significant
+// leftmost lowest numbered.
 
 // Extract a single bit from a key.
 static inline byte acbt_i1(byte *key, acbt_i len, acbt_i i) {
@@ -204,7 +211,7 @@ static const acbt_i acbt_eq = ~(acbt_i)0;
 // Return the index of the critical bit if the keys differ,
 // or acbt_eq if they are the same.
 static acbt_i acbt_cb(byte *k1, acbt_i l1, byte *k2, acbt_i l2) {
-  acbt_i i, l;
+  acbt_i l, i;
   l = l1 > l2 ? l1 : l2;
   for(i = 0; i <= l; i += 8) {
     byte b = acbt_i8(k1, l1, i) ^ acbt_i8(k2, l2, i);
@@ -244,7 +251,7 @@ static acbt_n0 *acbt_find(acbt *t, byte *key, acbt_i len, void *val) {
     return(acbt_insert(t, cb, key, len, val));
 }
 
-void *acbt_alter(acbt *t, void *key, acbt_i len, void *val) {
+void *acbt_alter(acbt *t, void *key, acbt_index len, void *val) {
   if(t->top.n0 == NULL)
     return(acbt_first(t, key, len, val));
   if(val == NULL)
@@ -255,9 +262,11 @@ void *acbt_alter(acbt *t, void *key, acbt_i len, void *val) {
   return(old);
 }
 
-void *acbt_query(acbt *t, void *key, acbt_i len, void *val) {
+void *acbt_query(acbt *t, void *key, acbt_index len, void *val) {
   if(t->top.n0 == NULL)
     return(acbt_first(t, key, len, val));
   else
     return(acbt_find(t, key, len, val)->val);
 }
+
+// eof
