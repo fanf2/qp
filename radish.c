@@ -164,17 +164,17 @@ static inline byte acbt_i8(byte *key, acbt_i len, acbt_i i) {
 }
 
 // Extract a single bit from a key.
-static byte acbt_i1(byte *key, acbt_i len, acbt_i i) {
+static inline byte acbt_i1(byte *key, acbt_i len, acbt_i i) {
   return((acbt_i8(key, len, i) >> 7 - (i & 7)) & 0x01);
 }
 
 // Extract a double bit from a key.
-static byte acbt_i2(byte *key, acbt_i len, acbt_i i) {
+static inline byte acbt_i2(byte *key, acbt_i len, acbt_i i) {
   return((acbt_i8(key, len, i) >> 6 - (i & 6)) & 0x03);
 }
 
 // Extract a quad bit from a key.
-static byte acbt_i4(byte *key, acbt_i len, acbt_i i) {
+static inline byte acbt_i4(byte *key, acbt_i len, acbt_i i) {
   return((acbt_i8(key, len, i) >> 4 - (i & 4)) & 0x0F);
 }
 
