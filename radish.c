@@ -87,3 +87,24 @@ typedef struct acbt {
 //
 // So the sum of the type codes of the coalescable child nodes must be
 // at least 5, and at least one of them must be an n2.
+
+
+// Two versions of count leading zeroes
+
+#ifdef __GNUC__
+
+static acbt_index acbt_clz(byte b) {
+  return(b ? __builtin_clz(b) - __builtin_clz(0xFF) : 8);
+}
+
+#else
+
+static acbt_index acbt_clz(byte b) {
+  acbt_index i = 0;
+  if(b & 0xF0) b &= 0xF0; else i += 4;
+  if(b & 0xCC) b &= 0xCC; else i += 2;
+  if(b & 0xAA) b &= 0xAA; else i += 1;
+  return(b ? i : 8);
+}
+
+#endif
