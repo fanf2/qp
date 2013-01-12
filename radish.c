@@ -1,48 +1,48 @@
 // Adaptive critbit tree
 
-typedef uintptr_t act_index; // bit indices
+typedef uintptr_t acbt_index; // bit indices
 typedef unsigned char byte;
 
-typedef enum act_type {
-  act_t_mask = 3,
-  act_t_n0 = 0,
-  act_t_n1 = 1,
-  act_t_n2 = 2,
-  act_t_n4 = 3,
-} act_type;
+typedef enum acbt_type {
+  acbt_t_mask = 3,
+  acbt_t_n0 = 0,
+  acbt_t_n1 = 1,
+  acbt_t_n2 = 2,
+  acbt_t_n4 = 3,
+} acbt_type;
 
-typedef union act_ptr {
+typedef union acbt_ptr {
   uintptr_t t;
-  struct act_n0 *n0;
-  struct act_n1 *n1;
-  struct act_n2 *n2;
-  struct act_n4 *n4;
-} act_ptr;
+  struct acbt_n0 *n0;
+  struct acbt_n1 *n1;
+  struct acbt_n2 *n2;
+  struct acbt_n4 *n4;
+} acbt_ptr;
 
-struct act_n0 {
-  act_index len;
+struct acbt_n0 {
+  acbt_index len;
   void *val;
   byte key[1];
 };
 
-struct act_n1 {
-  act_index i;
-  act_ptr sub[2];
+struct acbt_n1 {
+  acbt_index i;
+  acbt_ptr sub[2];
 };
 
-struct act_n2 {
-  act_index i;
-  act_ptr sub[4];
+struct acbt_n2 {
+  acbt_index i;
+  acbt_ptr sub[4];
 };
 
-struct act_n4 {
-  act_index i;
-  act_ptr sub[16];
+struct acbt_n4 {
+  acbt_index i;
+  acbt_ptr sub[16];
 };
 
-typedef struct act {
-  act_ptr top;
-} act;
+typedef struct acbt {
+  acbt_ptr top;
+} acbt;
 
 // What is the memory cost (counted in pointer-sized words) excluding
 // the copies of the keys and the value pointers? Each leaf includes
