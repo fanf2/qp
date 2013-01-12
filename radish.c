@@ -165,17 +165,17 @@ static inline byte acbt_i8(byte *key, acbt_i len, acbt_i i) {
 
 // Extract a single bit from a key.
 static inline byte acbt_i1(byte *key, acbt_i len, acbt_i i) {
-  return((acbt_i8(key, len, i) >> 7 - (i & 7)) & 0x01);
+  return(0x01 & (acbt_i8(key, len, i) >> (7 - (i & 7))));
 }
 
 // Extract a double bit from a key.
 static inline byte acbt_i2(byte *key, acbt_i len, acbt_i i) {
-  return((acbt_i8(key, len, i) >> 6 - (i & 6)) & 0x03);
+  return(0x03 & (acbt_i8(key, len, i) >> (6 - (i & 6))));
 }
 
 // Extract a quad bit from a key.
 static inline byte acbt_i4(byte *key, acbt_i len, acbt_i i) {
-  return((acbt_i8(key, len, i) >> 4 - (i & 4)) & 0x0F);
+  return(0x0F & (acbt_i8(key, len, i) >> (4 - (i & 4))));
 }
 
 // Find the leaf that is most similar to this key.
