@@ -47,7 +47,7 @@ struct acbt_n0 {
 // Single bit nodes
 //
 // If the key is present in the tree it will be in the subtree
-// n.sub[acbt_i1(key, len, n.i)]
+// p.n1->sub[acbt_i1(key, len, p.n1->i)]
 //
 struct acbt_n1 {
   acbt_index i;
@@ -59,7 +59,7 @@ struct acbt_n1 {
 // The index must be a multiple of two.
 //
 // If the key is present in the tree it will be in the subtree
-// n.sub[acbt_i2(key, len, n.i)]
+// p.n2->sub[acbt_i2(key, len, p.n2->i)]
 //
 struct acbt_n2 {
   acbt_index i;
@@ -71,7 +71,7 @@ struct acbt_n2 {
 // The index must be a multiple of four.
 //
 // If the key is present in the tree it will be in the subtree
-// n.sub[acbt_i4(key, len, n.i)]
+// p.n4->sub[acbt_i4(key, len, p.n4->i)]
 //
 struct acbt_n4 {
   acbt_index i;
@@ -145,10 +145,10 @@ static acbt_index acbt_clz(byte b) {
 
 // Extract the key byte in which the bit index falls.
 // The result includes the implicit trailing bits.
-static inline byte acbt_ib(byte *key, acbt_index len, acbt_index i) {
-  unsigned trail = len % 8;
-  unsigned blen = len / 8;
-  unsigned bi = i / 8;
+static inline byte acbt_i8(byte *key, acbt_index len, acbt_index i) {
+  acbt_index trail = len % 8;
+  acbt_index blen = len / 8;
+  acbt_index bi = i / 8;
   if(bi < blen)
     return(key[bi]);
   if(bi > blen)
@@ -160,18 +160,60 @@ static inline byte acbt_ib(byte *key, acbt_index len, acbt_index i) {
 }
 
 // Extract a single bit from a key.
-static unsigned acbt_i1(byte *key, acbt_index len, acbt_index i) {
-  return(acbt_ib(key, len, i) & (0x80 >> i % 8));
+static byte acbt_i1(byte *key, acbt_index len, acbt_index i) {
+  return(acbt_i8(key, len, i) & (0x80 >> i % 8));
 }
 
 // Extract a double bit from a key.
-static unsigned acbt_i2(byte *key, acbt_index len, acbt_index i) {
+static byte acbt_i2(byte *key, acbt_index len, acbt_index i) {
   assert(i % 2 == 0);
-  return(acbt_ib(key, len, i) & (0xC0 >> i % 8));
+  return(acbt_i8(key, len, i) & (0xC0 >> i % 8));
 }
 
 // Extract a quad bit from a key.
-static unsigned acbt_i4(byte *key, acbt_index len, acbt_index i) {
+static byte acbt_i4(byte *key, acbt_index len, acbt_index i) {
   assert(i % 4 == 0);
-  return(acbt_ib(key, len, i) & (0xF0 >> i % 8));
+  return(acbt_i8(key, len, i) & (0xF0 >> i % 8));
+}
+
+// Find the leaf that is most similar to this key.
+static struct acbt_n0 *acbt_walk(acbt_ptr p, byte *key, acbt_index len) {
+  for(;;) {
+    switch(acbt_type(p)) {
+    case(acbt_t_n0):
+      return(p.n0);
+    case(acbt_t_n1):
+      p = p.n1->sub[acbt_i1(key, len, p.n1->i)];
+      continue;
+    case(acbt_t_n2):
+      p = p.n2->sub[acbt_i2(key, len, p.n2->i)];
+      continue;
+    case(acbt_t_n4):
+      p = p.n4->sub[acbt_i4(key, len, p.n4->i)];
+      continue;
+    default:
+      abort();
+    }
+  }
+}
+
+// Return the index of the critical bit if the keys differ,
+// or ~0 if they are the same.
+static acbt_index acbt_cb(byte *k1, acbt_index l1, byte *k2, acbt_index l2) {
+  acbt_index i, l;
+  l = l1 > l2 ? l1 : l2;
+  for(i = 0; i <= l; i += 8) {
+    byte b = acbt_i8(k1, l1, i) ^ acbt_i8(k2, l2, i);
+    if(b) return(i + acbt_clz(b));
+  }
+  return(~0);
+}
+
+void *acbt_query(acbt *t, byte *key, acbt_index len, void *def) {
+  struct acbt_n0 *n0 = acbt_walk(t->top, key, len);
+  acbt_index cb = acbt_cb(n0, key, len);
+}
+
+void *acbt_alter(acbt *t, byte *key, acbt_index len, void *def) {
+  struct acbt_n0 *n0 = acbt_walk(t->top, key, len);
 }
