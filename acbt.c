@@ -7,23 +7,7 @@
 #include "acbt.h"
 
 typedef acbt_index acbt_i; // brevity
-typedef unsigned char byte;
-
-// Node pointer types
-//
-// The bottom bits determine which type of node is the target of the pointer.
-//
-enum {
-  acbt_t_mask = 3,
-  acbt_t_n0 = 0,
-  acbt_t_n1 = 1,
-  acbt_t_n2 = 2,
-  acbt_t_n4 = 3,
-};
-
-static inline unsigned acbt_type(acbt_ptr p) {
-  return(p.t & acbt_t_mask);
-}
+typedef unsigned char byte; // key data
 
 // Leaf nodes
 //
@@ -45,7 +29,7 @@ typedef struct acbt_n0 {
 //
 typedef struct acbt_n1 {
   acbt_i i;
-  acbt_ptr sub[2];
+  acbt sub[2];
 } acbt_n1;
 
 // Double bit nodes
@@ -57,7 +41,7 @@ typedef struct acbt_n1 {
 //
 typedef struct acbt_n2 {
   acbt_i i;
-  acbt_ptr sub[4];
+  acbt sub[4];
 } acbt_n2;
 
 // Quad bit nodes
@@ -69,8 +53,45 @@ typedef struct acbt_n2 {
 //
 typedef struct acbt_n4 {
   acbt_i i;
-  acbt_ptr sub[16];
+  acbt sub[16];
 } acbt_n4;
+
+// Node pointers
+//
+// The acbt type is not just used as the root of the tree; it is in
+// fact a typed pointer to a node; its bottom bits determine which
+// type of node is the target of the pointer.
+//
+// To help with type safety, struct acbt_private is never defined,
+// which makes it harder to accidentally convert to the wrong type
+// than if we used a void pointer.
+
+enum {
+  acbt_t_mask = 3,
+  acbt_t_n0 = 0,
+  acbt_t_n1 = 1,
+  acbt_t_n2 = 2,
+  acbt_t_n4 = 3,
+};
+
+static inline unsigned acbt2type(acbt p) {
+  return((uintptr_t)p.p & (uintptr_t)acbt_t_mask);
+}
+static inline struct acbt_private *acbt2ptr(acbt p) {
+  return(struct acbt_private *)((uintptr_t)p.p & ~(uintptr_t)acbt_t_mask);
+}
+static inline acbt tagacbt(void *v, unsigned t) {
+  acbt p = { (struct acbt_private *)((uintptr_t)v | (uintptr_t)t) };
+  return(p);
+}
+static inline acbt_n0 *acbt2n0(acbt p) { return(acbt_n0 *)acbt2ptr(p); }
+static inline acbt_n1 *acbt2n1(acbt p) { return(acbt_n1 *)acbt2ptr(p); }
+static inline acbt_n2 *acbt2n2(acbt p) { return(acbt_n2 *)acbt2ptr(p); }
+static inline acbt_n4 *acbt2n4(acbt p) { return(acbt_n4 *)acbt2ptr(p); }
+static inline acbt acbt4n0(acbt_n0 *n0) { return(tagacbt(n0, acbt_t_n0)); }
+static inline acbt acbt4n1(acbt_n1 *n1) { return(tagacbt(n1, acbt_t_n1)); }
+static inline acbt acbt4n2(acbt_n2 *n2) { return(tagacbt(n2, acbt_t_n2)); }
+static inline acbt acbt4n4(acbt_n4 *n4) { return(tagacbt(n4, acbt_t_n4)); }
 
 // What is the memory cost (counted in pointer-sized words) excluding
 // the copies of the keys and the value pointers? Each leaf includes
