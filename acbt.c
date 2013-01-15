@@ -6,8 +6,12 @@
 
 #include "acbt.h"
 
+#define countof(a) (sizeof(a)/sizeof(*a))
+
 typedef acbt_index acbt_i; // brevity
 typedef unsigned char byte; // key data
+
+static const acbt_i acbt_imax = ~(acbt_i)0;
 
 // Leaf nodes
 //
@@ -28,8 +32,8 @@ typedef struct acbt_n0 {
 // n1->sub[acbt_i1(key, len, n1->i)]
 //
 typedef struct acbt_n1 {
-  acbt_i i;
-  acbt sub[2];
+  acbt_i i1;
+  acbt sub1[2];
 } acbt_n1;
 
 // Double bit nodes
@@ -40,8 +44,8 @@ typedef struct acbt_n1 {
 // n2->sub[acbt_i2(key, len, n2->i)]
 //
 typedef struct acbt_n2 {
-  acbt_i i;
-  acbt sub[4];
+  acbt_i i2;
+  acbt sub2[4];
 } acbt_n2;
 
 // Quad bit nodes
@@ -52,14 +56,14 @@ typedef struct acbt_n2 {
 // n4->sub[acbt_i4(key, len, n4->i)]
 //
 typedef struct acbt_n4 {
-  acbt_i i;
-  acbt sub[16];
+  acbt_i i4;
+  acbt sub4[16];
 } acbt_n4;
 
 // Node pointers
 //
 // The acbt type is not just used as the root of the tree; it is in
-// fact a typed pointer to a node; its bottom bits determine which
+// fact a tagged pointer to a node; its bottom bits determine which
 // type of node is the target of the pointer.
 //
 // To help with type safety, struct acbt_private is never defined,
@@ -74,7 +78,7 @@ enum {
   acbt_t_n4 = 3,
 };
 
-static inline unsigned acbt2type(acbt p) {
+static inline unsigned acbt2tag(acbt p) {
   return((uintptr_t)p.p & (uintptr_t)acbt_t_mask);
 }
 static inline struct acbt_private *acbt2ptr(acbt p) {
@@ -134,7 +138,7 @@ static inline acbt acbt4n4(acbt_n4 *n4) { return(tagacbt(n4, acbt_t_n4)); }
 // 1*n1+3*n2 -> +6   7
 // 0*n1+4*n2 -> +8   8
 //
-// So the sum of the type codes of the coalescable child nodes must be
+// So the sum of the tags of the coalescable child nodes must be
 // at least 5, and at least one of them must be an n2.
 
 
@@ -195,30 +199,31 @@ static inline byte acbt_i4(byte *key, acbt_i len, acbt_i i) {
 }
 
 // Find the leaf that is most similar to this key.
-static acbt_n0 *acbt_walk(acbt_ptr p, byte *key, acbt_i len) {
+static acbt_n0 *acbt_walk(acbt p, byte *key, acbt_i len) {
   for(;;) {
-    switch(acbt_type(p)) {
+    switch(acbt2tag(p)) {
     case(acbt_t_n0):
-      return(p.n0);
-    case(acbt_t_n1):
-      p = p.n1->sub[acbt_i1(key, len, p.n1->i)];
-      continue;
-    case(acbt_t_n2):
-      p = p.n2->sub[acbt_i2(key, len, p.n2->i)];
-      continue;
-    case(acbt_t_n4):
-      p = p.n4->sub[acbt_i4(key, len, p.n4->i)];
-      continue;
+      return(acbt2n0(p));
+    case(acbt_t_n1): {
+      acbt_n1 *n1 = acbt2n1(p);
+      p = n1->sub1[acbt_i1(key, len, n1->i1)];
+    } continue;
+    case(acbt_t_n2): {
+      acbt_n2 *n2 = acbt2n2(p);
+      p = n2->sub2[acbt_i2(key, len, n2->i2)];
+    } continue;
+    case(acbt_t_n4): {
+      acbt_n4 *n4 = acbt2n4(p);
+      p = n4->sub4[acbt_i4(key, len, n4->i4)];
+    } continue;
     default:
       abort();
     }
   }
 }
 
-static const acbt_i acbt_eq = ~(acbt_i)0;
-
 // Return the index of the critical bit if the keys differ,
-// or acbt_eq if they are the same.
+// or acbt_imax if they are the same.
 static acbt_i acbt_cb(byte *k1, acbt_i l1, byte *k2, acbt_i l2) {
   acbt_i l, i;
   l = l1 > l2 ? l1 : l2;
@@ -226,17 +231,17 @@ static acbt_i acbt_cb(byte *k1, acbt_i l1, byte *k2, acbt_i l2) {
     byte b = acbt_i8(k1, l1, i) ^ acbt_i8(k2, l2, i);
     if(b) return(i + acbt_clz(b));
   }
-  return(acbt_eq);
+  return(acbt_imax);
 }
 
-static acbt_ptr acbt_new0(byte *key, acbt_i len, void *val) {
-  acbt_i blen = (len + 7) / 8;
-  acbt_ptr p;
-  p.n0 = malloc(sizeof(*p.n0) + blen);
-  memcpy(p.n0->key, key, blen);
-  p.n0->len = len;
-  p.n0->val = val;
-  return(p);
+static acbt acbt_new0(byte *key, acbt_i len, void *val) {
+  acbt_i blen = (len + 7) / 8; // round up
+  acbt_n0 *n0;
+  n0 = malloc(sizeof(*n0) + blen);
+  memcpy(n0->key, key, blen);
+  n0->len = len;
+  n0->val = val;
+  return(acbt4n0(n0));
 }
 
 static void *acbt_first(acbt *t, byte *key, acbt_i len, void *val) {
@@ -254,7 +259,7 @@ static acbt_n0 *acbt_insert(acbt *t, acbt_i cb, byte *key, acbt_i len, void *val
 static acbt_n0 *acbt_find(acbt *t, byte *key, acbt_i len, void *val) {
   acbt_n0 *n0 = acbt_walk(t->top, key, len);
   acbt_i cb = acbt_cb(n0->key, n0->len, key, len);
-  if(cb == acbt_eq)
+  if(cb == acbt_imax)
     return(n0);
   else
     return(acbt_insert(t, cb, key, len, val));
@@ -278,50 +283,46 @@ void *acbt_query(acbt *t, void *key, acbt_index len, void *val) {
     return(acbt_find(t, key, len, val)->val);
 }
 
-static void acbt_free_ptr(acbt_ptr p);
-
-static void acbt_free_four(acbt_ptr sub[4]) {
-  for(int i = 0; i < 4; i++) {
-    void *p = sub[i].p;
-    for(int j = i; i < 4; i++)
-      if(sub[j].p == p)
+static void acbt_walk_free(acbt p) {
+  acbt *sub;
+  unsigned nsub;
+  if(p.p == NULL)
+    return;
+  switch(acbt2tag(p)) {
+  case(acbt_t_n0): {
+    sub = NULL;
+    nsub = 0;
+  } break;
+  case(acbt_t_n1): {
+    acbt_n1 *n1 = acbt2n1(p);
+    sub = n1->sub1;
+    nsub = countof(n1->sub1);
+  } break;
+  case(acbt_t_n2): {
+    acbt_n2 *n2 = acbt2n2(p);
+    sub = n2->sub2;
+    nsub = countof(n2->sub2);
+  } break;
+  case(acbt_t_n4): {
+    acbt_n4 *n4 = acbt2n4(p);
+    sub = n4->sub4;
+    nsub = countof(n4->sub4);
+  } break;
+  default:
+    abort();
+  }
+  for(unsigned i = 0; i < nsub; i++) {
+    for(unsigned j = i + 1; j < nsub; j++)
+      if(sub[j].p == sub[i].p)
 	sub[j].p = NULL;
-    free(p);
+    acbt_walk_free(sub[i]);
   }
-}
-
-static void acbt_free_ptr(acbt_ptr p) {
-  for(;;) {
-    switch(acbt_type(p)) {
-    case(acbt_t_n0):
-      free(p.n0);
-      return;
-    case(acbt_t_n1):
-      acbt_free_ptr(p.n1->sub[0]);
-      acbt_free_ptr(p.n1->sub[1]);
-      free(p.n1);
-      return;
-    case(acbt_t_n2):
-      acbt_free_four(p.n2->sub);
-      free(p.n2);
-      return;
-    case(acbt_t_n4):
-      acbt_free_four(p.n4->sub+0);
-      acbt_free_four(p.n4->sub+4);
-      acbt_free_four(p.n4->sub+8);
-      acbt_free_four(p.n4->sub+12);
-      free(p.n4);
-      return;
-    default:
-      abort();
-    }
-  }
+  free(p.p);
 }
 
 void acbt_free(acbt *t) {
-  if(t->top.p != NULL)
-    acbt_free_ptr(t->top);
-  t->top.p = NULL;
+  acbt_walk_free(*t);
+  t->p = NULL;
 }
 
 // eof
