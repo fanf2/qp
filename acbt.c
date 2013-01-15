@@ -234,26 +234,55 @@ static acbt_i acbt_cb(byte *k1, acbt_i l1, byte *k2, acbt_i l2) {
   return(acbt_imax);
 }
 
-static acbt acbt_new0(byte *key, acbt_i len, void *val) {
+static acbt_n0 *acbt_new0(byte *key, acbt_i len, void *val) {
   acbt_i blen = (len + 7) / 8; // round up
-  acbt_n0 *n0;
-  n0 = malloc(sizeof(*n0) + blen);
+  acbt_n0 *n0 = malloc(sizeof(*n0) + blen);
   memcpy(n0->key, key, blen);
   n0->len = len;
   n0->val = val;
-  return(acbt4n0(n0));
+  return(n0);
 }
 
-static void *acbt_first(acbt *t, byte *key, acbt_i len, void *val) {
-  if(val != NULL)
-    *t = acbt_new0(key, len, val);
-  return(val);
+static acbt_n0 *acbt_new1(acbt *t, acbt_i cb, byte *key, acbt_i len, void *val) {
+  acbt_n0 *n0 = acbt_new0(key, len, val);
+  acbt_n1 *n1 = malloc(sizeof(*n1));
+  acbt p0 = acbt4n0(n0);
+  n1->i1 = cb;
+  if(acbt_i1(key, len, cb)) {
+    n1->sub1[0] = *t;
+    n1->sub1[1] = p0;
+  } else {
+    n1->sub1[0] = p0;
+    n1->sub1[1] = *t;
+  }
+  *t = acbt4n1(n1);
+  return(n0);
 }
 
 static void *acbt_delete(acbt *t, byte *key, acbt_i len) {
 }
 
 static acbt_n0 *acbt_insert(acbt *t, acbt_i cb, byte *key, acbt_i len, void *val) {
+  // Incomplete: does not yet create multi-bit nodes.
+  for(;;) {
+    acbt p = *t;
+    switch(acbt2tag(p)) {
+    case(acbt_t_n0):
+      // The new internal node is just above the leaves.
+      return(acbt_new1(t, cb, key, len, val));
+    case(acbt_t_n1): {
+      acbt_n1 *n1 = acbt2n1(p);
+      if(n1->i1 < cb) {
+	t = n1->sub1 + acbt_i1(key, len, n1->i1);
+	continue;
+      } else {
+	return(acbt_new1(t, cb, key, len, val));
+      }
+    }
+    default:
+      abort();
+    }
+  }
 }
 
 static acbt_n0 *acbt_find(acbt *t, byte *key, acbt_i len, void *val) {
@@ -263,6 +292,12 @@ static acbt_n0 *acbt_find(acbt *t, byte *key, acbt_i len, void *val) {
     return(n0);
   else
     return(acbt_insert(t, cb, key, len, val));
+}
+
+static void *acbt_first(acbt *t, byte *key, acbt_i len, void *val) {
+  if(val != NULL)
+    *t = acbt4n0(acbt_new0(key, len, val));
+  return(val);
 }
 
 void *acbt_alter(acbt *t, void *key, acbt_index len, void *val) {
