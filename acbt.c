@@ -246,7 +246,7 @@ static acbt acbt_new0(byte *key, acbt_i len, void *val) {
 
 static void *acbt_first(acbt *t, byte *key, acbt_i len, void *val) {
   if(val != NULL)
-    t->top = acbt_new0(key, len, val);
+    *t = acbt_new0(key, len, val);
   return(val);
 }
 
@@ -257,7 +257,7 @@ static acbt_n0 *acbt_insert(acbt *t, acbt_i cb, byte *key, acbt_i len, void *val
 }
 
 static acbt_n0 *acbt_find(acbt *t, byte *key, acbt_i len, void *val) {
-  acbt_n0 *n0 = acbt_walk(t->top, key, len);
+  acbt_n0 *n0 = acbt_walk(*t, key, len);
   acbt_i cb = acbt_cb(n0->key, n0->len, key, len);
   if(cb == acbt_imax)
     return(n0);
@@ -266,7 +266,7 @@ static acbt_n0 *acbt_find(acbt *t, byte *key, acbt_i len, void *val) {
 }
 
 void *acbt_alter(acbt *t, void *key, acbt_index len, void *val) {
-  if(t->top.p == NULL)
+  if(t->p == NULL)
     return(acbt_first(t, key, len, val));
   if(val == NULL)
     return(acbt_delete(t, key, len));
@@ -277,7 +277,7 @@ void *acbt_alter(acbt *t, void *key, acbt_index len, void *val) {
 }
 
 void *acbt_query(acbt *t, void *key, acbt_index len, void *val) {
-  if(t->top.p == NULL)
+  if(t->p == NULL)
     return(acbt_first(t, key, len, val));
   else
     return(acbt_find(t, key, len, val)->val);
