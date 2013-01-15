@@ -81,17 +81,17 @@ enum {
 static inline unsigned acbt2tag(acbt p) {
   return((uintptr_t)p.p & (uintptr_t)acbt_t_mask);
 }
-static inline struct acbt_private *acbt2ptr(acbt p) {
+static inline struct acbt_private *acbt0tag(acbt p) {
   return(struct acbt_private *)((uintptr_t)p.p & ~(uintptr_t)acbt_t_mask);
 }
 static inline acbt tagacbt(void *v, unsigned t) {
   acbt p = { (struct acbt_private *)((uintptr_t)v | (uintptr_t)t) };
   return(p);
 }
-static inline acbt_n0 *acbt2n0(acbt p) { return(acbt_n0 *)acbt2ptr(p); }
-static inline acbt_n1 *acbt2n1(acbt p) { return(acbt_n1 *)acbt2ptr(p); }
-static inline acbt_n2 *acbt2n2(acbt p) { return(acbt_n2 *)acbt2ptr(p); }
-static inline acbt_n4 *acbt2n4(acbt p) { return(acbt_n4 *)acbt2ptr(p); }
+static inline acbt_n0 *acbt2n0(acbt p) { return(acbt_n0 *)acbt0tag(p); }
+static inline acbt_n1 *acbt2n1(acbt p) { return(acbt_n1 *)acbt0tag(p); }
+static inline acbt_n2 *acbt2n2(acbt p) { return(acbt_n2 *)acbt0tag(p); }
+static inline acbt_n4 *acbt2n4(acbt p) { return(acbt_n4 *)acbt0tag(p); }
 static inline acbt acbt4n0(acbt_n0 *n0) { return(tagacbt(n0, acbt_t_n0)); }
 static inline acbt acbt4n1(acbt_n1 *n1) { return(tagacbt(n1, acbt_t_n1)); }
 static inline acbt acbt4n2(acbt_n2 *n2) { return(tagacbt(n2, acbt_t_n2)); }
