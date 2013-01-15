@@ -283,28 +283,28 @@ void *acbt_query(acbt *t, void *key, acbt_index len, void *val) {
     return(acbt_find(t, key, len, val)->val);
 }
 
-static void acbt_walk_free(acbt p) {
+void acbt_free(acbt *t) {
   acbt *sub;
   unsigned nsub;
-  if(p.p == NULL)
+  if(t->p == NULL)
     return;
-  switch(acbt2tag(p)) {
+  switch(acbt2tag(*t)) {
   case(acbt_t_n0): {
     sub = NULL;
     nsub = 0;
   } break;
   case(acbt_t_n1): {
-    acbt_n1 *n1 = acbt2n1(p);
+    acbt_n1 *n1 = acbt2n1(*t);
     sub = n1->sub1;
     nsub = countof(n1->sub1);
   } break;
   case(acbt_t_n2): {
-    acbt_n2 *n2 = acbt2n2(p);
+    acbt_n2 *n2 = acbt2n2(*t);
     sub = n2->sub2;
     nsub = countof(n2->sub2);
   } break;
   case(acbt_t_n4): {
-    acbt_n4 *n4 = acbt2n4(p);
+    acbt_n4 *n4 = acbt2n4(*t);
     sub = n4->sub4;
     nsub = countof(n4->sub4);
   } break;
@@ -315,13 +315,9 @@ static void acbt_walk_free(acbt p) {
     for(unsigned j = i + 1; j < nsub; j++)
       if(sub[j].p == sub[i].p)
 	sub[j].p = NULL;
-    acbt_walk_free(sub[i]);
+    acbt_free(&sub[i]);
   }
-  free(p.p);
-}
-
-void acbt_free(acbt *t) {
-  acbt_walk_free(*t);
+  free(t->p);
   t->p = NULL;
 }
 
