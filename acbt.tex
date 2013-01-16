@@ -1,0 +1,26 @@
+\documentclass{article}
+
+\usepackage{tikz}
+
+\newcommand\leaf[3]{\makebox[5em][l]{#1} #2 #3}
+
+\begin{document}
+
+\begin{tikzpicture}
+
+\draw (0,-0)  node{\leaf{April     }{ 41 70 72 }{ 0100 0001 0111 0000 0111 0010 }}; %      13.0
+\draw (0,-1)  node{\leaf{August    }{ 41 75 67 }{ 0100 0001 0111 0101 0110 0111 }}; %      13.1  5.0
+\draw (0,-2)  node{\leaf{December  }{ 44 65 63 }{ 0100 0100 0110 0101 0110 0011 }}; %       6.0  5.1  4.0
+\draw (0,-3)  node{\leaf{February  }{ 46 65 62 }{ 0100 0110 0110 0101 0110 0010 }}; %       6.1
+\draw (0,-4)  node{\leaf{January   }{ 4a 61 6e }{ 0100 1010 0110 0001 0110 1110 }}; %      11.0           3.0
+\draw (0,-5)  node{\leaf{July      }{ 4a 75 6c }{ 0100 1010 0111 0101 0110 1100 }}; % 22.0 11.1  5.0
+\draw (0,-6)  node{\leaf{June      }{ 4a 75 6e }{ 0100 1010 0111 0101 0110 1110 }}; %  22.1            4.1
+\draw (0,-7)  node{\leaf{March     }{ 4d 61 72 }{ 0100 1101 0110 0001 0111 0010 }}; % 20.0
+\draw (0,-8)  node{\leaf{May       }{ 4d 61 79 }{ 0100 1101 0110 0001 0111 1001 }}; % 20.1  6.0  5.1
+\draw (0,-9)  node{\leaf{November  }{ 4e 6f 76 }{ 0100 1110 0110 1111 0111 0110 }}; %  7.0  6.1
+\draw (0,-10) node{\leaf{October   }{ 4f 63 74 }{ 0100 1111 0110 0011 0111 0100 }}; %  7.1
+\draw (0,-11) node{\leaf{September }{ 53 65 70 }{ 0101 0011 0110 0101 0111 0000 }}; %                     3.1
+
+\end{tikzpicture}.
+
+\end{document}
