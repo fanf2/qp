@@ -32,46 +32,73 @@ static double cost_1(unsigned n) {
 	else
 		return 3 * (n - 1);
 }
-static unsigned cost_1_32(unsigned n) {
-	return 4 * cost_1(n);
-}
-static unsigned cost_1_64(unsigned n) {
-	return 8 * cost_1(n);
-}
 
 static unsigned cost_2(unsigned n) {
   unsigned c = 0;
   unsigned i = 0;
-  unsigned c01 = 0;
+  unsigned n01 = 0;
   for(unsigned b01 = 0x00; b01 <= 0xC0; b01 += 0x40) {
-    unsigned c23 = 0;
+    unsigned n23 = 0;
     for(unsigned b23 = 0x00; b23 <= 0x30; b23 += 0x10) {
-      unsigned c45 = 0;
+      unsigned n45 = 0;
       for(unsigned b45 = 0x00; b45 <= 0x0C; b45 += 0x04) {
 	unsigned i67 = i;
 	while(i < n && (data[i] & 0xFC) == (b01|b23|b45))
 	  i++;
-	if(i - i67 >= 1) c45 += 1;
-	if(i - i67 >= 2) c += 3;
-	if(i - i67 >= 3) c += 2;
+	unsigned n67 = i - i67;
+	if(n67 >= 3) c += 2;
+	if(n67 >= 2) c += 3;
+	if(n67 >= 1) n45 += 1;
       }
-      if(c45 >= 1) c23 += 1;
-      if(c45 >= 2) c += 3;
-      if(c45 >= 3) c += 2;
+      if(n45 >= 3) c += 2;
+      if(n45 >= 2) c += 3;
+      if(n45 >= 1) n23 += 1;
     }
-    if(c23 >= 1) c01 += 1;
-    if(c23 >= 2) c01 += 1;
-    if(c23 >= 3) c += 2;
+    if(n23 >= 3) c += 2;
+    if(n23 >= 2) c += 3;
+    if(n23 >= 1) n01 += 1;
   }
-  if(c01 >= 2) c += 3;
-  if(c01 >= 3) c += 2;
+  if(n01 >= 3) c += 2;
+  if(n01 >= 2) c += 3;
   return c;
 }
-static unsigned cost_2_32(unsigned n) {
-	return 4 * cost_2(n);
-}
-static unsigned cost_2_64(unsigned n) {
-	return 8 * cost_2(n);
+
+static unsigned cost_4(unsigned n) {
+  unsigned c = 0;
+  unsigned i = 0;
+  unsigned n01 = 0;
+  unsigned c23 = 0;
+  for(unsigned b01 = 0x00; b01 <= 0xC0; b01 += 0x40) {
+    unsigned n23 = 0;
+    for(unsigned b23 = 0x00; b23 <= 0x30; b23 += 0x10) {
+      unsigned n45 = 0;
+      unsigned c67 = 0;
+      for(unsigned b45 = 0x00; b45 <= 0x0C; b45 += 0x04) {
+	unsigned i67 = i;
+	while(i < n && (data[i] & 0xFC) == (b01|b23|b45))
+	  i++;
+	unsigned n67 = i - i67;
+	if(n67 >= 3) c67 += 2;
+	if(n67 >= 2) c67 += 3;
+	if(n67 >= 1) n45 += 1;
+      }
+      if(n45 >= 3) {
+	if(c67 > 13) c += 18;
+	else c += c67 + 5;
+      }
+      if(n45 == 2) c += c67 + 3;
+      if(n45 >= 1) n23 += 1;
+    }
+    if(n23 >= 3) c23 += 2;
+    if(n23 >= 2) c23 += 3;
+    if(n23 >= 1) n01 += 1;
+  }
+  if(n01 >= 3) {
+    if(c23 > 13) c += 18;
+    else c += c23 + 5;
+  }
+  if(n01 == 2) c += 3;
+  return c;
 }
 
 static unsigned cost_a_32(unsigned n) {
@@ -105,15 +132,18 @@ int main(void) {
 	for(unsigned n = 1; n <= 256; n++) {
 		double c1 = cost_1(n);
 		double c2 = mean(n, cost_2);
+		double c4 = mean(n, cost_4);
 		double c1s = c1 * 4;
 		double c1d = c1 * 8;
 		double c2s = c2 * 4;
 		double c2d = c2 * 8;
+		double c4s = c4 * 4;
+		double c4d = c4 * 8;
 		double cas = cost_a_32(n);
 		double cad = cost_a_64(n);
-		printf("%d %f %f %f %f %f %f %f %f %f %f %f %f\n", n,
-		       c1s, c2s, cas, c1s/n, c2s/n, cas/n,
-		       c1d, c2d, cad, c1d/n, c2d/n, cad/n);
+		printf("%d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", n,
+		       c1s, c2s, c4s, cas, c1s/n, c2s/n, c4s/n, cas/n,
+		       c1d, c2d, c4d, cad, c1d/n, c2d/n, c4s/n, cad/n);
 	}
 	return(0);
 }
