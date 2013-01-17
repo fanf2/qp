@@ -60,4 +60,28 @@
 
 \end{tikzpicture}
 
+\begin{tikzpicture}
+[row 2/.style={font=\scriptsize}
+,row 3/.style={font=\scriptsize}
+,every matrix/.style={draw,nodes={text width=1em,align=center}}
+]
+
+\matrix(13) at      (5,9)  { \node{13}; \\ \node(130){0}; \\ \node(131){1}; \\ };
+\matrix(5a) at   (2,8)     { \node{5};  \\ \node(5a0){0}; \\ \node(5a1){1}; \\ };
+\matrix(6a) at    (3,7)    { \node{6};  \\ \node(6a0){0}; \\ \node(6a1){1}; \\ };
+\matrix(4)  at  (1,6)      { \node{4};  \\ \node(4x0){0}; \\ \node(4x1){1}; \\ };
+\matrix(11) at      (5,5)  { \node{11}; \\ \node(110){0}; \\ \node(111){1}; \\ };
+\matrix(22) at       (6,4) { \node{22}; \\ \node(220){0}; \\ \node(221){1}; \\ };
+\matrix(5b) at   (2,3)     { \node{5};  \\ \node(5b0){0}; \\ \node(5b1){1}; \\ };
+\matrix(20) at       (6,2) { \node{20}; \\ \node(200){0}; \\ \node(201){1}; \\ };
+\matrix(6b) at    (3,1)    { \node{6};  \\ \node(6b0){0}; \\ \node(6b1){1}; \\ };
+\matrix(7)  at     (4,0)   { \node{7};  \\ \node(7x0){0}; \\ \node(7x1){1}; \\ };
+\matrix(3)  at (0,5)       { \node{3};  \\ \node(3x0){0}; \\ \node(3x1){1}; \\ };
+
+\draw [->] (node cs:name=3,angle=0) .. controls +(1,0) and +(-1,0) .. (node cs:name=4,angle=140);
+\draw [->] (node cs:name=4,angle=0) -> (5a.south);
+\draw [->] (node cs:name=4,angle=-30) -> (5b.north);
+
+\end{tikzpicture}
+
 \end{document}
