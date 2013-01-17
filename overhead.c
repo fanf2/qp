@@ -83,11 +83,11 @@ static unsigned cost_4(unsigned n) {
 	if(n67 >= 1) n45 += 1;
       }
       if(n45 >= 3) {
-	//if(c67 > 13) c += 18;
-	//else
-	  c += c67 + 5;
+	if(c67 > 13) c += 18;
+	else c += c67 + 5;
       }
       if(n45 == 2) c += c67 + 3;
+      if(n45 == 1) c += c67;
       if(n45 >= 1) n23 += 1;
     }
     if(n23 >= 3) c23 += 2;
@@ -95,11 +95,11 @@ static unsigned cost_4(unsigned n) {
     if(n23 >= 1) n01 += 1;
   }
   if(n01 >= 3) {
-    //    if(c23 > 13) c += 18;
-    // else
-      c += c23 + 5;
+    if(c23 > 13) c += 18;
+    else c += c23 + 5;
   }
-  if(n01 == 2) c += 3;
+  if(n01 == 2) c += c23 + 3;
+  if(n01 == 1) c += c23;
   return c;
 }
 
