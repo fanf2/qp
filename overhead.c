@@ -1,46 +1,119 @@
 // calculate acbt memory overhead
 
 #include <stdio.h>
+#include <stdlib.h>
 
-static double cost1(double n) {
-	return 3 * 0xFF * n / 256;
+typedef unsigned char byte;
+
+static byte data[256];
+
+static int cmp(const void *va, const void *vb) {
+	const byte *a = va, *b = vb;
+	int ai = *a, bi = *b;
+	return ai - bi;
 }
 
-// just take the mean, I guess?
-static double cost2(double n) {
-	double raw_2 = 5 * 0x55 * n / 256;
-	return (cost1(n) * (256 - n) +  raw_2 * n) / 256;
+static void shuffle(unsigned n) {
+	for(unsigned i = 0; i < 256; i++)
+		data[i] = i;
+	for(unsigned i = 0; i < n; i++) {
+		unsigned r = arc4random_uniform(255 - i);
+		byte s = data[i + r];
+		data[i + r] = data[i];
+		data[i] = s;
+	}
+	qsort(data, n, 1, cmp);
 }
 
-static double cost4(double n) {
-	double raw_4 = 18 * 0x11 * n / 256;
-	return (cost2(n) * (256 - n) +  raw_4 * n) / 256;
+// simples
+static double cost_1(unsigned n) {
+	if(n < 2)
+		return 0;
+	else
+		return 3 * (n - 1);
+}
+static unsigned cost_1_32(unsigned n) {
+	return 4 * cost_1(n);
+}
+static unsigned cost_1_64(unsigned n) {
+	return 8 * cost_1(n);
 }
 
-static double cost32(double n) {
-	for(double s = 8; s < 1024; s *= 2) {
-		double m = (s - 7) / 5;
+static unsigned cost_2(unsigned n) {
+  unsigned c = 0;
+  unsigned i = 0;
+  unsigned c01 = 0;
+  for(unsigned b01 = 0x00; b01 <= 0xC0; b01 += 0x40) {
+    unsigned c23 = 0;
+    for(unsigned b23 = 0x00; b23 <= 0x30; b23 += 0x10) {
+      unsigned c45 = 0;
+      for(unsigned b45 = 0x00; b45 <= 0x0C; b45 += 0x04) {
+	unsigned i67 = i;
+	while(i < n && (data[i] & 0xFC) == (b01|b23|b45))
+	  i++;
+	if(i - i67 >= 1) c45 += 1;
+	if(i - i67 >= 2) c += 3;
+	if(i - i67 >= 3) c += 2;
+      }
+      if(c45 >= 1) c23 += 1;
+      if(c45 >= 2) c += 3;
+      if(c45 >= 3) c += 2;
+    }
+    if(c23 >= 1) c01 += 1;
+    if(c23 >= 2) c01 += 1;
+    if(c23 >= 3) c += 2;
+  }
+  if(c01 >= 2) c += 3;
+  if(c01 >= 3) c += 2;
+  return c;
+}
+static unsigned cost_2_32(unsigned n) {
+	return 4 * cost_2(n);
+}
+static unsigned cost_2_64(unsigned n) {
+	return 8 * cost_2(n);
+}
+
+static unsigned cost_a_32(unsigned n) {
+	for(unsigned s = 8; s <= 1024; s *= 2) {
+		unsigned m = (s - 7) / 5;
 		if(n <= m) return s;
 	}
 	return 1024+7;
 }
 
-static double cost64(double n) {
-	for(double s = 16; s < 2048; s *= 2) {
-		double m = (s - 11) / 9;
+static unsigned cost_a_64(unsigned n) {
+	for(unsigned s = 16; s <= 2048; s *= 2) {
+		unsigned m = (s - 11) / 9;
 		if(n <= m) return s;
 	}
 	return 2048+11;
 }
 
+static double mean(unsigned n, unsigned cost(unsigned n)) {
+	double m = 0;
+	for(unsigned i = 1; i <= 100000; i++) {
+		shuffle(n);
+		double c = cost(n);
+		m += (c - m) / i;
+	}
+	return m;
+}
+
 int main(void) {
-	for(int n = 1; n <= 256; n++) {
-		double c1 = cost1(n)/n;
-		double c2 = cost2(n)/n;
-		double c4 = cost4(n)/n;
-		printf("%d %f %f %f %f %f %f %f %f\n", n,
-		    c1*4, c2*4, c4*4, cost32(n)/n,
-		    c1*8, c2*8, c4*8, cost64(n)/n);
+	setlinebuf(stdout);
+	for(unsigned n = 1; n <= 256; n++) {
+		double c1 = cost_1(n);
+		double c2 = mean(n, cost_2);
+		double c1s = c1 * 4;
+		double c1d = c1 * 8;
+		double c2s = c2 * 4;
+		double c2d = c2 * 8;
+		double cas = cost_a_32(n);
+		double cad = cost_a_64(n);
+		printf("%d %f %f %f %f %f %f %f %f %f %f %f %f\n", n,
+		       c1s, c2s, cas, c1s/n, c2s/n, cas/n,
+		       c1d, c2d, cad, c1d/n, c2d/n, cad/n);
 	}
 	return(0);
 }
