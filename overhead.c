@@ -83,8 +83,9 @@ static unsigned cost_4(unsigned n) {
 	if(n67 >= 1) n45 += 1;
       }
       if(n45 >= 3) {
-	if(c67 > 13) c += 18;
-	else c += c67 + 5;
+	//if(c67 > 13) c += 18;
+	//else
+	  c += c67 + 5;
       }
       if(n45 == 2) c += c67 + 3;
       if(n45 >= 1) n23 += 1;
@@ -94,14 +95,16 @@ static unsigned cost_4(unsigned n) {
     if(n23 >= 1) n01 += 1;
   }
   if(n01 >= 3) {
-    if(c23 > 13) c += 18;
-    else c += c23 + 5;
+    //    if(c23 > 13) c += 18;
+    // else
+      c += c23 + 5;
   }
   if(n01 == 2) c += 3;
   return c;
 }
 
 static unsigned cost_a_32(unsigned n) {
+	if(n < 2) return 0;
 	for(unsigned s = 8; s <= 1024; s *= 2) {
 		unsigned m = (s - 7) / 5;
 		if(n <= m) return s;
@@ -110,7 +113,26 @@ static unsigned cost_a_32(unsigned n) {
 }
 
 static unsigned cost_a_64(unsigned n) {
+	if(n < 2) return 0;
 	for(unsigned s = 16; s <= 2048; s *= 2) {
+		unsigned m = (s - 11) / 9;
+		if(n <= m) return s;
+	}
+	return 2048+11;
+}
+
+static unsigned cost_b_32(unsigned n) {
+	if(n < 2) return 0;
+	for(unsigned s = 12; s < 1024+7; s = (s*3)/2) {
+		unsigned m = (s - 7) / 5;
+		if(n <= m) return s;
+	}
+	return 1024+7;
+}
+
+static unsigned cost_b_64(unsigned n) {
+	if(n < 2) return 0;
+	for(unsigned s = 20; s < 2048+11; s = (s*3)/2) {
 		unsigned m = (s - 11) / 9;
 		if(n <= m) return s;
 	}
@@ -129,6 +151,10 @@ static double mean(unsigned n, unsigned cost(unsigned n)) {
 
 int main(void) {
 	setlinebuf(stdout);
+	printf("x binary32 pair32 quad32 double32 bump32"
+	        " binary32 pair32 quad32 double32 bump32"
+	        " binary64 pair64 quad64 double64 bump64"
+	        " binary64 pair64 quad64 double64 bump64\n");
 	for(unsigned n = 1; n <= 256; n++) {
 		double c1 = cost_1(n);
 		double c2 = mean(n, cost_2);
@@ -141,9 +167,11 @@ int main(void) {
 		double c4d = c4 * 8;
 		double cas = cost_a_32(n);
 		double cad = cost_a_64(n);
-		printf("%d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", n,
-		       c1s, c2s, c4s, cas, c1s/n, c2s/n, c4s/n, cas/n,
-		       c1d, c2d, c4d, cad, c1d/n, c2d/n, c4s/n, cad/n);
+		double cbs = cost_b_32(n);
+		double cbd = cost_b_64(n);
+		printf("%d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", n,
+		       c1s, c2s, c4s, cas, cbs, c1s/n, c2s/n, c4s/n, cas/n, cbs/n,
+		       c1d, c2d, c4d, cad, cbd, c1d/n, c2d/n, c4s/n, cad/n, cbd/n);
 	}
 	return(0);
 }
