@@ -1,0 +1,48 @@
+Small adaptve radix tree nodes
+
+2 children, 32 bit, 4 words / 16 bytes
+
+byte key[2] // 2 words
+byte type
+uint index
+node *sub[2]
+
+2 children, 64 bit, 3 words / 24 bytes
+
+problem with SSE alignment?
+
+byte key[2] // 1 word
+byte type
+uint index
+node *sub[2]
+
+3 children, 32 bit, 5 words / 20 bytes
+
+problem with SSE alignment?
+
+byte key[3] // 2 words
+byte type
+uint index
+node *sub[3]
+
+3 children, 64 bit, 4 words / 32 bytes
+
+byte key[3] // 1 word
+byte type
+uint index
+node *sub[3]
+
+4..7 children, 32 bit, 6..9 words / 24..36 bytes
+
+byte key[4..7] // 3 words
+byte type
+uint index
+node *sub[4..7]
+
+4..11 children, 64 bit, 6..13 words / 48..104 bytes
+
+byte key[4..11] // 2 words
+byte type
+uint index
+node *sub[4..11]
+
