@@ -171,7 +171,7 @@ int main(void) {
 		double cbd = cost_b_64(n);
 		printf("%d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", n,
 		       c1s, c2s, c4s, cas, cbs, c1s/n, c2s/n, c4s/n, cas/n, cbs/n,
-		       c1d, c2d, c4d, cad, cbd, c1d/n, c2d/n, c4s/n, cad/n, cbd/n);
+		       c1d, c2d, c4d, cad, cbd, c1d/n, c2d/n, c4d/n, cad/n, cbd/n);
 	}
 	return(0);
 }
