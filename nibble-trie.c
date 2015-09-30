@@ -148,6 +148,19 @@ Tnext(Tree *tree, const char *key) {
 
 Tree *
 Tset(Tree *tree, const char *key, void *value) {
+	// Ensure flag bits are zero.
+	if(value != NULL)
+		assert(((uint64_t)value & 3) == 0);
+	// First leaf in an empty tree?
+	if(tree == NULL) {
+		if(value != NULL)
+			tree = malloc(sizeof(*tree));
+		if(tree != NULL) {
+			tree->root.leaf.key = key;
+			tree->root.leaf.value = value;
+		}
+		return(tree);
+	}
 	Tnode *t = &tree->root;
 	size_t len = strlen(key);
 
