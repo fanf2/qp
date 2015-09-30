@@ -3,6 +3,7 @@
 // http://infoscience.epfl.ch/record/64394/files/triesearches.pdf
 // http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -16,16 +17,17 @@ typedef unsigned char byte;
 // fall in the clear bits at the bottom of the pointer. This needs
 // to change on a big-endian and/or 32 bit C implementation.
 //
-// We arrange for the flag bits to match up with the value pointer
-// because it is word-aligned and the key pointer can be byte-aligned.
-//
-// Flags can be
+// The flags are a type tag. They can be:
 // 0 -> node is a leaf
 // 1 -> node is a branch, testing upper nibble
 // 2 -> node is a branch, testing lower nibble
 //
-// The combined value (index << 2) | flags increases in big-endian
-// lexicographic order.
+// In a branch, the combined value (index << 2) | flags
+// increases along the key in big-endian lexicographic order.
+//
+// In a leaf node we arrange for the flag bits (which are zero)
+// to match up with the value pointer which must therefore be
+// word-aligned; the key pointer can be byte-aligned.
 
 typedef struct Tbranch {
 	union Tnode *nodes;
@@ -49,6 +51,12 @@ struct Tree {
 	union Tnode root;
 };
 
+// Test flags to determine type of this node.
+
+static inline bool isleaf(Tnode *t) {
+	return(t->branch.flags == 0);
+}
+
 // Extract a nibble from a key.
 //
 // mask:
@@ -58,11 +66,13 @@ struct Tree {
 // shift:
 // 1 -> 1 -> 4
 // 2 -> 0 -> 0
-//
-static inline unsigned nibble(const char *key, unsigned flags, uint64_t i) {
+
+static inline unsigned nibble(Tnode *t, const char *key) {
+	unsigned flags = t->branch.flags;
 	unsigned mask = ((flags - 2) ^ 0x0f) & 0xff;
 	unsigned shift = (2 - flags) << 2;
-	const byte *k = (const byte *)key;
+	const byte *k = (const void *)key;
+	uint64_t i = t->branch.index;
 	return((k[i] & mask) >> shift);
 }
 
@@ -71,7 +81,7 @@ void *Tget(Tree *tree, const char *key) {
 	size_t len = strlen(key);
 
 	for(;;) {
-		if(t->branch.flags == 0) {
+		if(isleaf(t)) {
 			if(strcmp(key, t->leaf.key) == 0)
 				return(t->leaf.val);
 			else
@@ -79,17 +89,17 @@ void *Tget(Tree *tree, const char *key) {
 		}
 		if(t->branch.index >= len)
 			return(NULL);
-		unsigned n = nibble(key, t->branch.flags, t->branch.index);
+		unsigned n = nibble(t, key);
 		unsigned m = 1 << n;
 		if((t->branch.bitmap & m) == 0)
 			return(NULL);
 		int i = popcount(t->branch.bitmap & (m - 1));
-		t = t->branch.nodes + i;
+		t = &t->branch.nodes[i];
 	}
 }
 
-static const char *Trec(Tnode *t, const char *key, size_t len) {
-	if(t->branch.flags == 0) {
+static const char *next_rec(Tnode *t, const char *key, size_t len) {
+	if(isleaf(t)) {
 		if(key == NULL ||
 		   strcmp(key, t->leaf.key) < 0)
 			return(t->leaf.key);
@@ -100,12 +110,12 @@ static const char *Trec(Tnode *t, const char *key, size_t len) {
 	if(t->branch.index >= len)
 		n = 0;
 	else
-	        n = nibble(key, t->branch.flags, t->branch.index);
+	        n = nibble(t, key);
 	unsigned m = 1 << n;
         int i = popcount(t->branch.bitmap & (m - 1));
 	int j = popcount(t->branch.bitmap);
 	while(i < j) {
-		const char *found = Trec(t->branch.nodes + i, key, len);
+		const char *found = next_rec(t->branch.nodes + i, key, len);
 		if(found) return(found);
 		i++;
 	}
@@ -115,7 +125,7 @@ static const char *Trec(Tnode *t, const char *key, size_t len) {
 const char *Tnext(Tree *tree, const char *key) {
 	Tnode *t = &tree->root;
 	size_t len = key != NULL ? strlen(key) : 0;
-	return(Trec(t, key, len));
+	return(next_rec(t, key, len));
 }
 
 Tree *Tset(Tree *tree, const char *key, void *value) {
@@ -123,7 +133,7 @@ Tree *Tset(Tree *tree, const char *key, void *value) {
 	size_t len = strlen(key);
 
 	for(;;) {
-		if(t->branch.flags == 0) {
+		if(isleaf(t)) {
 			if(strcmp(key, t->leaf.key) == 0)
 				return(t->leaf.val);
 			else
@@ -131,7 +141,7 @@ Tree *Tset(Tree *tree, const char *key, void *value) {
 		}
 		if(t->branch.index >= len)
 			return(NULL);
-		unsigned n = nibble(key, t->branch.flags, t->branch.index);
+		unsigned n = nibble(t, key);
 		unsigned m = 1 << n;
 		if((t->branch.bitmap & m) == 0)
 			return(NULL);
