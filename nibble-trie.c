@@ -99,7 +99,6 @@ Tget(Tree *tree, const char *key) {
 		return(NULL);
 	Tnode *t = &tree->root;
 	size_t len = strlen(key);
-
 	for(;;) {
 		if(isleaf(t)) {
 			if(strcmp(key, t->leaf.key) == 0)
@@ -125,11 +124,7 @@ next_rec(Tnode *t, const char *key, size_t len) {
 		else
 			return(NULL);
 	}
-	unsigned n;
-	if(t->branch.index > len)
-		n = 0;
-	else
-	        n = nibble(t, key);
+	unsigned n = (t->branch.index > len) ? 0 : nibble(t, key);
         for(int i = twigcount(t, n), j = twigcount(t, 16); i < j; i++) {
 		const char *found = next_rec(twig(t, i), key, len);
 		if(found) return(found);
