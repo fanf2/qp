@@ -190,9 +190,25 @@ Tset(Tree *tree, const char *key, void *val) {
 	}
 	t->leaf.val = val;
 	return(tree);
-newkey: // We have the branch's index; what are its flags?
-	unsigned f = key[i] ^ t->leaf.key[i];
+newkey:; // We have the branch's index; what are its flags?
+	unsigned f = (byte)key[i] ^ (byte)t->leaf.key[i];
 	f = (f & 0xf0) ? 1 : 2;
 	// Find where to insert a node or replace an existing node.
 	t = &tree->root;
+	// This can only happen if there is one element in the tree.
+	if(isleaf(t)) {
+		Tnode *twigs = malloc(sizeof(Tnode) * 2);
+		if(twigs == NULL) return(NULL);
+		Tnode t1 = { .leaf.key = key, .leaf.val = val };
+		Tnode t2 = *t;
+		t->branch.twigs = twigs;
+		t->branch.flags = f;
+		t->branch.index = i;
+		unsigned n1 = nibble(t, t1.leaf.key, i);
+		unsigned n2 = nibble(t, t2.leaf.key, i);
+		t->branch.bitmap = 1 << n1 | 1 << n2;
+		*twig(t, twigcount(t, n1)) = t1;
+		*twig(t, twigcount(t, n2)) = t2;
+		return(tree);
+	}
 }
