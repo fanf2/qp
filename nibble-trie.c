@@ -53,7 +53,8 @@ struct Tree {
 
 // Test flags to determine type of this node.
 
-static inline bool isleaf(Tnode *t) {
+static inline bool
+isleaf(Tnode *t) {
 	return(t->branch.flags == 0);
 }
 
@@ -67,7 +68,8 @@ static inline bool isleaf(Tnode *t) {
 // 1 -> 1 -> 4
 // 2 -> 0 -> 0
 
-static inline unsigned nibble(Tnode *t, const char *key) {
+static inline unsigned
+nibble(Tnode *t, const char *key) {
 	unsigned flags = t->branch.flags;
 	unsigned mask = ((flags - 2) ^ 0x0f) & 0xff;
 	unsigned shift = (2 - flags) << 2;
@@ -76,7 +78,8 @@ static inline unsigned nibble(Tnode *t, const char *key) {
 	return((k[i] & mask) >> shift);
 }
 
-void *Tget(Tree *tree, const char *key) {
+void *
+Tget(Tree *tree, const char *key) {
 	if(tree == NULL)
 		return(NULL);
 	Tnode *t = &tree->root;
@@ -100,7 +103,8 @@ void *Tget(Tree *tree, const char *key) {
 	}
 }
 
-static const char *next_rec(Tnode *t, const char *key, size_t len) {
+static const char *
+next_rec(Tnode *t, const char *key, size_t len) {
 	if(isleaf(t)) {
 		if(key == NULL ||
 		   strcmp(key, t->leaf.key) < 0)
@@ -124,7 +128,8 @@ static const char *next_rec(Tnode *t, const char *key, size_t len) {
 	return(NULL);
 }
 
-const char *Tnext(Tree *tree, const char *key) {
+const char *
+Tnext(Tree *tree, const char *key) {
 	if(tree == NULL)
 		return(NULL);
 	Tnode *t = &tree->root;
@@ -132,7 +137,8 @@ const char *Tnext(Tree *tree, const char *key) {
 	return(next_rec(t, key, len));
 }
 
-Tree *Tset(Tree *tree, const char *key, void *value) {
+Tree *
+Tset(Tree *tree, const char *key, void *value) {
 	Tnode *t = &tree->root;
 	size_t len = strlen(key);
 
