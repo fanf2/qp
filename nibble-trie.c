@@ -117,3 +117,25 @@ const char *Tnext(Tree *tree, const char *key) {
 	size_t len = key != NULL ? strlen(key) : 0;
 	return(Trec(t, key, len));
 }
+
+Tree *Tset(Tree *tree, const char *key, void *value) {
+	Tnode *t = &tree->tree;
+	size_t len = strlen(key);
+
+	for(;;) {
+		if(t->branch.flags == 0) {
+			if(strcmp(key, t->leaf.key) == 0)
+				return(t->leaf.val);
+			else
+				return(NULL);
+		}
+		if(t->branch.index >= len)
+			return(NULL);
+		unsigned n = nibble(key, t->branch.flags, t->branch.index);
+		unsigned m = 1 << n;
+		if((t->branch.bitmap & m) == 0)
+			return(NULL);
+	        int i = popcount(t->branch.bitmap & (m - 1));
+		t = t->branch.nodes + i;
+	}
+}
