@@ -3,8 +3,10 @@
 // http://infoscience.epfl.ch/record/64394/files/triesearches.pdf
 // http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "nibble-trie.h"
@@ -146,35 +148,42 @@ Tnext(Tree *tree, const char *key) {
 }
 
 Tree *
-Tset(Tree *tree, const char *key, void *value) {
+Tset(Tree *tree, const char *key, void *val) {
 	// Ensure flag bits are zero.
-	if(value != NULL)
-		assert(((uint64_t)value & 3) == 0);
+	if(val != NULL)
+		assert(((uint64_t)val & 3) == 0);
 	// First leaf in an empty tree?
 	if(tree == NULL) {
-		if(value != NULL)
+		if(val != NULL)
 			tree = malloc(sizeof(*tree));
 		if(tree != NULL) {
 			tree->root.leaf.key = key;
-			tree->root.leaf.value = value;
+			tree->root.leaf.val = val;
 		}
 		return(tree);
 	}
 	Tnode *t = &tree->root;
 	size_t len = strlen(key);
-
+	// Find the most similar leaf node in the tree. We will compare
+	// its key with our new key to find the first differing nibble,
+	// which can be at a lower index than the point at which we
+	// detect a difference.
 	for(;;) {
 		if(isleaf(t)) {
-			if(strcmp(key, t->leaf.key) == 0)
-				return(t->leaf.val);
-			else
-				return(NULL);
+			if(strcmp(key, t->leaf.key) == 0) {
+				assert(val != NULL); // XXX
+				t->leaf.val = val;
+				return(tree);
+			} else
+				break;
 		}
-		if(t->branch.index >= len)
-			return(NULL);
-		unsigned n = nibble(t, key);
-		if(!hastwig(t, n))
-			return(NULL);
-		t = twig(t, twigcount(t, n));
+		unsigned n = nibble(t, key, len);
+		// Even if our key is missing from this branch we need to
+		// keep iterating down to a leaf. It doesn't matter which
+		// twig we choose since the keys are all the same up to this
+		// index. Note that blindly using twigcount(t, n) can cause
+		// an out-of-bounds index if it equals twigcount(t, 16).
+		int i = hastwig(t, n) ? twigcount(t, n) : 0;
+		t = twig(t, i);
 	}
 }
