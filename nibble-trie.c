@@ -14,7 +14,7 @@ typedef unsigned char byte;
 
 // XXX Assume a little-endian struct layout, so that the flag bits
 // fall in the clear bits at the bottom of the pointer. This needs
-// to change on a big-endian C implementation.
+// to change on a big-endian and/or 32 bit C implementation.
 //
 // We arrange for the flag bits to match up with the value pointer
 // because it is word-aligned and the key pointer can be byte-aligned.
@@ -46,7 +46,7 @@ typedef union Tnode {
 } Tnode;
 
 struct Tree {
-	union Tnode tree;
+	union Tnode root;
 };
 
 // Extract a nibble from a key.
@@ -67,7 +67,7 @@ static inline unsigned nibble(const char *key, unsigned flags, uint64_t i) {
 }
 
 void *Tget(Tree *tree, const char *key) {
-	Tnode *t = &tree->tree;
+	Tnode *t = &tree->root;
 	size_t len = strlen(key);
 
 	for(;;) {
@@ -113,13 +113,13 @@ static const char *Trec(Tnode *t, const char *key, size_t len) {
 }
 
 const char *Tnext(Tree *tree, const char *key) {
-	Tnode *t = &tree->tree;
+	Tnode *t = &tree->root;
 	size_t len = key != NULL ? strlen(key) : 0;
 	return(Trec(t, key, len));
 }
 
 Tree *Tset(Tree *tree, const char *key, void *value) {
-	Tnode *t = &tree->tree;
+	Tnode *t = &tree->root;
 	size_t len = strlen(key);
 
 	for(;;) {
