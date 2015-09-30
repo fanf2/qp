@@ -77,6 +77,8 @@ static inline unsigned nibble(Tnode *t, const char *key) {
 }
 
 void *Tget(Tree *tree, const char *key) {
+	if(tree == NULL)
+		return(NULL);
 	Tnode *t = &tree->root;
 	size_t len = strlen(key);
 
@@ -123,6 +125,8 @@ static const char *next_rec(Tnode *t, const char *key, size_t len) {
 }
 
 const char *Tnext(Tree *tree, const char *key) {
+	if(tree == NULL)
+		return(NULL);
 	Tnode *t = &tree->root;
 	size_t len = key != NULL ? strlen(key) : 0;
 	return(next_rec(t, key, len));
