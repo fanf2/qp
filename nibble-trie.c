@@ -83,7 +83,7 @@ void *Tget(Tree *tree, const char *key) {
 		unsigned m = 1 << n;
 		if((t->branch.bitmap & m) == 0)
 			return(NULL);
-		unsigned i = popcount(t->branch.bitmap & (m - 1));
+		int i = popcount(t->branch.bitmap & (m - 1));
 		t = t->branch.nodes + i;
 	}
 }
@@ -96,14 +96,14 @@ static const char *Trec(Tnode *t, const char *key, size_t len) {
 		else
 			return(NULL);
 	}
-	unsigned n, m;
+	unsigned n;
 	if(t->branch.index >= len)
 		n = 0;
 	else
 	        n = nibble(key, t->branch.flags, t->branch.index);
-	m = (1 << n) - 1;
-	unsigned i = popcount(t->branch.bitmap & m);
-	unsigned j = popcount(t->branch.bitmap);
+	unsigned m = 1 << n;
+        int i = popcount(t->branch.bitmap & (m - 1));
+	int j = popcount(t->branch.bitmap);
 	while(i < j) {
 		const char *found = Trec(t->branch.nodes + i, key, len);
 		if(found) return(found);
