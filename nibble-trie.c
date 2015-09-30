@@ -15,13 +15,15 @@ typedef unsigned char byte;
 // fall in the clear bits at the bottom of the pointer. This needs
 // to change on a big-endian and/or 32 bit C implementation.
 //
-// The flags are a type tag. They can be:
+// The flags are a dynamic type tag. They can be:
 // 0 -> node is a leaf
 // 1 -> node is a branch, testing upper nibble
 // 2 -> node is a branch, testing lower nibble
 //
 // In a branch, the combined value (index << 2) | flags
 // increases along the key in big-endian lexicographic order.
+// All the keys below a branch are identical up to the nibble
+// identified by the branch.
 //
 // In a leaf node we arrange for the flag bits (which are zero)
 // to match up with the value pointer which must therefore be
@@ -67,12 +69,13 @@ isleaf(Tnode *t) {
 // 2 -> 0 -> 0
 
 static inline unsigned
-nibble(Tnode *t, const char *key) {
+nibble(Tnode *t, const char *key, size_t len) {
+	uint64_t i = t->branch.index;
+	if(i > len) return(0);
 	unsigned flags = t->branch.flags;
 	unsigned mask = ((flags - 2) ^ 0x0f) & 0xff;
 	unsigned shift = (2 - flags) << 2;
 	const byte *k = (const void *)key;
-	uint64_t i = t->branch.index;
 	return((k[i] & mask) >> shift);
 }
 
@@ -106,9 +109,7 @@ Tget(Tree *tree, const char *key) {
 			else
 				return(NULL);
 		}
-		if(t->branch.index > len)
-			return(NULL);
-		unsigned n = nibble(t, key);
+		unsigned n = nibble(t, key, len);
 		if(!hastwig(t, n))
 			return(NULL);
 		t = twig(t, twigcount(t, n));
@@ -124,7 +125,10 @@ next_rec(Tnode *t, const char *key, size_t len) {
 		else
 			return(NULL);
 	}
-	unsigned n = (t->branch.index > len) ? 0 : nibble(t, key);
+	unsigned n = nibble(t, key, len);
+	// This loop normally returns immediately, except when our key is
+	// the last in its twig, in which case the loop tries the next
+	// twig. Or if the key's twig is missing we run zero times.
         for(int i = twigcount(t, n), j = twigcount(t, 16); i < j; i++) {
 		const char *found = next_rec(twig(t, i), key, len);
 		if(found) return(found);
