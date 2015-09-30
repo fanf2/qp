@@ -9,8 +9,6 @@
 
 #include "nibble-trie.h"
 
-#define popcount __builtin_popcount
-
 typedef unsigned char byte;
 
 // XXX Assume a little-endian struct layout, so that the flag bits
@@ -30,7 +28,7 @@ typedef unsigned char byte;
 // word-aligned; the key pointer can be byte-aligned.
 
 typedef struct Tbranch {
-	union Tnode *nodes;
+	union Tnode *twigs;
 	uint64_t
 		flags : 2,
 		index : 46,
@@ -78,6 +76,23 @@ nibble(Tnode *t, const char *key) {
 	return((k[i] & mask) >> shift);
 }
 
+static inline Tnode *
+twig(Tnode *t, int i) {
+	return(&t->branch.twigs[i]);
+}
+
+static inline bool
+hastwig(Tnode *t, unsigned n) {
+	unsigned m = 1 << n;
+	return(t->branch.bitmap & m);
+}
+
+static inline int
+twigcount(Tnode *t, unsigned n) {
+	unsigned m = 1 << n;
+	return(__builtin_popcount(t->branch.bitmap & (m - 1)));
+}
+
 void *
 Tget(Tree *tree, const char *key) {
 	if(tree == NULL)
@@ -95,11 +110,9 @@ Tget(Tree *tree, const char *key) {
 		if(t->branch.index > len)
 			return(NULL);
 		unsigned n = nibble(t, key);
-		unsigned m = 1 << n;
-		if((t->branch.bitmap & m) == 0)
+		if(!hastwig(t, n))
 			return(NULL);
-		int i = popcount(t->branch.bitmap & (m - 1));
-		t = &t->branch.nodes[i];
+		t = twig(t, twigcount(t, n));
 	}
 }
 
@@ -117,13 +130,9 @@ next_rec(Tnode *t, const char *key, size_t len) {
 		n = 0;
 	else
 	        n = nibble(t, key);
-	unsigned m = 1 << n;
-        int i = popcount(t->branch.bitmap & (m - 1));
-	int j = popcount(t->branch.bitmap);
-	while(i < j) {
-		const char *found = next_rec(t->branch.nodes + i, key, len);
+        for(int i = twigcount(t, n), j = twigcount(t, 16); i < j; i++) {
+		const char *found = next_rec(twig(t, i), key, len);
 		if(found) return(found);
-		i++;
 	}
 	return(NULL);
 }
@@ -152,10 +161,8 @@ Tset(Tree *tree, const char *key, void *value) {
 		if(t->branch.index >= len)
 			return(NULL);
 		unsigned n = nibble(t, key);
-		unsigned m = 1 << n;
-		if((t->branch.bitmap & m) == 0)
+		if(!hastwig(t, n))
 			return(NULL);
-	        int i = popcount(t->branch.bitmap & (m - 1));
-		t = t->branch.nodes + i;
+		t = twig(t, twigcount(t, n));
 	}
 }
