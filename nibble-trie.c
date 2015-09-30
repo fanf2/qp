@@ -87,7 +87,7 @@ void *Tget(Tree *tree, const char *key) {
 			else
 				return(NULL);
 		}
-		if(t->branch.index >= len)
+		if(t->branch.index > len)
 			return(NULL);
 		unsigned n = nibble(t, key);
 		unsigned m = 1 << n;
@@ -107,7 +107,7 @@ static const char *next_rec(Tnode *t, const char *key, size_t len) {
 			return(NULL);
 	}
 	unsigned n;
-	if(t->branch.index >= len)
+	if(t->branch.index > len)
 		n = 0;
 	else
 	        n = nibble(t, key);
