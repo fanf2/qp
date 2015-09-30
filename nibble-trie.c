@@ -162,6 +162,8 @@ Tset(Tree *tree, const char *key, void *val) {
 		}
 		return(tree);
 	}
+	// delete is not yet implemented
+	assert(val != NULL);
 	Tnode *t = &tree->root;
 	size_t len = strlen(key);
 	// Find the most similar leaf node in the tree. We will compare
@@ -169,14 +171,8 @@ Tset(Tree *tree, const char *key, void *val) {
 	// which can be at a lower index than the point at which we
 	// detect a difference.
 	for(;;) {
-		if(isleaf(t)) {
-			if(strcmp(key, t->leaf.key) == 0) {
-				assert(val != NULL); // XXX
-				t->leaf.val = val;
-				return(tree);
-			} else
-				break;
-		}
+		if(isleaf(t))
+			break;
 		unsigned n = nibble(t, key, len);
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
@@ -186,4 +182,17 @@ Tset(Tree *tree, const char *key, void *val) {
 		int i = hastwig(t, n) ? twigcount(t, n) : 0;
 		t = twig(t, i);
 	}
+	// Do the keys differ, and if so, where?
+	size_t i;
+	for(i = 0; i <= len; i++) {
+		if(key[i] != t->leaf.key[i])
+			goto newkey;
+	}
+	t->leaf.val = val;
+	return(tree);
+newkey: // We have the branch's index; what are its flags?
+	unsigned f = key[i] ^ t->leaf.key[i];
+	f = (f & 0xf0) ? 1 : 2;
+	// Find where to insert a node or replace an existing node.
+	t = &tree->root;
 }
