@@ -73,14 +73,17 @@ isbranch(Tnode *t) {
 // 2 -> 0 -> 0
 
 static inline unsigned
+nibbit(byte k, unsigned flags) {
+	unsigned mask = ((flags - 2) ^ 0x0f) & 0xff;
+	unsigned shift = (2 - flags) << 2;
+	return(1 << ((k & mask) >> shift));
+}
+
+static inline unsigned
 twigbit(Tnode *t, const char *key, size_t len) {
 	uint64_t i = t->branch.index;
 	if(i > len) return(0);
-	unsigned flags = t->branch.flags;
-	unsigned mask = ((flags - 2) ^ 0x0f) & 0xff;
-	unsigned shift = (2 - flags) << 2;
-	const byte *k = (const void *)key;
-	return(1 << ((k[i] & mask) >> shift));
+	return(nibbit((byte)key[i], t->branch.flags));
 }
 
 static inline bool
@@ -193,23 +196,32 @@ Tset(Tree *tree, const char *key, void *val) {
 	t->leaf.val = val;
 	return(tree);
 newkey:; // We have the branch's index; what are its flags?
-	unsigned f = (byte)key[i] ^ (byte)t->leaf.key[i];
+	byte k1 = (byte)key[i], k2 = (byte)t->leaf.key[i];
+	unsigned f =  k1 ^ k2;
 	f = (f & 0xf0) ? 1 : 2;
 	// Find where to insert a node or replace an existing node.
 	t = &tree->root;
-	if(!isbranch(t)) {
-		Tnode *twigs = malloc(sizeof(Tnode) * 2);
-		if(twigs == NULL) return(NULL);
-		Tnode t1 = { .leaf = { .key = key, .val = val } };
-		Tnode t2 = *t;
-		t->branch.twigs = twigs;
-		t->branch.flags = f;
-		t->branch.index = i;
-		unsigned b1 = twigbit(t, t1.leaf.key, i);
-		unsigned b2 = twigbit(t, t2.leaf.key, i);
-		t->branch.bitmap = b1 | b2;
-		*twig(t, twigoff(t, b1)) = t1;
-		*twig(t, twigoff(t, b2)) = t2;
-		return(tree);
+	while(isbranch(t)) {
+		if(i == t->branch.index && f == t->branch.flags) {
+			assert(!!!"unimplemented");
+		} else if(i < t->branch.index || f < t->branch.flags)
+			break;
+		unsigned b = twigbit(t, key, len);
+		assert(hastwig(t, b));
+		t = twig(t, twigoff(t, b));
 	}
+	// Insert a two-way branch of which one twig is the new leaf
+	// and the other twig is the current node.
+	Tnode *twigs = malloc(sizeof(Tnode) * 2);
+	if(twigs == NULL) return(NULL);
+	Tnode t1 = { .leaf = { .key = key, .val = val } };
+	Tnode t2 = *t; // Save before overwriting.
+	unsigned b1 = nibbit(k1, f);
+	unsigned b2 = nibbit(k2, f);
+	t->branch.twigs = twigs;
+	t->branch.flags = f;
+	t->branch.index = i;
+	t->branch.bitmap = b1 | b2;
+	*twig(t, twigoff(t, b1)) = t1;
+	*twig(t, twigoff(t, b2)) = t2;
 }
