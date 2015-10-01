@@ -155,6 +155,42 @@ Tnext(Tree *tree, const char *key) {
 	return(next_rec(t, key, len));
 }
 
+static Tree *
+Tdel(Tree *tree, const char *key) {
+	Tnode *t = &tree->root, *p = NULL;
+	size_t len = strlen(key);
+	unsigned b;
+	while(isbranch(t)) {
+		b = twigbit(t, key, len);
+		if(!hastwig(t, b))
+			return(tree);
+		p = t; t = twig(t, twigoff(t, b));
+	}
+	if(strcmp(key, t->leaf.key) != 0)
+		return(tree);
+	if(p == NULL) {
+		free(tree);
+		return(NULL);
+	}
+	if(twigmax(p) == 2) {
+		// Move the other twig to the parent branch.
+		t = p->branch.twigs;
+		*p = *twig(p, !twigoff(t, b));
+		free(t);
+		return(tree);
+	}
+	int s = twigoff(t, b); // split
+	int m = twigmax(p);
+	Tnode *twigs = malloc(sizeof(Tnode) * (m - 1));
+	if(twigs == NULL) return(NULL);
+	memcpy(twigs, p->branch.twigs, sizeof(Tnode) * s);
+	memcpy(twigs+s, p->branch.twigs+s+1, sizeof(Tnode) * (m - s - 1));
+	free(p->branch.twigs);
+	p->branch.twigs = twigs;
+	p->branch.bitmap &= ~b;
+	return(tree);
+}
+
 Tree *
 Tset(Tree *tree, const char *key, void *val) {
 	// Ensure flag bits are zero.
@@ -162,18 +198,16 @@ Tset(Tree *tree, const char *key, void *val) {
 		errno = EINVAL;
 		return(NULL);
 	}
+	if(val == NULL)
+		return(Tdel(tree, key));
 	// First leaf in an empty tree?
 	if(tree == NULL) {
-		if(val != NULL)
-			tree = malloc(sizeof(*tree));
-		if(tree != NULL) {
-			tree->root.leaf.key = key;
-			tree->root.leaf.val = val;
-		}
+		tree = malloc(sizeof(*tree));
+		if(tree == NULL) return(NULL);
+		tree->root.leaf.key = key;
+		tree->root.leaf.val = val;
 		return(tree);
 	}
-	// delete is not yet implemented
-	assert(val != NULL);
 	Tnode *t = &tree->root;
 	size_t len = strlen(key);
 	// Find the most similar leaf node in the tree. We will compare
@@ -231,14 +265,14 @@ newbranch:;
 	*twig(t, twigoff(t, b2)) = t2;
 	return(tree);
 growbranch:;
-	assert(!hastwig(t, b1);
-	int j = twigoff(t, b1);
+	assert(!hastwig(t, b1));
+	int s = twigoff(t, b1); // split
 	int m = twigmax(t);
 	twigs = malloc(sizeof(Tnode) * (m + 1));
 	if(twigs == NULL) return(NULL);
-	memcpy(twigs, t->branch.twigs, sizeof(Tnode) * j);
-	memcpy(twigs+j, &t1, sizeof(Tnode));
-	memcpy(twigs+j+1, t->branch.twigs+j, sizeof(Tnode) * (m - j));
+	memcpy(twigs, t->branch.twigs, sizeof(Tnode) * s);
+	memcpy(twigs+s, &t1, sizeof(Tnode));
+	memcpy(twigs+s+1, t->branch.twigs+s, sizeof(Tnode) * (m - s));
 	free(t->branch.twigs);
 	t->branch.twigs = twigs;
 	t->branch.bitmap |= b1;
