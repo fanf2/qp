@@ -197,7 +197,6 @@ newkey:; // We have the branch's index; what are its flags?
 	f = (f & 0xf0) ? 1 : 2;
 	// Find where to insert a node or replace an existing node.
 	t = &tree->root;
-	// This can only happen if there is one element in the tree.
 	if(isleaf(t)) {
 		Tnode *twigs = malloc(sizeof(Tnode) * 2);
 		if(twigs == NULL) return(NULL);
