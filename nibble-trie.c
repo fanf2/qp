@@ -232,6 +232,7 @@ newkey:; // We have the branch's index; what are its flags?
 	*twig(t, twigoff(t, b2)) = t2;
 	return(tree);
 growbranch:;
+	assert(!hastwig(t, b1);
 	int j = twigoff(t, b1);
 	int m = twigmax(t);
 	twigs = malloc(sizeof(Tnode) * (m + 1));
