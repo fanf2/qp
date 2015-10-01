@@ -58,8 +58,8 @@ struct Tree {
 // Test flags to determine type of this node.
 
 static inline bool
-isleaf(Tnode *t) {
-	return(t->branch.flags == 0);
+isbranch(Tnode *t) {
+	return(t->branch.flags != 0);
 }
 
 // Extract a nibble from a key.
@@ -106,38 +106,37 @@ Tget(Tree *tree, const char *key) {
 		return(NULL);
 	Tnode *t = &tree->root;
 	size_t len = strlen(key);
-	for(;;) {
-		if(isleaf(t)) {
-			if(strcmp(key, t->leaf.key) == 0)
-				return(t->leaf.val);
-			else
-				return(NULL);
-		}
+	while(isbranch(t)) {
 		unsigned n = nibble(t, key, len);
 		if(!hastwig(t, n))
 			return(NULL);
 		t = twig(t, twigcount(t, n));
 	}
+	if(strcmp(key, t->leaf.key) == 0)
+		return(t->leaf.val);
+	else
+		return(NULL);
 }
 
 static const char *
 next_rec(Tnode *t, const char *key, size_t len) {
-	if(isleaf(t)) {
-		if(key == NULL ||
-		   strcmp(key, t->leaf.key) < 0)
-			return(t->leaf.key);
-		else
-			return(NULL);
+	if(isbranch(t)) {
+		unsigned n = nibble(t, key, len);
+		// This loop normally returns immediately, except when our
+		// key is the last in its twig, in which case the loop tries
+		// the next twig. Or if the key's twig is missing we run zero
+		// times.
+		for(int i = twigcount(t, n), j = twigcount(t, 16); i < j; i++) {
+			const char *found = next_rec(twig(t, i), key, len);
+			if(found) return(found);
+		}
+		return(NULL);
 	}
-	unsigned n = nibble(t, key, len);
-	// This loop normally returns immediately, except when our key is
-	// the last in its twig, in which case the loop tries the next
-	// twig. Or if the key's twig is missing we run zero times.
-        for(int i = twigcount(t, n), j = twigcount(t, 16); i < j; i++) {
-		const char *found = next_rec(twig(t, i), key, len);
-		if(found) return(found);
-	}
-	return(NULL);
+	if(key == NULL ||
+	    strcmp(key, t->leaf.key) < 0)
+		return(t->leaf.key);
+	else
+		return(NULL);
 }
 
 const char *
@@ -172,9 +171,7 @@ Tset(Tree *tree, const char *key, void *val) {
 	// its key with our new key to find the first differing nibble,
 	// which can be at a lower index than the point at which we
 	// detect a difference.
-	for(;;) {
-		if(isleaf(t))
-			break;
+	while(isbranch(t)) {
 		unsigned n = nibble(t, key, len);
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
@@ -197,7 +194,7 @@ newkey:; // We have the branch's index; what are its flags?
 	f = (f & 0xf0) ? 1 : 2;
 	// Find where to insert a node or replace an existing node.
 	t = &tree->root;
-	if(isleaf(t)) {
+	if(!isbranch(t)) {
 		Tnode *twigs = malloc(sizeof(Tnode) * 2);
 		if(twigs == NULL) return(NULL);
 		Tnode t1 = { .leaf.key = key, .leaf.val = val };
