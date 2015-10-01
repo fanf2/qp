@@ -2,6 +2,8 @@
 // and Phil Bagwell's (hashed) array-mapped tries
 // http://infoscience.epfl.ch/record/64394/files/triesearches.pdf
 // http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf
+// Something like this structure has been called a "poptrie"
+// http://conferences.sigcomm.org/sigcomm/2015/pdf/papers/p57.pdf
 
 #include <assert.h>
 #include <stdbool.h>
