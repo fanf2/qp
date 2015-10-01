@@ -1,4 +1,4 @@
-// table.h: an abstract API for tables with string keys.
+// Tbl.h: an abstract API for tables with string keys.
 //
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
@@ -34,7 +34,7 @@ Tbl *Tdell(Tbl *tbl, const char *key, size_t klen);
 Tbl *Tdel(Tbl *tbl, const char *key);
 
 // Find the next item in the table. The p... arguments are in/out
-// parameters. To find the first key, pass *pkey = NULL.
+// parameters. To find the first key, pass *pkey = NULL and *pklen = 0.
 // Returns false or NULL when there are no more keys.
 //
 bool Tnextl(Tbl *tbl, const char **pkey, size_t *pklen, void **pvalue);
