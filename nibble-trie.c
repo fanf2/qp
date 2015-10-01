@@ -205,21 +205,20 @@ newkey:; // We have the branch's index; what are its flags?
 	// Prepare the new leaf.
 	unsigned b1 = nibbit(k1, f);
 	Tnode t1 = { .leaf = { .key = key, .val = val } };
-	// Find where to insert a node or replace an existing node.
+	// Find where to insert a branch or grow an existing branch.
 	t = &tree->root;
 	while(isbranch(t)) {
 		if(i == t->branch.index && f == t->branch.flags)
 			goto growbranch;
 		if(i == t->branch.index && f < t->branch.flags)
-			break;
+			goto newbranch;
 		if(i < t->branch.index)
-			break;
+			goto newbranch;
 		unsigned b = twigbit(t, key, len);
 		assert(hastwig(t, b));
 		t = twig(t, twigoff(t, b));
 	}
-	// Insert a two-way branch of which one twig is the new leaf
-	// and the other twig is the current node.
+newbranch:;
 	Tnode *twigs = malloc(sizeof(Tnode) * 2);
 	if(twigs == NULL) return(NULL);
 	Tnode t2 = *t; // Save before overwriting.
