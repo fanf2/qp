@@ -6,6 +6,7 @@
 // http://conferences.sigcomm.org/sigcomm/2015/pdf/papers/p57.pdf
 
 #include <assert.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -201,12 +202,17 @@ newkey:; // We have the branch's index; what are its flags?
 	byte k1 = (byte)key[i], k2 = (byte)t->leaf.key[i];
 	unsigned f =  k1 ^ k2;
 	f = (f & 0xf0) ? 1 : 2;
+	// Prepare the new leaf.
+	unsigned b1 = nibbit(k1, f);
+	Tnode t1 = { .leaf = { .key = key, .val = val } };
 	// Find where to insert a node or replace an existing node.
 	t = &tree->root;
 	while(isbranch(t)) {
-		if(i == t->branch.index && f == t->branch.flags) {
-			assert(!!!"unimplemented");
-		} else if(i < t->branch.index || f < t->branch.flags)
+		if(i == t->branch.index && f == t->branch.flags)
+			goto growbranch;
+		if(i == t->branch.index && f < t->branch.flags)
+			break;
+		if(i < t->branch.index)
 			break;
 		unsigned b = twigbit(t, key, len);
 		assert(hastwig(t, b));
@@ -216,9 +222,7 @@ newkey:; // We have the branch's index; what are its flags?
 	// and the other twig is the current node.
 	Tnode *twigs = malloc(sizeof(Tnode) * 2);
 	if(twigs == NULL) return(NULL);
-	Tnode t1 = { .leaf = { .key = key, .val = val } };
 	Tnode t2 = *t; // Save before overwriting.
-	unsigned b1 = nibbit(k1, f);
 	unsigned b2 = nibbit(k2, f);
 	t->branch.twigs = twigs;
 	t->branch.flags = f;
@@ -226,5 +230,17 @@ newkey:; // We have the branch's index; what are its flags?
 	t->branch.bitmap = b1 | b2;
 	*twig(t, twigoff(t, b1)) = t1;
 	*twig(t, twigoff(t, b2)) = t2;
+	return(tree);
+growbranch:;
+	int j = twigoff(t, b1);
+	int m = twigmax(t);
+	twigs = malloc(sizeof(Tnode) * (m + 1));
+	if(twigs == NULL) return(NULL);
+	memcpy(twigs, t->branch.twigs, sizeof(Tnode) * j);
+	memcpy(twigs+j, &t1, sizeof(Tnode));
+	memcpy(twigs+j+1, t->branch.twigs+j, sizeof(Tnode) * (m - j));
+	free(t->branch.twigs);
+	t->branch.twigs = twigs;
+	t->branch.bitmap |= b1;
 	return(tree);
 }
