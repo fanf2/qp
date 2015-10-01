@@ -62,7 +62,7 @@ isbranch(Tnode *t) {
 	return(t->branch.flags != 0);
 }
 
-// Extract a nibble from a key.
+// Extract a nibble from a key and make a bitmask for testing the bitmap.
 //
 // mask:
 // 1 -> 0xffff -> 0xfff0 -> 0xf0
@@ -73,31 +73,34 @@ isbranch(Tnode *t) {
 // 2 -> 0 -> 0
 
 static inline unsigned
-nibble(Tnode *t, const char *key, size_t len) {
+twigbit(Tnode *t, const char *key, size_t len) {
 	uint64_t i = t->branch.index;
 	if(i > len) return(0);
 	unsigned flags = t->branch.flags;
 	unsigned mask = ((flags - 2) ^ 0x0f) & 0xff;
 	unsigned shift = (2 - flags) << 2;
 	const byte *k = (const void *)key;
-	return((k[i] & mask) >> shift);
+	return(1 << ((k[i] & mask) >> shift));
+}
+
+static inline bool
+hastwig(Tnode *t, unsigned bit) {
+	return(t->branch.bitmap & bit);
+}
+
+static inline int
+twigoff(Tnode *t, unsigned bit) {
+	return(__builtin_popcount(t->branch.bitmap & (bit - 1)));
+}
+
+static inline int
+twigmax(Tnode *t) {
+	return(__builtin_popcount(t->branch.bitmap));
 }
 
 static inline Tnode *
 twig(Tnode *t, int i) {
 	return(&t->branch.twigs[i]);
-}
-
-static inline bool
-hastwig(Tnode *t, unsigned n) {
-	unsigned m = 1 << n;
-	return(t->branch.bitmap & m);
-}
-
-static inline int
-twigcount(Tnode *t, unsigned n) {
-	unsigned m = 1 << n;
-	return(__builtin_popcount(t->branch.bitmap & (m - 1)));
 }
 
 void *
@@ -107,10 +110,10 @@ Tget(Tree *tree, const char *key) {
 	Tnode *t = &tree->root;
 	size_t len = strlen(key);
 	while(isbranch(t)) {
-		unsigned n = nibble(t, key, len);
-		if(!hastwig(t, n))
+		unsigned b = twigbit(t, key, len);
+		if(!hastwig(t, b))
 			return(NULL);
-		t = twig(t, twigcount(t, n));
+		t = twig(t, twigoff(t, b));
 	}
 	if(strcmp(key, t->leaf.key) == 0)
 		return(t->leaf.val);
@@ -121,12 +124,12 @@ Tget(Tree *tree, const char *key) {
 static const char *
 next_rec(Tnode *t, const char *key, size_t len) {
 	if(isbranch(t)) {
-		unsigned n = nibble(t, key, len);
 		// This loop normally returns immediately, except when our
 		// key is the last in its twig, in which case the loop tries
 		// the next twig. Or if the key's twig is missing we run zero
 		// times.
-		for(int i = twigcount(t, n), j = twigcount(t, 16); i < j; i++) {
+		unsigned b = twigbit(t, key, len);
+		for(int i = twigoff(t, b), j = twigmax(t); i < j; i++) {
 			const char *found = next_rec(twig(t, i), key, len);
 			if(found) return(found);
 		}
@@ -172,13 +175,13 @@ Tset(Tree *tree, const char *key, void *val) {
 	// which can be at a lower index than the point at which we
 	// detect a difference.
 	while(isbranch(t)) {
-		unsigned n = nibble(t, key, len);
+		unsigned b = twigbit(t, key, len);
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
 		// twig we choose since the keys are all the same up to this
 		// index. Note that blindly using twigcount(t, n) can cause
 		// an out-of-bounds index if it equals twigcount(t, 16).
-		int i = hastwig(t, n) ? twigcount(t, n) : 0;
+		int i = hastwig(t, b) ? twigoff(t, b) : 0;
 		t = twig(t, i);
 	}
 	// Do the keys differ, and if so, where?
@@ -197,16 +200,16 @@ newkey:; // We have the branch's index; what are its flags?
 	if(!isbranch(t)) {
 		Tnode *twigs = malloc(sizeof(Tnode) * 2);
 		if(twigs == NULL) return(NULL);
-		Tnode t1 = { .leaf.key = key, .leaf.val = val };
+		Tnode t1 = { .leaf = { .key = key, .val = val } };
 		Tnode t2 = *t;
 		t->branch.twigs = twigs;
 		t->branch.flags = f;
 		t->branch.index = i;
-		unsigned n1 = nibble(t, t1.leaf.key, i);
-		unsigned n2 = nibble(t, t2.leaf.key, i);
-		t->branch.bitmap = 1 << n1 | 1 << n2;
-		*twig(t, twigcount(t, n1)) = t1;
-		*twig(t, twigcount(t, n2)) = t2;
+		unsigned b1 = twigbit(t, t1.leaf.key, i);
+		unsigned b2 = twigbit(t, t2.leaf.key, i);
+		t->branch.bitmap = b1 | b2;
+		*twig(t, twigoff(t, b1)) = t1;
+		*twig(t, twigoff(t, b2)) = t2;
 		return(tree);
 	}
 }
