@@ -157,8 +157,10 @@ Tnext(Tree *tree, const char *key) {
 Tree *
 Tset(Tree *tree, const char *key, void *val) {
 	// Ensure flag bits are zero.
-	if(val != NULL)
-		assert(((uint64_t)val & 3) == 0);
+	if(((uint64_t)val & 3) != 0) {
+		errno = EINVAL;
+		return(NULL);
+	}
 	// First leaf in an empty tree?
 	if(tree == NULL) {
 		if(val != NULL)
@@ -224,4 +226,5 @@ newkey:; // We have the branch's index; what are its flags?
 	t->branch.bitmap = b1 | b2;
 	*twig(t, twigoff(t, b1)) = t1;
 	*twig(t, twigoff(t, b2)) = t2;
+	return(tree);
 }
