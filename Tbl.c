@@ -18,7 +18,7 @@ Tset(Tbl *tbl, const char *key, void *value) {
 	return(Tsetl(tbl, key, strlen(key), value));
 }
 
-void *
+Tbl *
 Tdel(Tbl *tbl, const char *key) {
 	return(Tdell(tbl, key, strlen(key)));
 }
@@ -35,5 +35,3 @@ Tnxt(Tbl *tbl, const char *key) {
 	Tnext(tbl, &key, &value);
 	return(key);
 }
-
-#endif // Tbl_h
