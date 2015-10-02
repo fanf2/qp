@@ -244,16 +244,16 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	}
 	if(strcmp(key, t->leaf.key) != 0)
 		return(tbl);
+	*pkey = t->leaf.key;
+	*pval = t->leaf.val;
 	if(p == NULL) {
-		*pkey = t->leaf.key;
-		*pval = t->leaf.val;
 		free(tbl);
 		return(NULL);
 	}
 	if(twigmax(p) == 2) {
 		// Move the other twig to the parent branch.
 		t = p->branch.twigs;
-		*p = *twig(p, !twigoff(t, b));
+		*p = *twig(p, !twigoff(p, b));
 		free(t);
 		return(tbl);
 	}
@@ -266,8 +266,6 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	free(p->branch.twigs);
 	p->branch.twigs = twigs;
 	p->branch.bitmap &= ~b;
-	*pkey = t->leaf.key;
-	*pval = t->leaf.val;
 	return(tbl);
 }
 
