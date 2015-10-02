@@ -65,6 +65,12 @@ main(int argc, char *argv[]) {
 		switch(s) {
 		default:
 			usage();
+		case('*'):
+			if(Tget(t, key))
+				putchar('+');
+			else
+				putchar('-');
+			continue;
 		case('+'):
 			errno = 0;
 			void *val = Tget(t, key);
@@ -90,6 +96,7 @@ main(int argc, char *argv[]) {
 			continue;
 		}
 	}
+	putchar('\n');
 	if(ferror(stdin))
 		die("read");
 	const char *key = NULL;

@@ -14,10 +14,9 @@ EOF
 my $i = shift;
 my $o = shift;
 
-my @p = qw( - + );
+my @p = qw( - + * * );
 my @i = <>;
 my @a;
 
 push @a, splice @i, (int rand @i), 1 while $i--;
-print $p[int rand 2], $a[int rand @a] while $o--;
-
+print $p[int rand @p], $a[int rand @a] while $o--;
