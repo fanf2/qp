@@ -80,7 +80,7 @@ main(int argc, char *argv[]) {
 				die("Tbl");
 			trace(t, s, key);
 			if(val != key)
-				free((void*)key);
+				free(key);
 			continue;
 		case('-'):
 			errno = 0;
@@ -90,8 +90,8 @@ main(int argc, char *argv[]) {
 			if(t == NULL && errno != 0)
 				die("Tbl");
 			trace(t, s, key);
-			free((void*)key);
-			free((void*)rkey);
+			free(key);
+			free(rkey);
 			continue;
 		}
 	}
@@ -108,11 +108,17 @@ main(int argc, char *argv[]) {
 	void *val = NULL, *prev = NULL;
 	while(Tnext(t, &key, &val)) {
 		assert(key == val);
-		puts(key);
-		t = Tdel(t, key);
-		free((void*)prev);
+		printf("< %s\n", key);
+//		Tdump(t);
+		if(prev) {
+			t = Tdel(t, prev);
+			free(prev);
+		}
 		prev = val;
 	}
-	free((void*)prev);
+//	Tdump(t);
+	t = Tdel(t, prev);
+	free(prev);
+//	Tdump(t);
 	return(0);
 }
