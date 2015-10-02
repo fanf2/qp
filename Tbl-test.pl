@@ -2,6 +2,9 @@
 
 # like Tbl-test.c but written in perl to verify correctness
 
+use warnings;
+use strict;
+
 my %t;
 
 while(<>) {
