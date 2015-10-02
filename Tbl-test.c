@@ -98,12 +98,12 @@ main(int argc, char *argv[]) {
 	putchar('\n');
 	if(ferror(stdin))
 		die("read");
-	size_t size, leaves;
-	Tsize(t, &size, &leaves);
-	printf("SIZE %zu %zu %f %.1f\n",
-	       size, leaves,
-	       (double)size / leaves,
-	       (double)size / leaves / 8);
+	size_t size, depth, leaves;
+	Tsize(t, &size, &depth, &leaves);
+	fprintf(stderr, "SIZE %zu %zu %zu %.2f %.2f\n",
+		size, depth, leaves,
+		(double)size / leaves / 8,
+		(double)depth / leaves);
 	const char *key = NULL;
 	void *val = NULL, *prev = NULL;
 	while(Tnext(t, &key, &val)) {
@@ -115,7 +115,9 @@ main(int argc, char *argv[]) {
 		}
 		prev = val;
 	}
-	t = Tdel(t, prev);
-	free(prev);
+	if(prev) {
+		t = Tdel(t, prev);
+		free(prev);
+	}
 	return(0);
 }

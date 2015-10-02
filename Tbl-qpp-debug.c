@@ -43,19 +43,20 @@ Tdump(Tbl *tbl) {
 }
 
 static void
-size_rec(Trie *t, size_t *rsize, size_t *rleaves) {
+size_rec(Trie *t, uint d, size_t *rsize, size_t *rdepth, size_t *rleaves) {
 	*rsize += sizeof(*t);
 	if(isbranch(t)) {
 		for(uint i = 0, j = twigmax(t); i < j; i++)
-			size_rec(twig(t, i), rsize, rleaves);
+			size_rec(twig(t, i), d+1, rsize, rdepth, rleaves);
 	} else {
+		*rdepth += d;
 		*rleaves += 1;
 	}
 }
 
 void
-Tsize(Tbl *tbl, size_t *rsize, size_t *rleaves) {
-	*rleaves = *rsize = 0;
+Tsize(Tbl *tbl, size_t *rsize, size_t *rdepth, size_t *rleaves) {
+	*rsize = *rdepth = *rleaves = 0;
 	if(tbl != NULL)
-		size_rec(&tbl->root, rsize, rleaves);
+		size_rec(&tbl->root, 0, rsize, rdepth, rleaves);
 }
