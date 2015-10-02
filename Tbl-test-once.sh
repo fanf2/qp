@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-./Tbl-test-generate.pl "$@" >Tbl-test-input
+[ -f Tbl-test-input ] || ./Tbl-test-generate.pl "$@" >Tbl-test-input
 ./Tbl-test.pl <Tbl-test-input >Tbl-test-out-pl
 ./Tbl-test <Tbl-test-input >Tbl-test-out-c
 cmp Tbl-test-out-pl Tbl-test-out-c
