@@ -250,22 +250,23 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		free(tbl);
 		return(NULL);
 	}
-	if(twigmax(p) == 2) {
+	t = p; p = NULL; // Becuase t is the usual name
+	if(twigmax(t) == 2) {
 		// Move the other twig to the parent branch.
-		t = p->branch.twigs;
-		*p = *twig(p, !twigoff(p, b));
-		free(t);
+		Trie *twigs = t->branch.twigs;
+		*t = *twig(t, !twigoff(t, b));
+		free(twigs);
 		return(tbl);
 	}
 	uint s = twigoff(t, b); // split
-	uint m = twigmax(p);
+	uint m = twigmax(t);
 	Trie *twigs = malloc(sizeof(Trie) * (m - 1));
 	if(twigs == NULL) return(NULL);
-	memcpy(twigs, p->branch.twigs, sizeof(Trie) * s);
-	memcpy(twigs+s, p->branch.twigs+s+1, sizeof(Trie) * (m - s - 1));
-	free(p->branch.twigs);
-	p->branch.twigs = twigs;
-	p->branch.bitmap &= ~b;
+	memcpy(twigs, t->branch.twigs, sizeof(Trie) * s);
+	memcpy(twigs+s, t->branch.twigs+s+1, sizeof(Trie) * (m - s - 1));
+	free(t->branch.twigs);
+	t->branch.twigs = twigs;
+	t->branch.bitmap &= ~b;
 	return(tbl);
 }
 
