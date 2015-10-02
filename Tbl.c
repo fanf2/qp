@@ -1,12 +1,10 @@
 // Tbl.c: simpler wrappers for core table functions
 //
+// #include this file in your implementation of the rest of Tbl.h
+//
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
 // <http://creativecommons.org/publicdomain/zero/1.0/>
-
-#include <stdbool.h>
-
-#include "Tbl.h"
 
 void *
 Tget(Tbl *tbl, const char *key) {
