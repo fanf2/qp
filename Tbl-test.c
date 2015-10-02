@@ -35,8 +35,8 @@ usage(void) {
 
 static void
 trace(Tbl *t, int s, const char *key) {
-	printf("%c%s\n", s, key);
-	Tdump(t);
+//	printf("%c%s\n", s, key);
+//	Tdump(t);
 }
 
 int
@@ -100,7 +100,10 @@ main(int argc, char *argv[]) {
 		die("read");
 	size_t size, leaves;
 	Tsize(t, &size, &leaves);
-	printf("SIZE %zu %zu %f\n", size, leaves, (double)size / leaves);
+	printf("SIZE %zu %zu %f %.1f\n",
+	       size, leaves,
+	       (double)size / leaves,
+	       (double)size / leaves / 8);
 	const char *key = NULL;
 	void *val = NULL, *prev = NULL;
 	while(Tnext(t, &key, &val)) {
