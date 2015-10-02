@@ -31,7 +31,7 @@
 // the packed vector is the popcount of the bits preceding i.
 //	mask = 1 << i;
 //	if(bitmap & mask)
-//		member = array[popcount(bitmap & mask-1)]
+//		member = vector[popcount(bitmap & mask-1)]
 //
 // Phil Bagwell's hashed array-mapped tries (HAMT) use popcount for
 // compact trie nodes. String keys are hashed, and the hash is used
