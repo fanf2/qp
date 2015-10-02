@@ -1,9 +1,48 @@
-// A combination of DJB's crit-bit tries (http://cr.yp.to/critbit.html)
-// and Phil Bagwell's (hashed) array-mapped tries
+// Tbl-qpp-trie.c: tables implemented with quadbit popcount patricia tries.
+//
+// Written by Tony Finch <dot@dotat.at>
+// You may do anything with this. It has no warranty.
+// <http://creativecommons.org/publicdomain/zero/1.0/>
+
+// In a trie, keys are divided into digits depending on some radix
+// e.g. base 2 for binary tries, base 256 for byte-indexed tries.
+// When searching the trie, successive digits in the key, from most to
+// least significant, are used to select branches from successive
+// nodes in the trie, like:
+//	for(i = 0; isbranch(node); i++) node = node->branch[key[i]];
+// All of the keys in a subtrie have identical prefixes. Tries do not
+// need to store keys since they are implicit in the structure.
+//
+// A patricia trie or crit-bit trie is a binary trie which omits nodes that
+// have only one child. Nodes are annotated with the index of the bit that
+// is used to select the branch; indexes always increase as you go further
+// into the trie. Each leaf has a copy of its key so that when you find a
+// leaf you can verify that the untested bits match.
+//
+// Dan Bernstein has a nice description of crit-bit tries
+//	http://cr.yp.to/critbit.html
+// Adam Langley has annotated DJB's crit-bit implementation
+//	https://github.com/agl/critbit
+//
+// You can use popcount() to implement a sparse array of length N
+// containing M < N members using bitmap of length N and a packed
+// vector of M elements. A member i is present in the array if bit
+// i is set, so M == popcount(bitmap). The index of member i in
+// the packed vector is the popcount of the bits preceding i.
+//	mask = 1 << i;
+//	if(bitmap & mask)
+//		member = array[popcount(bitmap & mask-1)]
+//
+// Phil Bagwell's hashed array-mapped tries (HAMT) use popcount for
+// compact trie nodes. String keys are hashed, and the hash is used
+// as the index to the trie, with radix 2^32 or 2^64.
 // http://infoscience.epfl.ch/record/64394/files/triesearches.pdf
 // http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf
-// Something like this structure has been called a "poptrie"
-// http://conferences.sigcomm.org/sigcomm/2015/pdf/papers/p57.pdf
+//
+// A qpp trie uses its keys a quadbit (or nibble or half-byte) at a time.
+// It is a radix 2^4 patricia trie, so each node can have between 2 and
+// 16 children. It uses a 16 bit word to mark which children are present
+// and popcount to index them.
 
 #include <assert.h>
 #include <errno.h>
