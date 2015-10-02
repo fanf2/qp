@@ -58,10 +58,10 @@ main(int argc, char *argv[]) {
 		char *key = NULL;
 		size_t len = 0;
 		int s = getchar();
-		if(s < 0)
-			break;
-		if(getline(&key, &len, stdin) < 0)
-			break;
+		if(s < 0) break;
+		ssize_t n = getline(&key, &len, stdin);
+		if(n < 0) break;
+		else len = n;
 		switch(s) {
 		default:
 			usage();
