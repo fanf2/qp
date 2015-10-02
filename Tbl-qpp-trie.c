@@ -47,10 +47,16 @@
 // required to look up a key.
 //
 // The worst case for a qpp trie is when each branch has 2 children;
-// then it is the same shape as a crit-bit trie. In this case it uses
-// 2 words for each leaf, and there are n-1 internal branch nodes of
-// two words each, so it is equally efficient as a crit-bit trie.
-// If the key space is denser then branches have more children
+// then it is the same shape as a crit-bit trie. In this case there
+// are n-1 internal branch nodes of two words each, so it is equally
+// efficient as a crit-bit trie. If the key space is denser then
+// branches have more children but the same overhead, so the memory
+// usage is less. For maximally dense tries the overhead is:
+//
+// key length (bytes)    n
+// number of leaves      256^n
+// crit-bit branches     256^n - 1
+// qpp branches          1 + 16^(n*2-1) == 1 + 256^n / 16
 
 #include <assert.h>
 #include <errno.h>
