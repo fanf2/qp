@@ -26,18 +26,33 @@ die(const char *cause) {
 static void
 usage(void) {
 	fprintf(stderr,
-"usage: %s <input\n"
+"usage: %s [input]\n"
 "	The input is a series of lines starting with a + or a - to add\n"
 "	or delete a key from the table. The rest of the line is the key.\n"
 	    , progname);
 	exit(1);
 }
 
+static void
+trace(Tbl *t, int s, const char *key) {
+	void *val;
+	printf("%c%s", s, key);
+	key = val = NULL;
+	while(Tnext(t, &key, &val))
+		printf("* %s", key);
+}
+
 int
 main(int argc, char *argv[]) {
 	progname = argv[0];
-	if(argc != 1)
+	if(argc > 2)
 		usage();
+	if(argc == 2) {
+		if(argv[1][0] == '-')
+			usage();
+		if(freopen(argv[1], "r", stdin) == NULL)
+			die("open");
+	}
 	Tbl *t = NULL;
 	for (;;) {
 		char *key = NULL;
@@ -58,6 +73,7 @@ main(int argc, char *argv[]) {
 			t = Tsetl(t, key, len, val);
 			if(t == NULL)
 				die("Tbl");
+			trace(t, s, key);
 			if(val != key)
 				free((void*)key);
 			continue;
@@ -68,6 +84,7 @@ main(int argc, char *argv[]) {
 			t = Tdelkv(t, key, len, &rkey, &rval);
 			if(t == NULL && errno != 0)
 				die("Tbl");
+			trace(t, s, key);
 			free((void*)key);
 			free((void*)rkey);
 			continue;
