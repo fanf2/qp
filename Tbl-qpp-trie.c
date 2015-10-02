@@ -38,9 +38,7 @@ next_rec(Trie *t, const char **pkey, size_t *plen, void **pval) {
 		// Recurse to find either this leaf (*pkey != NULL)
 		// or the next one (*pkey == NULL).
 		uint b = twigbit(t, *pkey, *plen);
-		for(uint i = twigoff(t, b),
-			    j = twigmax(t);
-		    i < j; i++)
+		for(uint i = twigoff(t, b), j = twigmax(t); i < j; i++)
 			if(next_rec(twig(t, i), pkey, plen, pval))
 				return(true);
 		return(false);
