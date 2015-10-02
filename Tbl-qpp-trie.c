@@ -155,7 +155,7 @@ nibbit(byte k, uint flags) {
 static inline uint
 twigbit(Trie *t, const char *key, size_t len) {
 	uint64_t i = t->branch.index;
-	if(i > len) return(0);
+	if(i >= len) return(0);
 	return(nibbit((byte)key[i], t->branch.flags));
 }
 
