@@ -232,6 +232,8 @@ Tnextl(Tbl *tbl, const char **pkey, size_t *plen, void **pval) {
 
 Tbl *
 Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
+	if(tbl == NULL)
+		return(NULL);
 	Trie *t = &tbl->root, *p = NULL;
 	uint b = 0;
 	while(isbranch(t)) {
