@@ -8,8 +8,8 @@
 
 void *
 Tgetl(Tbl *tbl, const char *key, size_t len) {
-	const char *rkey;
-	void *rval;
+	const char *rkey = NULL;
+	void *rval = NULL;
 	if(Tgetkv(tbl, key, len, &rkey, &rval))
 		return(rval);
 	else
@@ -28,8 +28,8 @@ Tset(Tbl *tbl, const char *key, void *value) {
 
 Tbl *
 Tdell(Tbl *tbl, const char *key, size_t len) {
-	const char *rkey;
-	void *rval;
+	const char *rkey = NULL;
+	void *rval = NULL;
 	return(Tdelkv(tbl, key, len, &rkey, &rval));
 }
 
