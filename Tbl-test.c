@@ -108,17 +108,14 @@ main(int argc, char *argv[]) {
 	void *val = NULL, *prev = NULL;
 	while(Tnext(t, &key, &val)) {
 		assert(key == val);
-		printf("< %s\n", key);
-//		Tdump(t);
+		puts(key);
 		if(prev) {
 			t = Tdel(t, prev);
 			free(prev);
 		}
 		prev = val;
 	}
-//	Tdump(t);
 	t = Tdel(t, prev);
 	free(prev);
-//	Tdump(t);
 	return(0);
 }
