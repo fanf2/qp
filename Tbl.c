@@ -7,6 +7,16 @@
 // <http://creativecommons.org/publicdomain/zero/1.0/>
 
 void *
+Tgetl(Tbl *tbl, const char *key, size_t len) {
+	const char *rkey;
+	void *rval;
+	if(Tgetkv(tbl, key, len, &rkey, &rval))
+		return(rval);
+	else
+		return(NULL);
+}
+
+void *
 Tget(Tbl *tbl, const char *key) {
 	return(Tgetl(tbl, key, strlen(key)));
 }
@@ -14,6 +24,13 @@ Tget(Tbl *tbl, const char *key) {
 Tbl *
 Tset(Tbl *tbl, const char *key, void *value) {
 	return(Tsetl(tbl, key, strlen(key), value));
+}
+
+Tbl *
+Tdell(Tbl *tbl, const char *key, size_t len) {
+	const char *rkey;
+	void *rval;
+	return(Tdelkv(tbl, key, len, &rkey, &rval));
 }
 
 Tbl *

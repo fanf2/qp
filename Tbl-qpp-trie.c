@@ -179,21 +179,22 @@ twig(Trie *t, uint i) {
 	return(&t->branch.twigs[i]);
 }
 
-void *
-Tgetl(Tbl *tbl, const char *key, size_t len) {
+bool
+Tgetkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
-		return(NULL);
+		return(false);
 	Trie *t = &tbl->root;
 	while(isbranch(t)) {
 		uint b = twigbit(t, key, len);
 		if(!hastwig(t, b))
-			return(NULL);
+			return(false);
 		t = twig(t, twigoff(t, b));
 	}
-	if(strcmp(key, t->leaf.key) == 0)
-		return(t->leaf.val);
-	else
-		return(NULL);
+	if(strcmp(key, t->leaf.key) != 0)
+		return(false);
+	*pkey = t->leaf.key;
+	*pval = t->leaf.val;
+	return(true);
 }
 
 static bool
@@ -230,7 +231,7 @@ Tnextl(Tbl *tbl, const char **pkey, size_t *plen, void **pval) {
 }
 
 Tbl *
-Tdell(Tbl *tbl, const char *key, size_t len) {
+Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	Trie *t = &tbl->root, *p = NULL;
 	uint b = 0;
 	while(isbranch(t)) {
@@ -242,6 +243,8 @@ Tdell(Tbl *tbl, const char *key, size_t len) {
 	if(strcmp(key, t->leaf.key) != 0)
 		return(tbl);
 	if(p == NULL) {
+		*pkey = t->leaf.key;
+		*pval = t->leaf.val;
 		free(tbl);
 		return(NULL);
 	}
@@ -261,6 +264,8 @@ Tdell(Tbl *tbl, const char *key, size_t len) {
 	free(p->branch.twigs);
 	p->branch.twigs = twigs;
 	p->branch.bitmap &= ~b;
+	*pkey = t->leaf.key;
+	*pval = t->leaf.val;
 	return(tbl);
 }
 

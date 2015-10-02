@@ -18,6 +18,11 @@ typedef struct Tbl Tbl;
 void *Tgetl(Tbl *tbl, const char *key, size_t klen);
 void *Tget(Tbl *tbl, const char *key);
 
+// Returns false if the key is not found, otherwise returns true and
+// sets *pkey and *pval to the table's key and value pointers.
+//
+bool Tgetkv(Tbl *tbl, const char *key, size_t klen, const char **pkey, void **pval);
+
 // Associate a key with a value in a table. Returns a new pointer to
 // the modified table. If there is an error it sets errno and returns
 // NULL. To delete a key, set its value to NULL. When the last key is
@@ -32,6 +37,11 @@ Tbl *Tsetl(Tbl *tbl, const char *key, size_t klen, void *value);
 Tbl *Tset(Tbl *tbl, const char *key, void *value);
 Tbl *Tdell(Tbl *tbl, const char *key, size_t klen);
 Tbl *Tdel(Tbl *tbl, const char *key);
+
+// Deletes an entry from the table as above, and sets *pkey and *pval
+// to the removed key and value pointers.
+//
+Tbl *Tdelkv(Tbl *tbl, const char *key, size_t klen, const char **pkey, void **pval);
 
 // Find the next item in the table. The p... arguments are in/out
 // parameters. To find the first key, pass *pkey = NULL and *pklen = 0.
