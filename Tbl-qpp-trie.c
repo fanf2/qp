@@ -35,23 +35,30 @@ Tgetkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 static bool
 next_rec(Trie *t, const char **pkey, size_t *plen, void **pval) {
 	if(isbranch(t)) {
-		// This loop normally returns immediately, except when our
-		// key is the last in its twig, in which case the loop tries
-		// the next twig. Or if the key's twig is missing we run zero
-		// times.
+		// Recurse to find either this leaf (*pkey != NULL)
+		// or the next one (*pkey == NULL).
 		uint b = twigbit(t, *pkey, *plen);
-		for(uint i = twigoff(t, b), j = twigmax(t); i < j; i++)
+		for(uint i = twigoff(t, b),
+			    j = twigmax(t);
+		    i < j; i++)
 			if(next_rec(twig(t, i), pkey, plen, pval))
 				return(true);
 		return(false);
 	}
-	if(*pkey == NULL ||
-	   strcmp(*pkey, t->leaf.key) < 0) {
+	// We have found the next leaf.
+	if(*pkey == NULL) {
 		*pkey = t->leaf.key;
 		*plen = strlen(*pkey);
 		*pval = t->leaf.val;
 		return(true);
 	}
+	// We have found this leaf, so start looking for the next one.
+	if(strcmp(*pkey, t->leaf.key) == 0) {
+		*pkey = NULL;
+		*plen = 0;
+		return(false);
+	}
+	// No match.
 	return(false);
 }
 
