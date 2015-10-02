@@ -39,10 +39,18 @@
 // http://infoscience.epfl.ch/record/64394/files/triesearches.pdf
 // http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf
 //
-// A qpp trie uses its keys a quadbit (or nibble or half-byte) at a time.
-// It is a radix 2^4 patricia trie, so each node can have between 2 and
-// 16 children. It uses a 16 bit word to mark which children are present
-// and popcount to index them.
+// A qpp trie uses its keys a quadbit (or nibble or half-byte) at a
+// time. It is a radix 2^4 patricia trie, so each node can have between
+// 2 and 16 children. It uses a 16 bit word to mark which children are
+// present and popcount to index them. The aim is to improve on crit-bit
+// tries by reducing memory usage and the number of indirections
+// required to look up a key.
+//
+// The worst case for a qpp trie is when each branch has 2 children;
+// then it is the same shape as a crit-bit trie. In this case it uses
+// 2 words for each leaf, and there are n-1 internal branch nodes of
+// two words each, so it is equally efficient as a crit-bit trie.
+// If the key space is denser then branches have more children
 
 #include <assert.h>
 #include <errno.h>
@@ -57,24 +65,44 @@
 typedef unsigned char byte;
 typedef unsigned int uint;
 
-// XXX Assume a little-endian struct layout, so that the flag bits
-// fall in the clear bits at the bottom of the pointer. This needs
-// to change on a big-endian and/or 32 bit C implementation.
+static inline uint
+popcount(uint word) {
+	return((uint)__builtin_popcount(word));
+}
+
+// A trie node is two words on 64 bit machines, or three on 32 bit
+// machines. A node can be a leaf or a branch.
+
+typedef struct Tleaf {
+	const char *key;
+	void *val;
+} Tleaf;
+
+// Branch nodes are distinguished from leaf nodes using a couple
+// of flag bits which act as a dynamic type tag. They can be:
 //
-// The flags are a dynamic type tag. They can be:
 // 0 -> node is a leaf
 // 1 -> node is a branch, testing upper nibble
 // 2 -> node is a branch, testing lower nibble
 //
-// In a branch, the combined value (index << 2) | flags
-// increases along the key in big-endian lexicographic order.
+// A branch node is laid out so that the flag bits correspond to the
+// least significant bits bits of one of the leaf node pointers. In a
+// leaf node, that pointer must be word-aligned so that its flag bits
+// are zero. We have chosen to place this restriction on the value
+// pointer.
+//
+// A branch contains the index of the byte that it tests. The combined
+// value index << 2 | flags increases along the key in big-endian
+// lexicographic order, and increases as you go deeper into the trie.
 // All the keys below a branch are identical up to the nibble
 // identified by the branch.
 //
-// In a leaf node we arrange for the flag bits (which are zero)
-// to match up with the value pointer which must therefore be
-// word-aligned; the key pointer can be byte-aligned.
+// A branch has a bitmap of which subtries ("twigs") are present. The
+// flags, index, and bitmap are packed into one word. The other word
+// is a pointer to an array of trie nodes, one for each twig that is
+// present.
 
+// XXX this currently assumes a 64 bit little endian machine
 typedef struct Tbranch {
 	union Trie *twigs;
 	uint64_t
@@ -82,11 +110,6 @@ typedef struct Tbranch {
 		index : 46,
 		bitmap : 16;
 } Tbranch;
-
-typedef struct Tleaf {
-	const char *key;
-	void *val;
-} Tleaf;
 
 typedef union Trie {
 	struct Tleaf   leaf;
@@ -104,7 +127,7 @@ isbranch(Trie *t) {
 	return(t->branch.flags != 0);
 }
 
-// Extract a nibble from a key and make a bitmask for testing the bitmap.
+// Make a bitmask for testing a branch bitmap.
 //
 // mask:
 // 1 -> 0xffff -> 0xfff0 -> 0xf0
@@ -121,6 +144,8 @@ nibbit(byte k, uint flags) {
 	return(1 << ((k & mask) >> shift));
 }
 
+// Extract a nibble from a key and turn it into a bitmask.
+
 static inline uint
 twigbit(Trie *t, const char *key, size_t len) {
 	uint64_t i = t->branch.index;
@@ -131,11 +156,6 @@ twigbit(Trie *t, const char *key, size_t len) {
 static inline bool
 hastwig(Trie *t, uint bit) {
 	return(t->branch.bitmap & bit);
-}
-
-static inline uint
-popcount(uint word) {
-	return((uint)__builtin_popcount(word));
 }
 
 static inline uint
