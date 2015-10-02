@@ -13,5 +13,5 @@ while(<>) {
 	$t{$2} = 1 if $1 eq '+';
 	print $t{$2} ? "+" : "-" if $1 eq '*';
 }
-
+print "\n";
 print for sort keys %t;
