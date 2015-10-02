@@ -51,4 +51,9 @@ bool Tnextl(Tbl *tbl, const char **pkey, size_t *pklen, void **pvalue);
 bool Tnext(Tbl *tbl, const char **pkey, void **pvalue);
 const char *Tnxt(Tbl *tbl, const char *key);
 
+// Debugging
+//
+void Tdump(Tbl *tbl);
+void Tsize(Tbl *tbl, size_t *rsize, size_t *rleaves);
+
 #endif // Tbl_h

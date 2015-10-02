@@ -35,11 +35,8 @@ usage(void) {
 
 static void
 trace(Tbl *t, int s, const char *key) {
-	void *val;
-	printf("%c%s", s, key);
-	key = val = NULL;
-	while(Tnext(t, &key, &val))
-		printf("* %s", key);
+	printf("%c%s\n", s, key);
+	Tdump(t);
 }
 
 int
@@ -81,7 +78,7 @@ main(int argc, char *argv[]) {
 			t = Tsetl(t, key, len, val);
 			if(t == NULL)
 				die("Tbl");
-//			trace(t, s, key);
+			trace(t, s, key);
 			if(val != key)
 				free((void*)key);
 			continue;
@@ -92,7 +89,7 @@ main(int argc, char *argv[]) {
 			t = Tdelkv(t, key, len, &rkey, &rval);
 			if(t == NULL && errno != 0)
 				die("Tbl");
-//			trace(t, s, key);
+			trace(t, s, key);
 			free((void*)key);
 			free((void*)rkey);
 			continue;
@@ -101,6 +98,9 @@ main(int argc, char *argv[]) {
 	putchar('\n');
 	if(ferror(stdin))
 		die("read");
+	size_t size, leaves;
+	Tsize(t, &size, &leaves);
+	printf("SIZE %zu %zu %f\n", size, leaves, (double)size / leaves);
 	const char *key = NULL;
 	void *val = NULL, *prev = NULL;
 	while(Tnext(t, &key, &val)) {
