@@ -73,7 +73,7 @@ main(int argc, char *argv[]) {
 			t = Tsetl(t, key, len, val);
 			if(t == NULL)
 				die("Tbl");
-			trace(t, s, key);
+//			trace(t, s, key);
 			if(val != key)
 				free((void*)key);
 			continue;
@@ -84,7 +84,7 @@ main(int argc, char *argv[]) {
 			t = Tdelkv(t, key, len, &rkey, &rval);
 			if(t == NULL && errno != 0)
 				die("Tbl");
-			trace(t, s, key);
+//			trace(t, s, key);
 			free((void*)key);
 			free((void*)rkey);
 			continue;
