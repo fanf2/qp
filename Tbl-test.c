@@ -61,7 +61,9 @@ main(int argc, char *argv[]) {
 		if(s < 0) break;
 		ssize_t n = getline(&key, &len, stdin);
 		if(n < 0) break;
-		else len = n;
+		else len = (size_t)n;
+		if(len > 0 && key[len-1] == '\n')
+			key[--len] = '\0';
 		switch(s) {
 		default:
 			usage();
@@ -103,7 +105,7 @@ main(int argc, char *argv[]) {
 	void *val = NULL, *prev = NULL;
 	while(Tnext(t, &key, &val)) {
 		assert(key == val);
-		fputs(key, stdout);
+		puts(key);
 		t = Tdel(t, key);
 		free((void*)prev);
 		prev = val;
