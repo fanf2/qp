@@ -57,6 +57,11 @@
 // number of leaves      256^n
 // crit-bit branches     256^n - 1
 // qpp branches          1 + 16^(n*2-1) == 1 + 256^n / 16
+// crit-bit depth        n * 8
+// qpp depth             n * 2
+//
+// In practice, qpp averages about 3.3 words per leaf vs. crit-bit's 4
+// words per leaf, and qpp has about half the depth.
 
 typedef unsigned char byte;
 typedef unsigned int uint;
