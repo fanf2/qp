@@ -101,9 +101,10 @@ main(int argc, char *argv[]) {
 	size_t size, depth, leaves;
 	const char *type;
 	Tsize(t, &type, &size, &depth, &leaves);
-	fprintf(stderr, "SIZE %s %zu %zu %zu %.2f %.2f\n",
-		type, size, depth, leaves,
-		(double)size / leaves / 8,
+	size_t overhead = size / sizeof(void*) - 2 * leaves;
+	fprintf(stderr, "SIZE %s leaves=%zu branches=%zu overhead=%.2f depth=%.2f\n",
+		type, leaves, overhead,
+		(double)overhead / leaves,
 		(double)depth / leaves);
 	const char *key = NULL;
 	void *val = NULL, *prev = NULL;
