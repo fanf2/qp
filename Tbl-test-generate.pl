@@ -14,7 +14,7 @@ EOF
 my $i = shift;
 my $o = shift;
 
-my @p = qw( - + * * );
+my @p = qw( - + * * * * );
 my @i = <>;
 my @a;
 

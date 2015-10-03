@@ -99,9 +99,10 @@ main(int argc, char *argv[]) {
 	if(ferror(stdin))
 		die("read");
 	size_t size, depth, leaves;
-	Tsize(t, &size, &depth, &leaves);
-	fprintf(stderr, "SIZE %zu %zu %zu %.2f %.2f\n",
-		size, depth, leaves,
+	const char *type;
+	Tsize(t, &type, &size, &depth, &leaves);
+	fprintf(stderr, "SIZE %s %zu %zu %zu %.2f %.2f\n",
+		type, size, depth, leaves,
 		(double)size / leaves / 8,
 		(double)depth / leaves);
 	const char *key = NULL;

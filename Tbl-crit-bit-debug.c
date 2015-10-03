@@ -51,7 +51,9 @@ size_rec(Trie *t, uint d, size_t *rsize, size_t *rdepth, size_t *rleaves) {
 }
 
 void
-Tsize(Tbl *tbl, size_t *rsize, size_t *rdepth, size_t *rleaves) {
+Tsize(Tbl *tbl, const char **rtype,
+      size_t *rsize, size_t *rdepth, size_t *rleaves) {
+	*rtype = "cb";
 	*rsize = *rdepth = *rleaves = 0;
 	if(tbl != NULL)
 		size_rec(&tbl->root, 0, rsize, rdepth, rleaves);
