@@ -1,4 +1,4 @@
-CFLAGS= -O2 -g -fsanitize=address -Weverything -Wshadow
+CFLAGS= -O2 -g -Weverything -Wshadow
 
 all: test-cb test-qp bench-cb bench-qp
 
