@@ -57,6 +57,9 @@
 //
 // This layout has two words of overhead per entry, in addition to the
 // key+value pointers.
+//
+// I originally developed this layout for qpp tries, then simplified
+// the qpp code to produce this crit-bit implementation.
 
 typedef unsigned char byte;
 typedef unsigned int uint;
