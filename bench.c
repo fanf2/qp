@@ -62,8 +62,7 @@ ssrandom(char *s) {
 	// initialize random(3) from a string
 	size_t len = strlen(s);
 	if(len < 12) return(-1);
-	unsigned char *u = (unsigned char *)s;
-	unsigned seed = u[0] | u[1] << 8 | u[2] << 16 | u[3] << 24;
+	unsigned seed = s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
 	initstate(seed, s+4, len-4);
 	return(0);
 }
@@ -80,31 +79,37 @@ main(int argc, char *argv[]) {
 	struct stat st;
 	if(fstat(fd, &st) < 0) die("stat");
 	size_t flen = (size_t)st.st_size;
-	char *t = malloc(flen + 1);
-	if(t == NULL) die("malloc");
-	if(read(fd, t, flen) < 0) die("read");
+	char *fbuf = malloc(flen + 1);
+	if(fbuf == NULL) die("malloc");
+	if(read(fd, fbuf, flen) < 0) die("read");
 	close(fd);
-	t[flen] = '\0';
+	fbuf[flen] = '\0';
 	done();
 
 	start("scanning");
-	size_t lines = 1;
-	for(char *p = t; *p; p++)
+	size_t lines = 0;
+	for(char *p = fbuf; *p; p++)
 		if(*p == '\n')
 			++lines;
-	const char **line = calloc(lines, sizeof(*line));
-	int l = 0;
-	bool start = true;
-	for(char *p = t; *p; p++) {
-		if(start) {
+	char **line = calloc(lines, sizeof(*line));
+	size_t l = 0;
+	bool bol = true;
+	for(char *p = fbuf; *p; p++) {
+		if(bol) {
 			line[l++] = p;
-			start = false;
+			bol = false;
 		}
 		if(*p == '\n') {
 			*p = '\0';
-			start = true;
+			bol = true;
 		}
 	}
 	done();
 	printf("got %zu lines\n", lines);
+
+	start("loading");
+	Tbl *t = NULL;
+	for(l = 0; l < lines; l++)
+		Tset(t, line[l], line[l]);
+	done();
 }

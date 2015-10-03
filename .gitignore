@@ -1,6 +1,5 @@
 
 *.o
-test-cb
-test-qp
-test-in
+bench-??
+test-??
 test-out-*
