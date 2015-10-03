@@ -19,11 +19,6 @@
 // into the trie. Each leaf has a copy of its key so that when you find a
 // leaf you can verify that the untested bits match.
 //
-// Dan Bernstein has a nice description of crit-bit tries
-//	http://cr.yp.to/critbit.html
-// Adam Langley has annotated DJB's crit-bit implementation
-//	https://github.com/agl/critbit
-//
 // You can use popcount() to implement a sparse array of length N
 // containing M < N members using bitmap of length N and a packed
 // vector of M elements. A member i is present in the array if bit
