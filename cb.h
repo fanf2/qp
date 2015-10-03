@@ -1,10 +1,10 @@
-// Tbl-cri-bit.h: tables implemented with crit-bit tries.
+// cb.h: tables implemented with crit-bit tries.
 //
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
 // <http://creativecommons.org/publicdomain/zero/1.0/>
 
-// See Tbl-qpp-trie.h for introductory comments on tries.
+// See qp.h for introductory comments on tries.
 //
 // Dan Bernstein has a well-known description of crit-bit tries
 //	http://cr.yp.to/critbit.html
@@ -58,8 +58,8 @@
 // This layout has two words of overhead per entry, in addition to the
 // key+value pointers.
 //
-// I originally developed this layout for qpp tries, then simplified
-// the qpp code to produce this crit-bit implementation.
+// I originally developed this layout for qp tries, then simplified
+// the qp code to produce this crit-bit implementation.
 
 typedef unsigned char byte;
 typedef unsigned int uint;

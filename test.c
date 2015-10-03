@@ -1,4 +1,4 @@
-// Tbl-test.c: test table implementations.
+// test.c: test table implementations.
 //
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.

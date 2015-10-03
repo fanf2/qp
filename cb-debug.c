@@ -1,4 +1,4 @@
-// Tbl-qpp-debug.c: crit-bit trie debug support
+// cb-debug.c: crit-bit trie debug support
 //
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 #include "Tbl.h"
-#include "Tbl-crit-bit.h"
+#include "cb.h"
 
 static void
 dump_rec(Trie *t, int d) {

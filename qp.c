@@ -1,4 +1,4 @@
-// Tbl-qpp-trie.c: tables implemented with quadbit popcount patricia tries.
+// qp.c: tables implemented with quadbit popcount patricia tries.
 //
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
@@ -12,7 +12,7 @@
 #include <string.h>
 
 #include "Tbl.h"
-#include "Tbl-qpp-trie.h"
+#include "qp.h"
 
 bool
 Tgetkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {

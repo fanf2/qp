@@ -1,4 +1,4 @@
-// Tbl-qpp-trie.h: tables implemented with quadbit popcount patricia tries.
+// qp.h: tables implemented with quadbit popcount patricia tries.
 //
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
@@ -34,14 +34,14 @@
 // http://infoscience.epfl.ch/record/64394/files/triesearches.pdf
 // http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf
 //
-// A qpp trie uses its keys a quadbit (or nibble or half-byte) at a
+// A qp trie uses its keys a quadbit (or nibble or half-byte) at a
 // time. It is a radix 2^4 patricia trie, so each node can have between
 // 2 and 16 children. It uses a 16 bit word to mark which children are
 // present and popcount to index them. The aim is to improve on crit-bit
 // tries by reducing memory usage and the number of indirections
 // required to look up a key.
 //
-// The worst case for a qpp trie is when each branch has 2 children;
+// The worst case for a qp trie is when each branch has 2 children;
 // then it is the same shape as a crit-bit trie. In this case there
 // are n-1 internal branch nodes of two words each, so it is equally
 // efficient as a crit-bit trie. If the key space is denser then
@@ -51,12 +51,12 @@
 // key length (bytes)    n
 // number of leaves      256^n
 // crit-bit branches     256^n - 1
-// qpp branches          1 + 16^(n*2-1) == 1 + 256^n / 16
+// qp branches           1 + 16^(n*2-1) == 1 + 256^n / 16
 // crit-bit depth        n * 8
-// qpp depth             n * 2
+// qp depth              n * 2
 //
-// In practice, qpp averages about 3.3 words per leaf vs. crit-bit's 4
-// words per leaf, and qpp has about half the depth.
+// In practice, qp averages about 3.3 words per leaf vs. crit-bit's 4
+// words per leaf, and qp has about half the depth.
 
 typedef unsigned char byte;
 typedef unsigned int uint;

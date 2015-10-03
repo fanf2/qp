@@ -1,4 +1,4 @@
-// Tbl-qpp-debug.c: qpp trie debug support
+// qp-debug.c: qp trie debug support
 //
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 #include "Tbl.h"
-#include "Tbl-qpp-trie.h"
+#include "qp.h"
 
 static void
 dump_rec(Trie *t, int d) {
@@ -57,7 +57,7 @@ size_rec(Trie *t, uint d, size_t *rsize, size_t *rdepth, size_t *rleaves) {
 void
 Tsize(Tbl *tbl, const char **rtype,
       size_t *rsize, size_t *rdepth, size_t *rleaves) {
-	*rtype = "qpp";
+	*rtype = "qp";
 	*rsize = *rdepth = *rleaves = 0;
 	if(tbl != NULL)
 		size_rec(&tbl->root, 0, rsize, rdepth, rleaves);

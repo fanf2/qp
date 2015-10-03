@@ -1,4 +1,4 @@
-// Tbl-crit-bit.c: tables implemented with crit-bit tries.
+// cb.c: tables implemented with crit-bit tries.
 //
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
@@ -12,7 +12,7 @@
 #include <string.h>
 
 #include "Tbl.h"
-#include "Tbl-crit-bit.h"
+#include "cb.h"
 
 bool
 Tgetkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
