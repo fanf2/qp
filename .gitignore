@@ -1,0 +1,6 @@
+
+*.o
+test-cb
+test-qp
+test-in
+test-out-*
