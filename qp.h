@@ -28,6 +28,9 @@
 //	if(bitmap & mask)
 //		member = vector[popcount(bitmap & mask-1)]
 //
+// See "Hacker's Delight" by Hank Warren, section 5-1 "Counting 1
+// bits", subsection "applications".
+//
 // Phil Bagwell's hashed array-mapped tries (HAMT) use popcount for
 // compact trie nodes. String keys are hashed, and the hash is used
 // as the index to the trie, with radix 2^32 or 2^64.
