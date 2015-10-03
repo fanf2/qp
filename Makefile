@@ -13,6 +13,8 @@ clean:
 realclean: clean
 	rm -f test-in test-out-??
 
+bench: bench.c
+
 test-cb: test.o Tbl.o cb.o cb-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
