@@ -1,0 +1,78 @@
+quadbit popcount patricia tries and crit-bit tries
+==================================================
+
+This repository contains my experiments with radix trees / patricia
+tries / crit-bit tries. I have been trying to develop a version which
+has a larger fan-out per branch to reduce lookup costs without wasting
+memory.
+
+My best solution so far is the "qp trie", short for quadbit popcount
+patricia trie. (Nothing to do with cutie cupid dolls or Japanese
+mayonnaise!) A qp trie is like a crit-bit trie (aka patricia trie)
+except each branch is indexed by a quadbit (a nibble) at a time
+instead of one bit. The array of sub-tries at a branch node is
+compressed using the popcount trick to omit unused entries.
+
+Based on a few benchmarks, qp tries have about 2/3 the memory overhead
+of crit-bit tries: 1.3 words vs 2 words of overhead per item; and the
+average depth of a qp trie is about half that of a crit-bit trie,
+which means faster searching. The implementation is about 40% bigger.
+
+
+usage
+-----
+
+Type `make test`. That's all there is right now...
+
+
+roadmap
+-------
+
+* [Tbl.h][] [Tbl.c][]
+
+	Abstract programming interface for tables with string keys and
+	associated values. Intended to be shareable by multiple
+	different implementations.
+
+* [qp.h][] [qp.c][]
+
+	My qp trie implementation. See qp.h for a longer description
+	of where the data structure comes from.
+
+* [cb.h][] [cb.c][]
+
+	My crit-bit trie implementation. See cb.h for a description of
+	how it differs from DJB's crit-bit code.
+
+* [qp-debug.c][] [cb-debug.c][]
+
+	Debug support code.
+
+* [test.c][] [test.pl][]
+
+	Generic test harness for the Tbl.h API, and a perl reference
+	implementation for verifying correctness.
+
+* [test-gen.pl][] [test-once.sh][]
+
+	Driver scripts for the test harness.
+
+
+[Tbl.c]:        https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/Tbl.c
+[Tbl.h]:        https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/Tbl.h
+[cb-debug.c]:   https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/cb-debug.c
+[cb.c]:         https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/cb.c
+[cb.h]:         https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/cb.h
+[qp-debug.c]:   https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/qp-debug.c
+[qp.c]:         https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/qp.c
+[qp.h]:         https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/qp.h
+[test-gen.pl]:  https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/test-gen.pl
+[test-once.sh]: https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/test-once.sh
+[test.c]:       https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/test.c
+[test.pl]:      https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git/blob/HEAD:/test.pl
+
+---------------------------------------------------------------------------
+
+Written by Tony Finch <dot@dotat.at>;
+You may do anything with this. It has no warranty.
+<http://creativecommons.org/publicdomain/zero/1.0/>

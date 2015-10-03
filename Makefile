@@ -1,8 +1,11 @@
-CFLAGS= -g -fsanitize=address -Weverything
+CFLAGS= -O2 -g -fsanitize=address -Weverything
 
 TARG=	test-cb test-qp
 
 all: ${TARG}
+
+test: all
+	./test-once.sh 10000 100000 /usr/share/dict/words
 
 clean:
 	rm -f ${TARG} *.o
