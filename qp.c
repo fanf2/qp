@@ -137,8 +137,8 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
 		// twig we choose since the keys are all the same up to this
-		// index. Note that blindly using twigcount(t, n) can cause
-		// an out-of-bounds index if it equals twigcount(t, 16).
+		// index. Note that blindly using twigoff(t, b) can cause
+		// an out-of-bounds index if it equals twigmax(t).
 		uint i = hastwig(t, b) ? twigoff(t, b) : 0;
 		t = twig(t, i);
 	}
