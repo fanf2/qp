@@ -6,8 +6,8 @@ test: all
 	./test-once.sh 10000 100000 /usr/share/dict/words
 
 bench: all
-	echo cb; ./bench-cb Gg3ne2QU0KGHsw58 /usr/share/dict/words
-	echo qp; ./bench-qp Gg3ne2QU0KGHsw58 /usr/share/dict/words
+	echo cb; ./bench-cb Gg3ne2QU0KGHsw58 1000000 /usr/share/dict/words
+	echo qp; ./bench-qp Gg3ne2QU0KGHsw58 1000000 /usr/share/dict/words
 
 clean:
 	rm -f ${TARG} *.o

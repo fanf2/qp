@@ -30,7 +30,7 @@ die(const char *cause) {
 static void
 usage(void) {
 	fprintf(stderr,
-"usage: %s <seed> <input>\n"
+"usage: %s <seed> <count> <input>\n"
 "	The seed must be at least 12 characters.\n"
 		, progname);
 	exit(1);
@@ -70,11 +70,11 @@ ssrandom(char *s) {
 int
 main(int argc, char *argv[]) {
 	progname = argv[0];
-	if(argc != 3 || argv[1][0] == '-') usage();
+	if(argc != 4 || argv[1][0] == '-') usage();
 	if(ssrandom(argv[1]) < 0) usage();
+	int N = atoi(argv[2]);
 
-	start("reading");
-	int fd = open(argv[2], O_RDONLY);
+	int fd = open(argv[3], O_RDONLY);
 	if(fd < 0) die("open");
 	struct stat st;
 	if(fstat(fd, &st) < 0) die("stat");
@@ -84,9 +84,7 @@ main(int argc, char *argv[]) {
 	if(read(fd, fbuf, flen) < 0) die("read");
 	close(fd);
 	fbuf[flen] = '\0';
-	done();
 
-	start("scanning");
 	size_t lines = 0;
 	for(char *p = fbuf; *p; p++)
 		if(*p == '\n')
@@ -104,12 +102,16 @@ main(int argc, char *argv[]) {
 			bol = true;
 		}
 	}
-	done();
 	printf("got %zu lines\n", lines);
 
 	start("loading");
 	Tbl *t = NULL;
 	for(l = 0; l < lines; l++)
 		Tset(t, line[l], line[l]);
+	done();
+
+	start("searching");
+	for(int i = 0; i < N; i++)
+		Tget(t, line[random() % lines]);
 	done();
 }
