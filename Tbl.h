@@ -44,8 +44,10 @@ Tbl *Tdel(Tbl *tbl, const char *key);
 Tbl *Tdelkv(Tbl *tbl, const char *key, size_t klen, const char **rkey, void **rval);
 
 // Find the next item in the table. The p... arguments are in/out
-// parameters. To find the first key, pass *pkey = NULL and *pklen = 0.
-// Returns false or NULL when there are no more keys.
+// parameters. To find the first key, pass *pkey=NULL and *pklen=0.
+// For subsequent keys, *pkey must be present in the table and is
+// updated to the lexicographically following key. Returns false or
+// NULL when there are no more keys.
 //
 bool Tnextl(Tbl *tbl, const char **pkey, size_t *pklen, void **pvalue);
 bool Tnext(Tbl *tbl, const char **pkey, void **pvalue);
