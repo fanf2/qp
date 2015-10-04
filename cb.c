@@ -123,8 +123,8 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	t->leaf.val = val;
 	return(tbl);
 newkey:; // We have the byte index; what about the bit?
-	byte k1 = (byte)key[i], k2 = (byte)t->leaf.key[i];
-	uint b = 8 - fls(k1 ^ k2);
+	uint k1 = (byte)key[i], k2 = (byte)t->leaf.key[i];
+	uint b = __builtin_clz((k1 ^ k2) << 24 | 0x800000);
 	i = 8 * i + b;
 	b = k1 >> (7 - b) & 1;
 	// Find where to insert a branch or grow an existing branch.
