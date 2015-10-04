@@ -107,7 +107,7 @@ main(int argc, char *argv[]) {
 	start("loading");
 	Tbl *t = NULL;
 	for(l = 0; l < lines; l++)
-		Tset(t, line[l], main);
+		t = Tset(t, line[l], main);
 	done();
 
 	start("searching");
@@ -117,7 +117,9 @@ main(int argc, char *argv[]) {
 
 	start("mutating");
 	for(int i = 0; i < N; i++)
-		Tset(t, line[random() % lines],
-		     random() % 2 ? main : NULL);
+		t = Tset(t, line[random() % lines],
+			 random() % 2 ? main : NULL);
 	done();
+
+	return(0);
 }
