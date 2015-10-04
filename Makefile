@@ -34,7 +34,11 @@ qp.o: qp.c qp.h Tbl.h
 cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
 
-upload:
+README.html: README.md
+	markdown $< >$@
+
+upload: README.html
+	rsync README.html chiark:public-html/prog/qp/index.html
 	git push chiark:public-git/qp.git
 	git push git@github.com:fanf2/qp.git
 	git push ucs@git.csx.cam.ac.uk:u/fanf2/radish.git

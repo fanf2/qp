@@ -1,10 +1,9 @@
 qp tries and crit-bit tries
 ===========================
 
-This repository contains my experiments with radix trees / patricia
-tries / crit-bit tries. I have been trying to develop a version which
-has a larger fan-out per branch to reduce lookup costs without wasting
-memory.
+I have been working on radix trees / patricia tries / crit-bit tries
+with a larger fan-out per branch to reduce lookup costs without
+wasting memory.
 
 My best solution so far is the "qp trie", short for quadbit popcount
 patricia trie. (Nothing to do with cutie cupid dolls or Japanese
@@ -13,12 +12,11 @@ except each branch is indexed by a quadbit (a nibble) at a time
 instead of one bit. The array of sub-tries at a branch node is
 compressed using the popcount trick to omit unused branches.
 
-Based on a few benchmarks, qp tries have about 1/3 less memory overhead
-of crit-bit tries: 1.3 words vs 2 words of overhead per item; and the
-average depth of a qp trie is about half that of a crit-bit trie,
-which should means faster searching. In benchmarks qp tries are about
-10% faster than crit-bit tries. The qp trie implementation is about
-40% bigger.
+Based on a few benchmarks, qp tries have about 1/3 less memory
+overhead of crit-bit tries, 1.3 words vs 2 words of overhead per item;
+the average depth of a qp trie is about half that of a crit-bit trie;
+and the overall speed of qp tries is about 10% faster than crit-bit
+tries. The qp trie implementation is about 40% bigger.
 
 
 usage
@@ -54,7 +52,7 @@ roadmap
 * [Tbl.h][] [Tbl.c][]
 
 	Abstract programming interface for tables with string keys and
-	associated values. Intended to be shareable by multiple
+	associated `void*` values. Intended to be shareable by multiple
 	different implementations.
 
 * [qp.h][] [qp.c][]
