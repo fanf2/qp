@@ -29,7 +29,7 @@
 //		member = vector[popcount(bitmap & mask-1)]
 //
 // See "Hacker's Delight" by Hank Warren, section 5-1 "Counting 1
-// bits", subsection "applications".
+// bits", subsection "applications". http://www.hackersdelight.org
 //
 // Phil Bagwell's hashed array-mapped tries (HAMT) use popcount for
 // compact trie nodes. String keys are hashed, and the hash is used
@@ -101,7 +101,13 @@ typedef struct Tleaf {
 // is a pointer to an array of trie nodes, one for each twig that is
 // present.
 
-// XXX this currently assumes a 64 bit little endian machine
+// XXX This currently assumes a 64 bit little endian machine.
+// On a 32 bit machine we could perhaps fit a branch in to two words
+// without restricting the key length by making the index relative
+// instead of absolute. If the gap between nodes is larger than a 16
+// bit offset allows, we can insert a stepping-stone branch with only
+// one twig. This would make the code a bit more complicated...
+
 typedef struct Tbranch {
 	union Trie *twigs;
 	uint64_t
