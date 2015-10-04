@@ -102,15 +102,15 @@ main(int argc, char *argv[]) {
 			bol = true;
 		}
 	}
-	printf("got %zu lines\n", lines);
+	printf("- got %zu lines\n", lines);
 
-	start("loading");
+	start("load");
 	Tbl *t = NULL;
 	for(l = 0; l < lines; l++)
 		t = Tset(t, line[l], main);
 	done();
 
-	start("searching");
+	start("search");
 	l = 0;
 	for(int i = 0; i < N; i++)
 		if(Tget(t, line[random() % lines]) != NULL)
@@ -118,7 +118,7 @@ main(int argc, char *argv[]) {
 	assert(l == N);
 	done();
 
-	start("mutating");
+	start("mutate");
 	for(int i = 0; i < N; i++)
 		t = Tset(t, line[random() % lines],
 			 random() % 2 ? main : NULL);
@@ -127,7 +127,7 @@ main(int argc, char *argv[]) {
 	// ensure all keys present
 	for(l = 0; l < lines; l++)
 		t = Tset(t, line[l], main);
-	start("deleting");
+	start("free");
 	for(l = 0; l < lines; l++)
 		t = Tset(t, line[l], NULL);
 	assert(t == NULL);
