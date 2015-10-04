@@ -1,5 +1,6 @@
-
 *.o
+*.s
+*.html
 bench-??
 test-??
 test-out-*
