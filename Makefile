@@ -1,4 +1,4 @@
-CFLAGS= -O2 -g -Weverything -Wshadow
+CFLAGS= -O2 -std=gnu99
 
 all: test-cb test-qp bench-cb bench-qp
 
@@ -33,3 +33,8 @@ cb.o: cb.c cb.h Tbl.h
 qp.o: qp.c qp.h Tbl.h
 cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
+
+upload:
+	git push chiark:fanf/public-git/qp.git
+	git push git@github.com:fanf2/qp.git
+	git push ucs@git.csx.cam.ac.uk:u/fanf2/radish.git
