@@ -24,7 +24,7 @@ trie implementation is about 40% bigger.
 usage
 -----
 
-Type `make test`. That's all there is right now...
+Type `make test` or `make bench`. That's all there is right now...
 
 
 roadmap
