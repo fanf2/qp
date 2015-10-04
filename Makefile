@@ -35,6 +35,6 @@ cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
 
 upload:
-	git push chiark:fanf/public-git/qp.git
+	git push chiark:public-git/qp.git
 	git push git@github.com:fanf2/qp.git
 	git push ucs@git.csx.cam.ac.uk:u/fanf2/radish.git
