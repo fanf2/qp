@@ -111,14 +111,26 @@ main(int argc, char *argv[]) {
 	done();
 
 	start("searching");
+	l = 0;
 	for(int i = 0; i < N; i++)
-		Tget(t, line[random() % lines]);
+		if(Tget(t, line[random() % lines]) != NULL)
+			++l;
+	assert(l == N);
 	done();
 
 	start("mutating");
 	for(int i = 0; i < N; i++)
 		t = Tset(t, line[random() % lines],
 			 random() % 2 ? main : NULL);
+	done();
+
+	// ensure all keys present
+	for(l = 0; l < lines; l++)
+		t = Tset(t, line[l], main);
+	start("deleting");
+	for(l = 0; l < lines; l++)
+		t = Tset(t, line[l], NULL);
+	assert(t == NULL);
 	done();
 
 	return(0);
