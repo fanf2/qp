@@ -50,7 +50,7 @@ for (my $N = 1 ;; ++$N) {
 		for my $prog (@prog) {
 			my $mean = $stats{$test}{$prog}{tot} / $N;
 			my $var = $stats{$test}{$prog}{tot2} / $N - $mean * $mean;
-			printf " | %.2f : %.2f < %.2f +/- %.3f",
+			printf " | %.3f : %.3f < %.3f +/- %.3f",
 			    $stats{$test}{$prog}{this},
 			    $stats{$test}{$prog}{min},
 			    $mean, $var ** 0.5;

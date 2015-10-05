@@ -73,6 +73,8 @@ popcount(uint w) {
 	return((uint)__builtin_popcount(w));
 }
 
+// 16 bit popcount() for use when __builtin_popcount() is slow.
+
 static inline uint
 popcount16(uint w) {
 	w -= (w >> 1) & 0x5555;
@@ -190,7 +192,7 @@ hastwig(Trie *t, uint bit) {
 	return(t->branch.bitmap & bit);
 }
 
-#ifdef HAVE_FAST_POPCOUNT
+#ifndef HAVE_SLOW_POPCOUNT
 
 static inline uint
 twigoff(Trie *t, uint bit) {
@@ -199,7 +201,7 @@ twigoff(Trie *t, uint bit) {
 
 #define TWIGOFFMAX(off, max, t, b) do {			\
 		off = twigoff(t, b);			\
-		max = popcount(t->branch.bitmap));	\
+		max = popcount(t->branch.bitmap);	\
 	} while(0)
 
 #else
