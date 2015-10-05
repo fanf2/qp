@@ -19,6 +19,10 @@
 // into the trie. Each leaf has a copy of its key so that when you find a
 // leaf you can verify that the untested bits match.
 //
+// The popcount() function counts the number of bits that are set in
+// a word. It's also known as the Hamming weight; Knuth calls it
+// "sideways add". https://en.wikipedia.org/wiki/popcount
+//
 // You can use popcount() to implement a sparse array of length N
 // containing M < N members using bitmap of length N and a packed
 // vector of M elements. A member i is present in the array if bit
