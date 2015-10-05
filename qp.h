@@ -74,7 +74,8 @@ popcount(uint word) {
 }
 
 // A trie node is two words on 64 bit machines, or three on 32 bit
-// machines. A node can be a leaf or a branch.
+// machines. A node can be a leaf or a branch. In a leaf, the value
+// pointer must be word-aligned to allow for the tag bits.
 
 typedef struct Tleaf {
 	const char *key;
