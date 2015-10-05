@@ -23,7 +23,12 @@ usage
 -----
 
 Type `make test` or `make bench`. (You will need to use GNU make.)
-That's all there is right now...
+
+There is a build option HAVE_SLOW_POPCOUNT which compiles the code to
+use a hand-coded 16 bit popcount() instead of __builtin_popcount().
+The makefile builds test-qs and bench-qs with this option; they are
+otherwise the same as test-qp and bench-qp. HAVE_SLOW_POPCOUNT is very
+effective with gcc; clang's popcount is about as quick as mine.
 
 
 caveats
