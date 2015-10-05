@@ -105,6 +105,8 @@ typedef struct Tleaf {
 // is a pointer to an array of trie nodes, one for each twig that is
 // present.
 
+// XXX We hope that the compiler will not punish us for abusing unions.
+
 // XXX This currently assumes a 64 bit little endian machine.
 // On a 32 bit machine we could perhaps fit a branch in to two words
 // without restricting the key length by making the index relative
