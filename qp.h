@@ -64,6 +64,10 @@
 typedef unsigned char byte;
 typedef unsigned int uint;
 
+// XXX: On machines without a fast popcount instruction (e.g. older
+// x86 and x64), it is probably worth writing our own 16 bit popcount,
+// to save a couple of instructions.
+
 static inline uint
 popcount(uint word) {
 	return((uint)__builtin_popcount(word));
@@ -167,6 +171,10 @@ static inline uint
 twigoff(Trie *t, uint bit) {
 	return(popcount(t->branch.bitmap & (bit - 1)));
 }
+
+// XXX When we call twigmax() we always call twigoff() too, so if
+// popcount() is slow it might be better to do a SWAR version that
+// does two 16 bit popcounts on two halves of a register in parallel.
 
 static inline uint
 twigmax(Trie *t) {
