@@ -32,7 +32,10 @@ caveats
 The code has only been tested on 64-bit little endian machines. It
 might work on 32-bit machines (provided the compilter supports 64 bit
 integers) and probably won't work on a big-endian machine. It should
-be easy to port by tweaking the struct bit-field layouts.
+be easy to port by tweaking the struct bit-field layouts. Key strings
+can be byte-aligned but values must be word-aligned; you can swap this
+restriction (e.g. if you want to map from strings to integers) by
+tweaking the struct layout and adjusting the check in Tset().
 
 
 download
