@@ -91,15 +91,15 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		return(NULL);
 	}
 	t = p; p = NULL; // Becuase t is the usual name
-	if(twigmax(t) == 2) {
+	uint s = twigoff(t, b); // split
+	uint m = twigmax(t);
+	if(m == 2) {
 		// Move the other twig to the parent branch.
 		Trie *twigs = t->branch.twigs;
 		*t = *twig(t, !twigoff(t, b));
 		free(twigs);
 		return(tbl);
 	}
-	uint s = twigoff(t, b); // split
-	uint m = twigmax(t);
 	Trie *twigs = malloc(sizeof(Trie) * (m - 1));
 	if(twigs == NULL) return(NULL);
 	memcpy(twigs, t->branch.twigs, sizeof(Trie) * s);
