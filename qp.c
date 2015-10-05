@@ -96,7 +96,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(m == 2) {
 		// Move the other twig to the parent branch.
 		Trie *twigs = t->branch.twigs;
-		*t = *twig(t, !twigoff(t, b));
+		*t = *twig(t, !s);
 		free(twigs);
 		return(tbl);
 	}
