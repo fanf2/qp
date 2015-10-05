@@ -68,13 +68,29 @@
 typedef unsigned char byte;
 typedef unsigned int uint;
 
-// XXX: On machines without a fast popcount instruction (e.g. older
-// x86 and x64), it is probably worth writing our own 16 bit popcount,
-// to save a couple of instructions.
+static inline uint
+popcount(uint w) {
+	return((uint)__builtin_popcount(w));
+}
 
 static inline uint
-popcount(uint word) {
-	return((uint)__builtin_popcount(word));
+popcount16(uint w) {
+	w -= (w >> 1) & 0x5555;
+	w = (w & 0x3333) + ((w >> 2) & 0x3333);
+	w = (w + (w >> 4)) & 0x0f0f;
+	w = (w + (w >> 8)) & 0x00ff;
+	return(w);
+}
+
+// Parallel popcount of the top and bottom 16 bits in a 32 bit word.
+
+static inline uint
+popcount16x2(uint w) {
+	w -= (w >> 1) & 0x55555555;
+	w = (w & 0x33333333) + ((w >> 2) & 0x33333333);
+	w = (w + (w >> 4)) & 0x0f0f0f0f;
+	w = (w + (w >> 8)) & 0x00ff00ff;
+	return(w);
 }
 
 // A trie node is two words on 64 bit machines, or three on 32 bit
@@ -174,19 +190,36 @@ hastwig(Trie *t, uint bit) {
 	return(t->branch.bitmap & bit);
 }
 
+#ifdef HAVE_FAST_POPCOUNT
+
 static inline uint
 twigoff(Trie *t, uint bit) {
 	return(popcount(t->branch.bitmap & (bit - 1)));
 }
 
-// XXX When we call twigmax() we always call twigoff() too, so if
-// popcount() is slow it might be better to do a SWAR version that
-// does two 16 bit popcounts on two halves of a register in parallel.
+#define TWIGOFFMAX(off, max, t, b) do {			\
+		off = twigoff(t, b);			\
+		max = popcount(t->branch.bitmap));	\
+	} while(0)
+
+#else
 
 static inline uint
-twigmax(Trie *t) {
-	return(popcount(t->branch.bitmap));
+twigoff(Trie *t, uint b) {
+	return(popcount16(t->branch.bitmap & (b-1)));
 }
+
+#define TWIGOFFMAX(off, max, t, b) do {				\
+		uint bitmap = t->branch.bitmap;			\
+		uint word = (bitmap << 16) | (bitmap & (b-1));	\
+		uint counts = popcount16x2(word);		\
+		off = counts & 0xff;				\
+		max = counts >> 16;				\
+	} while(0)
+
+#endif
+
+// Argument i is result of twigoff()
 
 static inline Trie *
 twig(Trie *t, uint i) {

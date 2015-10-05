@@ -38,8 +38,9 @@ next_rec(Trie *t, const char **pkey, size_t *plen, void **pval) {
 		// Recurse to find either this leaf (*pkey != NULL)
 		// or the next one (*pkey == NULL).
 		uint b = twigbit(t, *pkey, *plen);
-		for(uint i = twigoff(t, b), j = twigmax(t); i < j; i++)
-			if(next_rec(twig(t, i), pkey, plen, pval))
+		uint s, m; TWIGOFFMAX(s, m, t, b);
+		for(; s < m; s++)
+			if(next_rec(twig(t, s), pkey, plen, pval))
 				return(true);
 		return(false);
 	}
@@ -91,8 +92,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		return(NULL);
 	}
 	t = p; p = NULL; // Becuase t is the usual name
-	uint s = twigoff(t, b); // split
-	uint m = twigmax(t);
+	uint s, m; TWIGOFFMAX(s, m, t, b);
 	if(m == 2) {
 		// Move the other twig to the parent branch.
 		Trie *twigs = t->branch.twigs;
@@ -184,8 +184,7 @@ newbranch:;
 	return(tbl);
 growbranch:;
 	assert(!hastwig(t, b1));
-	uint s = twigoff(t, b1); // split
-	uint m = twigmax(t);
+	uint s, m; TWIGOFFMAX(s, m, t, b1);
 	twigs = malloc(sizeof(Trie) * (m + 1));
 	if(twigs == NULL) return(NULL);
 	memcpy(twigs, t->branch.twigs, sizeof(Trie) * s);

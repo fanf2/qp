@@ -47,8 +47,10 @@ static void
 size_rec(Trie *t, uint d, size_t *rsize, size_t *rdepth, size_t *rleaves) {
 	*rsize += sizeof(*t);
 	if(isbranch(t)) {
-		for(uint i = 0, j = twigmax(t); i < j; i++)
-			size_rec(twig(t, i), d+1, rsize, rdepth, rleaves);
+		for(uint b = 1; b < (1 << 16); b <<= 1)
+			if(hastwig(t, b))
+				size_rec(twig(t, twigoff(t, b)),
+					 d+1, rsize, rdepth, rleaves);
 	} else {
 		*rdepth += d;
 		*rleaves += 1;
