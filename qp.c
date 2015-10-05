@@ -118,7 +118,7 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 		return(NULL);
 	}
 	if(val == NULL)
-		return(Tdel(tbl, key));
+		return(Tdell(tbl, key, len));
 	// First leaf in an empty tbl?
 	if(tbl == NULL) {
 		tbl = malloc(sizeof(*tbl));
