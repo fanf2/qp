@@ -26,12 +26,12 @@ Type `make test` or `make bench`. (You will need to use GNU make.)
 
 Build options:
 
-* HAVE_SLOW_POPCOUNT
+* `HAVE_SLOW_POPCOUNT`
 	compiles the code to use a hand-coded 16 bit popcount()
 	instead of __builtin_popcount(). No need for this with
 	recent clang/llvm; useful with older gcc.
 
-* HAVE_NARROW_CPU
+* `HAVE_NARROW_CPU`
 	uses a 2 x 16 bit SIMD-within-a-register popcount instead of
 	two separate 16 bit popcounts; might be useful on small CPUs
 	but not actually helpful on 64 bit Intel.
