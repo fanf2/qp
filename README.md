@@ -62,6 +62,12 @@ articles
 
 	A blog article / announcement.
 
+thanks
+------
+
+Marek Vavrusa enthusiastically put this code to work and provided
+encouraging feedback.
+
 
 roadmap
 -------
