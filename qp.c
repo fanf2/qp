@@ -20,6 +20,7 @@ Tgetkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		return(false);
 	Trie *t = &tbl->root;
 	while(isbranch(t)) {
+		__builtin_prefetch(t->branch.twigs);
 		uint b = twigbit(t, key, len);
 		if(!hastwig(t, b))
 			return(false);
@@ -78,6 +79,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	Trie *t = &tbl->root, *p = NULL;
 	uint b = 0;
 	while(isbranch(t)) {
+		__builtin_prefetch(t->branch.twigs);
 		b = twigbit(t, key, len);
 		if(!hastwig(t, b))
 			return(tbl);
@@ -133,6 +135,7 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	// which can be at a lower index than the point at which we
 	// detect a difference.
 	while(isbranch(t)) {
+		__builtin_prefetch(t->branch.twigs);
 		uint b = twigbit(t, key, len);
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
@@ -160,6 +163,7 @@ newkey:; // We have the branch's index; what are its flags?
 	// Find where to insert a branch or grow an existing branch.
 	t = &tbl->root;
 	while(isbranch(t)) {
+		__builtin_prefetch(t->branch.twigs);
 		if(i == t->branch.index && f == t->branch.flags)
 			goto growbranch;
 		if(i == t->branch.index && f < t->branch.flags)

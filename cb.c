@@ -19,8 +19,10 @@ Tgetkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
 		return(false);
 	Trie *t = &tbl->root;
-	while(isbranch(t))
+	while(isbranch(t)) {
+		__builtin_prefetch(t->branch.twigs);
 		t = twig(t, twigoff(t, key, len));
+	}
 	if(strcmp(key, t->leaf.key) != 0)
 		return(false);
 	*pkey = t->leaf.key;
@@ -72,6 +74,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	Trie *t = &tbl->root, *p = NULL;
 	uint b = 0;
 	while(isbranch(t)) {
+		__builtin_prefetch(t->branch.twigs);
 		b = twigoff(t, key, len);
 		p = t, t = twig(t, b);
 	}
@@ -130,6 +133,7 @@ newkey:; // We have the byte index; what about the bit?
 	// Find where to insert a branch or grow an existing branch.
 	t = &tbl->root;
 	while(isbranch(t)) {
+		__builtin_prefetch(t->branch.twigs);
 		if(i < t->branch.index)
 			goto newbranch;
 		t = twig(t, twigoff(t, key, len));
