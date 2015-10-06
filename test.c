@@ -113,6 +113,7 @@ main(int argc, char *argv[]) {
 		puts(key);
 		if(prev) {
 			t = Tdel(t, prev);
+			trace(t, '!', prev);
 			free(prev);
 		}
 		prev = val;
