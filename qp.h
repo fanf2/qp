@@ -32,8 +32,9 @@
 //	if(bitmap & mask)
 //		member = vector[popcount(bitmap & mask-1)]
 //
-// See "Hacker's Delight" by Hank Warren, section 5-1 "Counting 1
-// bits", subsection "applications". http://www.hackersdelight.org
+// See "AMD64 Optimization Guide", section 8-6 "Efficient Implementation
+// of Population-Count Function in 32-Bit Mode"
+// http://support.amd.com/TechDocs/25112.PDF
 //
 // Phil Bagwell's hashed array-mapped tries (HAMT) use popcount for
 // compact trie nodes. String keys are hashed, and the hash is used
@@ -68,13 +69,23 @@
 typedef unsigned char byte;
 typedef unsigned int uint;
 
+#ifndef HAVE_SLOW_POPCOUNT
 static inline uint
 popcount(uint w) {
 	return((uint)__builtin_popcount(w));
 }
-
+#define popcount16(w) popcount(w)
+#else
+// 32 bit popcount() for use when __builtin_popcount() is slow.
+static inline uint
+popcount(uint w) {
+	w -= (w >> 1) & 0x55555555;
+	w = (w & 0x33333333) + ((w >> 2) & 0x33333333);
+	w = (w + (w >> 4)) & 0x0f0f0f0f;
+	w = (w * 0x01010101) >> 24;
+	return(w);
+}
 // 16 bit popcount() for use when __builtin_popcount() is slow.
-
 static inline uint
 popcount16(uint w) {
 	w -= (w >> 1) & 0x5555;
@@ -83,17 +94,7 @@ popcount16(uint w) {
 	w = (w + (w >> 8)) & 0x00ff;
 	return(w);
 }
-
-// Parallel popcount of the top and bottom 16 bits in a 32 bit word.
-
-static inline uint
-popcount16x2(uint w) {
-	w -= (w >> 1) & 0x55555555;
-	w = (w & 0x33333333) + ((w >> 2) & 0x33333333);
-	w = (w + (w >> 4)) & 0x0f0f0f0f;
-	w = (w + (w >> 8)) & 0x00ff00ff;
-	return(w);
-}
+#endif
 
 // A trie node is two words on 64 bit machines, or three on 32 bit
 // machines. A node can be a leaf or a branch. In a leaf, the value
@@ -192,34 +193,15 @@ hastwig(Trie *t, uint bit) {
 	return(t->branch.bitmap & bit);
 }
 
-#ifndef HAVE_SLOW_POPCOUNT
-
 static inline uint
 twigoff(Trie *t, uint bit) {
-	return(popcount(t->branch.bitmap & (bit - 1)));
+	return(popcount16(t->branch.bitmap & (bit - 1)));
 }
 
 #define TWIGOFFMAX(off, max, t, b) do {			\
 		off = twigoff(t, b);			\
 		max = popcount(t->branch.bitmap);	\
 	} while(0)
-
-#else
-
-static inline uint
-twigoff(Trie *t, uint b) {
-	return(popcount16(t->branch.bitmap & (b-1)));
-}
-
-#define TWIGOFFMAX(off, max, t, b) do {				\
-		uint bitmap = t->branch.bitmap;			\
-		uint word = (bitmap << 16) | (bitmap & (b-1));	\
-		uint counts = popcount16x2(word);		\
-		off = counts & 0xff;				\
-		max = counts >> 16;				\
-	} while(0)
-
-#endif
 
 // Argument i is result of twigoff()
 
