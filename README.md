@@ -118,6 +118,6 @@ roadmap
 
 ---------------------------------------------------------------------------
 
-Written by Tony Finch <dot@dotat.at>;
+Written by Tony Finch <dot@dotat.at> <http://dotat.at/>;
 You may do anything with this. It has no warranty.
 <http://creativecommons.org/publicdomain/zero/1.0/>
