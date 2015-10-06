@@ -79,19 +79,21 @@ static inline uint
 popcount16(uint w) {
 	w -= (w >> 1) & 0x5555;
 	w = (w & 0x3333) + ((w >> 2) & 0x3333);
-	w = (w + (w >> 4)) & 0x0f0f;
-	w = (w + (w >> 8)) & 0x00ff;
+	w = (w + (w >> 4)) & 0x0F0F;
+	w = (w + (w >> 8)) & 0x00FF;
 	return(w);
 }
 
 // Parallel popcount of the top and bottom 16 bits in a 32 bit word.
+// NOTE: The caller needs to extract the results by masking with
+// 0x00FF0000 and 0x000000FF for the top and bottom halves
 
 static inline uint
 popcount16x2(uint w) {
 	w -= (w >> 1) & 0x55555555;
 	w = (w & 0x33333333) + ((w >> 2) & 0x33333333);
-	w = (w + (w >> 4)) & 0x0f0f0f0f;
-	w = (w + (w >> 8)) & 0x00ff00ff;
+	w = (w + (w >> 4)) & 0x0F0F0F0F;
+	w = w + (w >> 8);
 	return(w);
 }
 
@@ -216,7 +218,7 @@ twigoff(Trie *t, uint b) {
 		uint word = (bitmap << 16) | (bitmap & (b-1));	\
 		uint counts = popcount16x2(word);		\
 		off = counts & 0xff;				\
-		max = counts >> 16;				\
+		max = (counts >> 16) & 0xff;			\
 	} while(0)
 
 #endif
