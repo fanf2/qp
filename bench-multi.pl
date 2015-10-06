@@ -45,7 +45,7 @@ for (my $N = 1 ;; ++$N) {
 	printf "%-*s", $w, "";
 	printf " | %-31s", $_ for @prog;
 	print "\n";
-	for my $test (keys %stats) {
+	for my $test (sort keys %stats) {
 		printf "%-*s", $w, $test;
 		for my $prog (@prog) {
 			my $mean = $stats{$test}{$prog}{tot} / $N;
