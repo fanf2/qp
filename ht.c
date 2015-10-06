@@ -59,6 +59,8 @@ next_rec(Trie *t, const char **pkey, size_t *plen, void **pval,
 			if(next_rec(twig(t, s), pkey, plen, pval,
 				    h >> 6, d1, d2 + 6))
 				return(true);
+			else
+				h = 0;
 		return(false);
 	}
 	// We have found the next leaf.
