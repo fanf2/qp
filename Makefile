@@ -1,12 +1,17 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
-all: test-cb test-qp test-qs bench-cb bench-qp bench-qs # test-ht bench-ht
+# implementation codes
+XY=	cb qp qs qn # ht
+TEST=	$(addprefix ./test-,${XY})
+BENCH=  $(addprefix ./bench-,${XY})
+
+all: ${TEST} ${BENCH}
 
 test: all
 	./test-once.sh 10000 100000 /usr/share/dict/words
 
 bench: all
-	./bench-multi.pl ./bench-cb ./bench-qp ./bench-qs \
+	./bench-multi.pl ${BENCH} \
 		-- 1000000 /usr/share/dict/words
 
 clean:
@@ -24,6 +29,9 @@ bench-qp: bench.o Tbl.o qp.o
 bench-qs: bench.o Tbl.o qs.o
 	${CC} ${CFLAGS} -o $@ $^
 
+bench-qn: bench.o Tbl.o qn.o
+	${CC} ${CFLAGS} -o $@ $^
+
 bench-ht: bench.o Tbl.o ht.o siphash24.o
 	${CC} ${CFLAGS} -o $@ $^
 
@@ -34,6 +42,9 @@ test-qp: test.o Tbl.o qp.o qp-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
 test-qs: test.o Tbl.o qs.o qp-debug.o
+	${CC} ${CFLAGS} -o $@ $^
+
+test-qn: test.o Tbl.o qn.o qp-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
 test-ht: test.o Tbl.o ht.o ht-debug.o siphash24.o
@@ -53,6 +64,10 @@ ht-debug.o: ht-debug.c ht.h Tbl.h
 # use hand coded 16 bit popcount
 qs.o: qp.c qp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o qs.o $<
+
+# use SWAR 16 bit x 2 popcount
+qn.o: qp.c qp.h Tbl.h
+	${CC} ${CFLAGS} -DHAVE_NARROW_CPU -c -o qn.o $<
 
 README.html: README.md
 	markdown $< >$@

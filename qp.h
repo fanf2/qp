@@ -68,15 +68,12 @@
 typedef unsigned char byte;
 typedef unsigned int uint;
 
+#if defined(HAVE_NARROW_CPU) || defined(HAVE_SLOW_POPCOUNT)
+
+// NOTE: 16 bits only
+
 static inline uint
 popcount(uint w) {
-	return((uint)__builtin_popcount(w));
-}
-
-// 16 bit popcount() for use when __builtin_popcount() is slow.
-
-static inline uint
-popcount16(uint w) {
 	w -= (w >> 1) & 0x5555;
 	w = (w & 0x3333) + ((w >> 2) & 0x3333);
 	w = (w + (w >> 4)) & 0x0F0F;
@@ -84,8 +81,18 @@ popcount16(uint w) {
 	return(w);
 }
 
-// Parallel popcount of the top and bottom 16 bits in a 32 bit word.
-// NOTE: The caller needs to extract the results by masking with
+#else
+
+static inline uint
+popcount(uint w) {
+	return((uint)__builtin_popcount(w));
+}
+
+#endif
+
+// Parallel popcount of the top and bottom 16 bits in a 32 bit word. This
+// is probably only a win if your CPU is short of registers and/or integer
+// units. NOTE: The caller needs to extract the results by masking with
 // 0x00FF0000 and 0x000000FF for the top and bottom halves.
 
 static inline uint
@@ -194,24 +201,17 @@ hastwig(Trie *t, uint bit) {
 	return(t->branch.bitmap & bit);
 }
 
-#ifndef HAVE_SLOW_POPCOUNT
-
-static inline uint
-twigoff(Trie *t, uint bit) {
-	return(popcount(t->branch.bitmap & (bit - 1)));
-}
-
-#define TWIGOFFMAX(off, max, t, b) do {			\
-		off = twigoff(t, b);			\
-		max = popcount(t->branch.bitmap);	\
-	} while(0)
-
-#else
-
 static inline uint
 twigoff(Trie *t, uint b) {
-	return(popcount16(t->branch.bitmap & (b-1)));
+	return(popcount(t->branch.bitmap & (b-1)));
 }
+
+static inline Trie *
+twig(Trie *t, uint i) {
+	return(&t->branch.twigs[i]);
+}
+
+#ifdef HAVE_NARROW_CPU
 
 #define TWIGOFFMAX(off, max, t, b) do {				\
 		uint bitmap = t->branch.bitmap;			\
@@ -221,11 +221,11 @@ twigoff(Trie *t, uint b) {
 		max = (counts >> 16) & 0xFF;			\
 	} while(0)
 
+#else
+
+#define TWIGOFFMAX(off, max, t, b) do {			\
+		off = twigoff(t, b);			\
+		max = popcount(t->branch.bitmap);	\
+	} while(0)
+
 #endif
-
-// Argument i is result of twigoff()
-
-static inline Trie *
-twig(Trie *t, uint i) {
-	return(&t->branch.twigs[i]);
-}
