@@ -66,20 +66,19 @@ main(int argc, char *argv[]) {
 			usage();
 		case('*'):
 			if(Tget(t, key))
-				putchar('+');
+				putchar('*');
 			else
-				putchar('-');
+				putchar('=');
 			continue;
 		case('+'):
 			errno = 0;
 			void *val = Tget(t, key);
-			if(val == NULL)
-				val = key;
-			t = Tsetl(t, key, len, val);
+			t = Tsetl(t, key, len, val == NULL ? key : val);
 			if(t == NULL)
 				die("Tbl");
-			trace(t, s, key);
-			if(val != key)
+			if(!val)
+				trace(t, s, key);
+			else
 				free(key);
 			continue;
 		case('-'):
@@ -89,7 +88,8 @@ main(int argc, char *argv[]) {
 			t = Tdelkv(t, key, len, &rkey, &rval);
 			if(t == NULL && errno != 0)
 				die("Tbl");
-			trace(t, s, key);
+			if(rkey)
+				trace(t, s, key);
 			free(key);
 			free(rkey);
 			continue;

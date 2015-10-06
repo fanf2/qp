@@ -1,6 +1,6 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
-all: test-cb test-qp test-qs bench-cb bench-qp bench-qs
+all: test-cb test-qp test-qs test-ht bench-cb bench-qp bench-qs bench-ht
 
 test: all
 	./test-once.sh 10000 100000 /usr/share/dict/words
@@ -24,6 +24,9 @@ bench-qp: bench.o Tbl.o qp.o
 bench-qs: bench.o Tbl.o qs.o
 	${CC} ${CFLAGS} -o $@ $^
 
+bench-ht: bench.o Tbl.o ht.o siphash24.o
+	${CC} ${CFLAGS} -o $@ $^
+
 test-cb: test.o Tbl.o cb.o cb-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
@@ -33,13 +36,19 @@ test-qp: test.o Tbl.o qp.o qp-debug.o
 test-qs: test.o Tbl.o qs.o qp-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
+test-ht: test.o Tbl.o ht.o ht-debug.o siphash24.o
+	${CC} ${CFLAGS} -o $@ $^
+
 Tbl.o: Tbl.c Tbl.h
 test.o: test.c Tbl.h
 bench.o: bench.c Tbl.h
+siphash24.o: siphash24.c
 cb.o: cb.c cb.h Tbl.h
 qp.o: qp.c qp.h Tbl.h
+ht.o: ht.c ht.h Tbl.h
 cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
+ht-debug.o: ht-debug.c ht.h Tbl.h
 
 # use hand coded 16 bit popcount
 qs.o: qp.c qp.h Tbl.h
