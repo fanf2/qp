@@ -86,7 +86,7 @@ popcount16(uint w) {
 
 // Parallel popcount of the top and bottom 16 bits in a 32 bit word.
 // NOTE: The caller needs to extract the results by masking with
-// 0x00FF0000 and 0x000000FF for the top and bottom halves
+// 0x00FF0000 and 0x000000FF for the top and bottom halves.
 
 static inline uint
 popcount16x2(uint w) {
@@ -217,8 +217,8 @@ twigoff(Trie *t, uint b) {
 		uint bitmap = t->branch.bitmap;			\
 		uint word = (bitmap << 16) | (bitmap & (b-1));	\
 		uint counts = popcount16x2(word);		\
-		off = counts & 0xff;				\
-		max = (counts >> 16) & 0xff;			\
+		off = counts & 0xFF;				\
+		max = (counts >> 16) & 0xFF;			\
 	} while(0)
 
 #endif
