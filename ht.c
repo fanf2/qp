@@ -174,7 +174,7 @@ newbranch:;
 	if(twigs == NULL) return(NULL);
 	Trie t2 = *t; // Save before overwriting.
 	uint64_t h2 = hash(t->key, strlen(t->key), d1);
-	uint64_t b2 = twigbit(h2 >>= d2);
+	uint64_t b2 = twigbit(h2 >>= d2 - 6);
 	t->map = b1 | b2;
 	twigset(t, twigs);
 	*twig(t, twigoff(t, b1)) = t1;
