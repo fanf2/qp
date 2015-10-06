@@ -1,6 +1,6 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
-all: test-cb test-qp test-qs test-ht bench-cb bench-qp bench-qs bench-ht
+all: test-cb test-qp test-qs bench-cb bench-qp bench-qs # test-ht bench-ht
 
 test: all
 	./test-once.sh 10000 100000 /usr/share/dict/words
