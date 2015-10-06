@@ -151,6 +151,7 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 		return(tbl);
 	}
 	Trie *t = tbl;
+	Trie t1 = { .key = key, .val = val };
 	uint d1, d2;
 	uint64_t b1;
 	for(d1 = 0 ;; ++d1) {
@@ -171,7 +172,6 @@ leaf:	if(strcmp(key, t->key) != 0)
 newbranch:;
 	Trie *twigs = malloc(sizeof(Trie) * 2);
 	if(twigs == NULL) return(NULL);
-	Trie t1 = { .key = key, .val = val };
 	Trie t2 = *t; // Save before overwriting.
 	uint64_t h2 = hash(t->key, strlen(t->key), d1);
 	uint64_t b2 = twigbit(h2 >>= d2);
