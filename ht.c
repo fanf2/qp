@@ -22,24 +22,25 @@ hash(const char *key, size_t len, uint depth) {
 }
 
 bool
-Tgetkv(Trie *t, const char *key, size_t len, const char **pkey, void **pval) {
-	if(t == NULL)
+Tgetkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
+	if(tbl == NULL)
 		return(false);
+	Trie *t = &tbl->root;
 	for(uint d1 = 0 ;; ++d1) {
 		uint64_t h = hash(key, len, d1);
-		for(uint d2 = 6; d2 < 64; d2 +=6, h >>= 6) {
+		for(uint d2 = lglgN; d2 < Hbits; d2 += lglgN, h >>= lglgN) {
 			if(!isbranch(t))
 				goto leaf;
-			uint64_t b = twigbit(h);
+			uintptr_t b = twigbit(h);
 			if(!hastwig(t, b))
 				return(false);
 			t = twig(t, twigoff(t, b));
 		}
 	}
-leaf:	if(strcmp(key, t->key) != 0)
+leaf:	if(strcmp(key, t->leaf.key) != 0)
 		return(false);
-	*pkey = t->key;
-	*pval = t->val;
+	*pkey = t->leaf.key;
+	*pval = t->leaf.val;
 	return(true);
 }
 
@@ -47,17 +48,17 @@ static bool
 next_rec(Trie *t, const char **pkey, size_t *plen, void **pval,
 	 uint64_t h, uint d1, uint d2) {
 	if(isbranch(t)) {
-		if(d2 >= 64) {
+		if(d2 >= Hbits) {
 			h = *pkey == NULL ? 0 :
 				hash(*pkey, *plen, d1++);
-			d2 = 6;
+			d2 = lglgN;
 		}
-		uint64_t b = twigbit(h);
+		uintptr_t b = twigbit(h);
 		uint s = twigoff(t, b);
 		uint m = twigmax(t);
 		for(; s < m; s++)
 			if(next_rec(twig(t, s), pkey, plen, pval,
-				    h >> 6, d1, d2 + 6))
+				    h >> lglgN, d1, d2 + lglgN))
 				return(true);
 			else
 				h = 0;
@@ -65,13 +66,13 @@ next_rec(Trie *t, const char **pkey, size_t *plen, void **pval,
 	}
 	// We have found the next leaf.
 	if(*pkey == NULL) {
-		*pkey = t->key;
+		*pkey = t->leaf.key;
 		*plen = strlen(*pkey);
-		*pval = t->val;
+		*pval = t->leaf.val;
 		return(true);
 	}
 	// We have found this leaf, so start looking for the next one.
-	if(strcmp(*pkey, t->key) == 0) {
+	if(strcmp(*pkey, t->leaf.key) == 0) {
 		*pkey = NULL;
 		*plen = 0;
 		return(false);
@@ -87,19 +88,19 @@ Tnextl(Tbl *tbl, const char **pkey, size_t *plen, void **pval) {
 		*plen = 0;
 		return(NULL);
 	}
-	return(next_rec(tbl, pkey, plen, pval, 0, 0, 64));
+	return(next_rec(&tbl->root, pkey, plen, pval, 0, 0, Hbits));
 }
 
 Tbl *
 Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
 		return(NULL);
-	Trie *t = tbl, *p = NULL;
+	Trie *t = &tbl->root, *p = NULL;
 	uint64_t h = 0;
-	uint64_t b = 0;
+	uintptr_t b = 0;
 	for(uint d1 = 0 ;; ++d1) {
 		h = hash(key, len, d1);
-		for(uint d2 = 6; d2 < 64; d2 += 6, h >>= 6) {
+		for(uint d2 = lglgN; d2 < Hbits; d2 += lglgN, h >>= lglgN) {
 			if(!isbranch(t))
 				goto leaf;
 			b = twigbit(h);
@@ -108,10 +109,10 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 			p = t; t = twig(t, twigoff(t, b));
 		}
 	}
-leaf:	if(strcmp(key, t->key) != 0)
+leaf:	if(strcmp(key, t->leaf.key) != 0)
 		return(tbl);
-	*pkey = t->key;
-	*pval = t->val;
+	*pkey = t->leaf.key;
+	*pval = t->leaf.val;
 	if(p == NULL) {
 		free(tbl);
 		return(NULL);
@@ -132,14 +133,14 @@ leaf:	if(strcmp(key, t->key) != 0)
 	memcpy(twigs+s, twig(t, s+1), sizeof(Trie) * (m - s - 1));
 	free(twig(t, 0));
 	twigset(t, twigs);
-	t->map &= ~b;
+	t->branch.map &= ~b;
 	return(tbl);
 }
 
 Tbl *
 Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	// Ensure flag bits are zero.
-	if(((uint64_t)val & 1) != 0) {
+	if(((uintptr_t)val & 1) != 0) {
 		errno = EINVAL;
 		return(NULL);
 	}
@@ -149,17 +150,17 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	if(tbl == NULL) {
 		tbl = malloc(sizeof(*tbl));
 		if(tbl == NULL) return(NULL);
-		tbl->key = key;
-		tbl->val = val;
+		tbl->root.leaf.key = key;
+		tbl->root.leaf.val = val;
 		return(tbl);
 	}
-	Trie *t = tbl;
-	Trie t1 = { .key = key, .val = val };
+	Trie *t = &tbl->root;
+	Trie t1 = { .leaf = { .key = key, .val = val } };
 	uint d1, d2;
-	uint64_t b1;
+	uintptr_t b1;
 	for(d1 = 0 ;; ++d1) {
 		uint64_t h = hash(key, len, d1);
-		for(d2 = 6; d2 < 64; d2 += 6, h >>= 6) {
+		for(d2 = lglgN; d2 < Hbits; d2 += lglgN, h >>= lglgN) {
 			b1 = twigbit(h);
 			if(!isbranch(t))
 				goto leaf;
@@ -168,18 +169,18 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 			t = twig(t, twigoff(t, b1));
 		}
 	}
-leaf:	if(strcmp(key, t->key) != 0)
+leaf:	if(strcmp(key, t->leaf.key) != 0)
 		goto newbranch;
-	t->val = val;
+	t->leaf.val = val;
 	return(tbl);
 newbranch:;
 	// XXX May need multiple levels of trie here.
 	Trie *twigs = malloc(sizeof(Trie) * 2);
 	if(twigs == NULL) return(NULL);
 	Trie t2 = *t; // Save before overwriting.
-	uint64_t h2 = hash(t->key, strlen(t->key), d1);
-	uint64_t b2 = twigbit(h2 >>= d2 - 6);
-	t->map = b1 | b2;
+	uint64_t h2 = hash(t->leaf.key, strlen(t->leaf.key), d1);
+	uint64_t b2 = twigbit(h2 >>= d2 - lglgN);
+	t->branch.map = b1 | b2;
 	twigset(t, twigs);
 	*twig(t, twigoff(t, b1)) = t1;
 	*twig(t, twigoff(t, b2)) = t2;
@@ -194,6 +195,6 @@ growbranch:;
 	memcpy(twigs+s+1, twig(t, s), sizeof(Trie) * (m - s));
 	free(twig(t, 0));
 	twigset(t, twigs);
-	t->map |= b1;
+	t->branch.map |= b1;
 	return(tbl);
 }

@@ -1,7 +1,7 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
 # implementation codes
-XY=	cb qp qs qn # ht
+XY=	cb qp qs qn ht
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 

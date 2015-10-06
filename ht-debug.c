@@ -27,9 +27,9 @@ dump_rec(Trie *t, int d) {
 	} else {
 		printf("Tdump%*s leaf %p\n", d, "", t);
 		printf("Tdump%*s leaf key %p %s\n", d, "",
-		       t->key, t->key);
+		       t->leaf.key, t->leaf.key);
 		printf("Tdump%*s leaf val %p\n", d, "",
-		       t->val);
+		       t->leaf.val);
 	}
 }
 
@@ -37,7 +37,7 @@ void
 Tdump(Tbl *tbl) {
 	printf("Tdump root %p\n", tbl);
 	if(tbl != NULL)
-		dump_rec(tbl, 0);
+		dump_rec(&tbl->root, 0);
 }
 
 static void
