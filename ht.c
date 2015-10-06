@@ -120,6 +120,7 @@ leaf:	if(strcmp(key, t->key) != 0)
 	uint s = twigoff(t, b), m = twigmax(t);
 	if(m == 2) {
 		// Move the other twig to the parent branch.
+		// XXX: May need to unsplice deep hash collision here.
 		Trie *twigs = twig(t, 0);
 		*t = *twig(t, !s);
 		free(twigs);
@@ -172,6 +173,7 @@ leaf:	if(strcmp(key, t->key) != 0)
 	t->val = val;
 	return(tbl);
 newbranch:;
+	// XXX May need multiple levels of trie here.
 	Trie *twigs = malloc(sizeof(Trie) * 2);
 	if(twigs == NULL) return(NULL);
 	Trie t2 = *t; // Save before overwriting.
