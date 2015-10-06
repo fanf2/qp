@@ -43,7 +43,7 @@ for (my $N = 1 ;; ++$N) {
 	}
 
 	printf "%-*s", $w, "";
-	printf " | %-28s", $_ for @prog;
+	printf " | %-31s", $_ for @prog;
 	print "\n";
 	for my $test (keys %stats) {
 		printf "%-*s", $w, $test;
