@@ -23,8 +23,8 @@ usage
 -----
 
 Type `make test` or `make bench`. (You will need to use GNU make.)
-
-Build options:
+You might want to add `-mpopcnt` to the CFLAGS to get SSE4.2 POPCNT
+instructions. Other build options:
 
 * `HAVE_SLOW_POPCOUNT`
 	compiles the code to use a hand-coded 16 bit popcount()
@@ -34,7 +34,7 @@ Build options:
 * `HAVE_NARROW_CPU`
 	uses a 2 x 16 bit SIMD-within-a-register popcount instead of
 	two separate 16 bit popcounts; might be useful on small CPUs
-	but not actually helpful on 64 bit Intel.
+	but makes little difference on 64 bit Intel.
 
 The makefile builds {test,bench}-{qs,qn} with these options; they are
 otherwise the same as test-qp and bench-qp.

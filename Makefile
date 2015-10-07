@@ -1,3 +1,4 @@
+# You may need -mpopcnt to get the compiler to emit POPCNT instructions
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
 # implementation codes
