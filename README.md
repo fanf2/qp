@@ -15,7 +15,7 @@ compressed using the popcount trick to omit unused branches.
 Based on a few benchmarks, qp tries have about 1/3 less memory
 overhead of crit-bit tries, 1.3 words vs 2 words of overhead per item;
 the average depth of a qp trie is about half that of a crit-bit trie;
-and the overall speed of qp tries is about 10% faster than crit-bit
+and the overall speed of qp tries is about 30% faster than crit-bit
 tries. The qp trie implementation is about 40% bigger.
 
 
