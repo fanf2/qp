@@ -10,9 +10,9 @@ all: ${TEST} ${BENCH}
 test: all
 	./test-once.sh 10000 100000 /usr/share/dict/words
 
-bench: all
+bench: all top-1m
 	./bench-multi.pl ${BENCH} \
-		-- 1000000 /usr/share/dict/words
+		-- 1000000 top-1m
 
 clean:
 	rm -f test-?? bench-?? *.o
@@ -68,6 +68,14 @@ qs.o: qp.c qp.h Tbl.h
 # use SWAR 16 bit x 2 popcount
 qn.o: qp.c qp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_NARROW_CPU -c -o qn.o $<
+
+top-1m: top-1m.csv
+	sed 's/^[0-9]*,//' <$< >$@
+top-1m.csv: top-1m.csv.zip
+	rm -f $@
+	unzip $<
+top-1m.csv.zip:
+	curl -O http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
 
 README.html: README.md
 	markdown $< >$@
