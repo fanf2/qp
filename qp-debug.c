@@ -16,8 +16,8 @@
 static void
 dump_rec(Trie *t, int d) {
 	if(isbranch(t)) {
-		printf("Tdump%*s branch %p %llu %d\n", d, "", t,
-		       t->branch.index, t->branch.flags);
+		printf("Tdump%*s branch %p %zu %d\n", d, "", t,
+		    (size_t)t->branch.index, t->branch.flags);
 		int dd = 2 + t->branch.index * 4 + (t->branch.flags - 1) * 2;
 		assert(dd > d);
 		for(uint i = 0; i < 16; i++) {
