@@ -6,14 +6,13 @@ XY=	cb qp qs qn #ht
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 
-all: ${TEST} ${BENCH}
+all: ${TEST} ${BENCH} top-1m
 
 test: all
-	./test-once.sh 10000 100000 /usr/share/dict/words
+	./test-once.sh 10000 100000 top-1m
 
 bench: all top-1m
-	./bench-multi.pl ${BENCH} \
-		-- 1000000 top-1m
+	./bench-multi.pl ${BENCH} -- 1000000 top-1m
 
 clean:
 	rm -f test-?? bench-?? *.o
