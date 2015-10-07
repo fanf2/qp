@@ -75,6 +75,7 @@ top-1m: top-1m.csv
 top-1m.csv: top-1m.csv.zip
 	rm -f $@
 	unzip $<
+	touch $@
 top-1m.csv.zip:
 	curl -O http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
 
