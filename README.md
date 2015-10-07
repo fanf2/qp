@@ -23,8 +23,8 @@ usage
 -----
 
 Type `make test` or `make bench`. (You will need to use GNU make.)
-You might want to add `-mpopcnt` to the CFLAGS to get SSE4.2 POPCNT
-instructions. Other build options:
+If you have a recent Intel CPU you might want to add `-mpopcnt` to
+the CFLAGS to get SSE4.2 POPCNT instructions. Other build options:
 
 * `HAVE_SLOW_POPCOUNT`
 	compiles the code to use a hand-coded 16 bit popcount()
@@ -44,7 +44,7 @@ caveats
 -------
 
 The code has only been tested on 64-bit little endian machines. It
-might work on 32-bit machines (provided the compilter supports 64 bit
+might work on 32-bit machines (provided the compiler supports 64 bit
 integers) and probably won't work on a big-endian machine. It should
 be easy to port by tweaking the struct bit-field layouts. Key strings
 can be byte-aligned but values must be word-aligned; you can swap this
