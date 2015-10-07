@@ -27,8 +27,8 @@ If you have a recent Intel CPU you might want to add `-mpopcnt` to
 the CFLAGS to get SSE4.2 POPCNT instructions. Other build options:
 
 * `HAVE_SLOW_POPCOUNT`
-	compiles the code to use a hand-coded 16 bit popcount()
-	instead of __builtin_popcount(). No need for this with
+	compiles the code to use a hand-coded 16 bit `popcount()`
+	instead of `__builtin_popcount()`. No need for this with
 	recent clang/llvm; useful with older gcc.
 
 * `HAVE_NARROW_CPU`
@@ -66,12 +66,12 @@ You can clone or browse the repository from:
 articles
 --------
 
-* [2015-10-04](https://github.com/fanf2/qp/blob/master/blog-2015-10-04.md)
+* [2015-10-04](https://github.com/fanf2/qp/blob/master/blog-2015-10-04.md) -
 	qp tries: smaller and faster than crit-bit tries
 
 	A blog article / announcement.
 
-* [2015-10-07](https://github.com/fanf2/qp/blob/master/blog-2015-10-07.md)
+* [2015-10-07](https://github.com/fanf2/qp/blob/master/blog-2015-10-07.md) -
 	crit-bit tries without allocation
 
 	An unimplemented sketch of a neat way to use crit-bit tries.
