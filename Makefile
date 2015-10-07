@@ -11,7 +11,7 @@ all: ${TEST} ${BENCH} top-1m
 test: all
 	./test-once.sh 10000 100000 top-1m
 
-bench: all top-1m
+bench: all
 	./bench-multi.pl ${BENCH} -- 1000000 top-1m
 
 clean:
@@ -77,6 +77,13 @@ top-1m.csv: top-1m.csv.zip
 	touch $@
 top-1m.csv.zip:
 	curl -O http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
+
+bind9-words: bind9
+	find bind9/ -name '*.c' -o -name '*.h' | \
+	xargs perl -ne ' \
+		$$a{$$_} = 1 for m{\b[A-Za-z0-9_]+\b}g; \
+		END { print "$$_\n" for keys %a } \
+	' >bind9-words
 
 README.html: README.md
 	markdown $< >$@
