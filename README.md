@@ -71,6 +71,12 @@ articles
 
 	A blog article / announcement.
 
+* [2015-10-07](https://github.com/fanf2/qp/blob/master/blog-2015-10-07.md)
+	crit-bit tries without allocation
+
+	An unimplemented sketch of a neat way to use crit-bit tries.
+
+
 thanks
 ------
 
