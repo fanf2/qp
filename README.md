@@ -63,8 +63,8 @@ You can clone or browse the repository from:
 * <https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git>
 
 
-articles
---------
+articles and notes
+------------------
 
 * [2015-10-04](https://github.com/fanf2/qp/blob/master/blog-2015-10-04.md) -
 	qp tries: smaller and faster than crit-bit tries
@@ -76,12 +76,19 @@ articles
 
 	An unimplemented sketch of a neat way to use crit-bit tries.
 
+* [jumbo branches](notes-jumbo.md)
+* [embedded keys](notes-embed-key.md)
+* [todo](notes-todo.md)
+
 
 thanks
 ------
 
 Marek Vavrusa enthusiastically put this code to work and provided
 encouraging feedback.
+
+Simon Tatham proved that parent pointers are not needed for embedded
+crit-bit tries.
 
 
 roadmap
