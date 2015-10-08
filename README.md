@@ -66,12 +66,12 @@ You can clone or browse the repository from:
 articles
 --------
 
-* [2015-10-04](https://github.com/fanf2/qp/blob/master/blog-2015-10-04.md) -
+* [2015-10-04](blog-2015-10-04.md) -
 	qp tries: smaller and faster than crit-bit tries
 
 	A blog article / announcement.
 
-* [2015-10-07](https://github.com/fanf2/qp/blob/master/blog-2015-10-07.md) -
+* [2015-10-07](blog-2015-10-07.md) -
 	crit-bit tries without allocation
 
 	An unimplemented sketch of a neat way to use crit-bit tries.
@@ -79,9 +79,9 @@ articles
 notes
 -----
 
-* [jumbo branches](https://github.com/fanf2/qp/blob/master/notes-jumbo.md)
-* [embedded keys](https://github.com/fanf2/qp/blob/master/notes-embed-key.md)
-* [todo](https://github.com/fanf2/qp/blob/master/notes-todo.md)
+* [jumbo branches](notes-jumbo.md)
+* [embedded keys](notes-embed-key.md)
+* [todo](notes-todo.md)
 
 
 thanks

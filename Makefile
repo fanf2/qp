@@ -85,11 +85,12 @@ bind9-words: bind9
 		END { print "$$_\n" for keys %a } \
 	' >bind9-words
 
-README.html: README.md
-	markdown $< >$@
+html:
+	for f in *.md; do markdown <$$f >$${f%md}html; done
+	[ -h index.html ] || ln README.html index.html
 
-upload: README.html
-	rsync README.html chiark:public-html/prog/qp/index.html
+upload: html
 	git push chiark:public-git/qp.git
 	git push git@github.com:fanf2/qp.git
 	git push ucs@git.csx.cam.ac.uk:u/fanf2/radish.git
+	ssh chiark public-html/prog/qp/.htupdate

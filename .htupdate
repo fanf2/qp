@@ -1,0 +1,4 @@
+#!/bin/sh -e
+cd public-html/prog/qp
+git pull
+make html
