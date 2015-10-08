@@ -76,9 +76,9 @@ articles and notes
 
 	An unimplemented sketch of a neat way to use crit-bit tries.
 
-* [jumbo branches](notes-jumbo.md)
-* [embedded keys](notes-embed-key.md)
-* [todo](notes-todo.md)
+* [jumbo branches](https://github.com/fanf2/qp/blob/master/notes-jumbo.md)
+* [embedded keys](https://github.com/fanf2/qp/blob/master/notes-embed-key.md)
+* [todo](https://github.com/fanf2/qp/blob/master/notes-todo.md)
 
 
 thanks
