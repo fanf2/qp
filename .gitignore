@@ -5,3 +5,5 @@ bench-??
 test-??
 test-out-*
 popcount-test
+bind9
+top-1m*

@@ -87,7 +87,6 @@ bind9-words: bind9
 
 html:
 	for f in *.md; do markdown <$$f >$${f%md}html; done
-	[ -h index.html ] || ln README.html index.html
 
 upload: html
 	git push chiark:public-git/qp.git

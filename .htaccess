@@ -1,1 +1,2 @@
+RedirectMatch ^/prog/qp/?$       http://dotat.at/prog/qp/README.html
 RedirectMatch ^/prog/qp/(.*)\.md http://dotat.at/prog/qp/$1.html
