@@ -65,6 +65,10 @@ articles
 
 	An unimplemented sketch of a neat way to use crit-bit tries.
 
+* [2015-10-11](blog-2015-10-11.md) -
+	prefetching tries
+
+
 thanks
 ------
 
