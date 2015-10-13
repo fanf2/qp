@@ -34,6 +34,15 @@ Marek Vavrusa
 > pretty consistent 7% speed bump on my simple benchmark. This is
 > shaping up nicely!
 
+<https://twitter.com/vavrusam/status/654026338865704963>
+
+> crude bench on /usr..dict/words sample (almost no common pref),
+> hopscotch htable (85% fill) vs qp: 2.19x faster, 12% less mem
+
+<https://twitter.com/vavrusam/status/654026771621396480>
+
+> that means qp tries are still incredible, same ballpark perf for
+> such degenerate use case and still can do range/prefix scan!
 
 
 Justin Mason
