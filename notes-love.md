@@ -29,9 +29,7 @@ Marek Vavrusa
 > Really enjoyed toying with @fanf's qp tries today. It's been a while
 > working on this sort of stuff...
 
-re. prefetching:
-
-<https://twitter.com/vavrusam/status/651748801728921600>
+<https://twitter.com/vavrusam/status/651748801728921600> (prefetching)
 
 > pretty consistent 7% speed bump on my simple benchmark. This is
 > shaping up nicely!
@@ -44,9 +42,7 @@ Justin Mason
 
 > Interesting new data structure from Tony Finch.
 
-re. prefetching:
-
-<https://twitter.com/jmason/status/653294858296295424>
+<https://twitter.com/jmason/status/653294858296295424> (prefetching)
 
 > this is awesome. every time I've tried using tries, the memory
 > access patterns vs cache killed its performance
@@ -69,3 +65,14 @@ Devon H. O'Dell
 
 > We've a compelling use case for crit-bit, and I was going to replace
 > it with a specialized rbt (which performed better), but qp > *
+
+<https://twitter.com/dhobsd/status/653958255937384449> (embedded crit-bit)
+
+> Oh, also, the cb tree we use is a parentless embedded tree; source
+> at https://github.com/glk/critbit (it's a bit of an eyesore though)
+
+<https://twitter.com/dhobsd/status/653958255937384449>
+
+> The "qp trie" by @fanf is amazing and you should use it.
+> Preliminary synthetic benchmarks against some alternatives:
+> https://9vx.org/post/qp-tries/
