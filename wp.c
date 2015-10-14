@@ -154,9 +154,9 @@ newkey:; // We have the branch's index; what are its flags?
 	uint f =  k1 ^ k2;
 	// See diagram in wp.h ... this can probably be faster.
 	switch(i % 3) {
-	case(0): f = (f & 0xFC) ? 1 : 7; break;
-	case(1): f = (f & 0xF0) ? 7 : 5; break;
-	case(2): f = (f & 0xC0) ? 5 : 3; break;
+	case(0): f = (f & 0xFC) ?           1 : 7; break;
+	case(1): f = (f & 0xF0) ? (i -= 1), 7 : 5; break;
+	case(2): f = (f & 0xC0) ? (i -= 1), 5 : 3; break;
 	}
 	k1 = k1 << 8 | (k1 ? (byte)key[i+1] : 0);
 	k2 = k2 << 8 | (k2 ? (byte)t->leaf.key[i+1] : 0);
