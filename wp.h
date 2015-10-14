@@ -9,6 +9,8 @@ typedef unsigned int uint;
 
 typedef uint64_t Tbitmap;
 
+const char *dump_bitmap(Tbitmap w);
+
 #if defined(HAVE_SLOW_POPCOUNT)
 
 static inline uint
@@ -83,9 +85,9 @@ isbranch(Trie *t) {
 // BUT NOTE! We never use overlapping 6-bit sections as suggested
 // by that diagram, we use successive sections like:
 //
-// 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2  index % 3
 // 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0  bit number
-// 0 0 0 0 0 0 6 6 6 6 6 6 4 4 4 4 4 4 2 2 2 2 2 2  shift
+// 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2  index % 3
+// 1 1 1 1 1 1 7 7 7 7 7 7 5 5 5 5 5 5 3 3 3 3 3 3  flags
 
 static inline Tbitmap
 nibbit(uint k, uint flags) {

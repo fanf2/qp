@@ -13,11 +13,26 @@
 #include "Tbl.h"
 #include "wp.h"
 
+const char *
+dump_bitmap(Tbitmap w) {
+	static char buf[64*3];
+	uint n = 0;
+	n += snprintf(buf+n, sizeof(buf)-n, "(");
+	for(uint i = 0; i < 64; i++) {
+		Tbitmap b = 1ULL << i;
+		if(w & b)
+			n += snprintf(buf+n, sizeof(buf)-n, "%u,", i);
+	}
+	if(n > 1)
+		buf[n-1] = ')';
+	return buf;
+}
+
 static void
 dump_rec(Trie *t, int d) {
 	if(isbranch(t)) {
-		printf("Tdump%*s branch %p %llx %zu %d\n", d, "", t,
-		    t->branch.bitmap,
+		printf("Tdump%*s branch %p %s %zu %d\n", d, "", t,
+		    dump_bitmap(t->branch.bitmap),
 		    (size_t)t->branch.index, t->branch.flags);
 		int dd = 2 + t->branch.index * 6 + t->branch.flags - 1;
 		assert(dd > d);
