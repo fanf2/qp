@@ -2,7 +2,7 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
 # implementation codes
-XY=	cb qp qs qn #ht
+XY=	cb qp qs qn wp #ht
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 
@@ -32,6 +32,9 @@ bench-qs: bench.o Tbl.o qs.o
 bench-qn: bench.o Tbl.o qn.o
 	${CC} ${CFLAGS} -o $@ $^
 
+bench-wp: bench.o Tbl.o wp.o
+	${CC} ${CFLAGS} -o $@ $^
+
 bench-ht: bench.o Tbl.o ht.o siphash24.o
 	${CC} ${CFLAGS} -o $@ $^
 
@@ -47,6 +50,9 @@ test-qs: test.o Tbl.o qs.o qp-debug.o
 test-qn: test.o Tbl.o qn.o qp-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
+test-wp: test.o Tbl.o wp.o wp-debug.o
+	${CC} ${CFLAGS} -o $@ $^
+
 test-ht: test.o Tbl.o ht.o ht-debug.o siphash24.o
 	${CC} ${CFLAGS} -o $@ $^
 
@@ -59,6 +65,7 @@ qp.o: qp.c qp.h Tbl.h
 ht.o: ht.c ht.h Tbl.h
 cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
+wp-debug.o: wp-debug.c wp.h Tbl.h
 ht-debug.o: ht-debug.c ht.h Tbl.h
 
 # use hand coded 16 bit popcount
@@ -68,6 +75,10 @@ qs.o: qp.c qp.h Tbl.h
 # use SWAR 16 bit x 2 popcount
 qn.o: qp.c qp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_NARROW_CPU -c -o qn.o $<
+
+# use hand coded 64 bit popcount
+wp.o: wp.c wp.h Tbl.h
+	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o wp.o $<
 
 top-1m: top-1m.csv
 	sed 's/^[0-9]*,//' <$< >$@
