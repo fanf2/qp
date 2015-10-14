@@ -16,12 +16,13 @@
 static void
 dump_rec(Trie *t, int d) {
 	if(isbranch(t)) {
-		printf("Tdump%*s branch %p %zu %d\n", d, "", t,
+		printf("Tdump%*s branch %p %llx %zu %d\n", d, "", t,
+		    t->branch.bitmap,
 		    (size_t)t->branch.index, t->branch.flags);
 		int dd = 2 + t->branch.index * 6 + t->branch.flags - 1;
 		assert(dd > d);
 		for(uint i = 0; i < 64; i++) {
-			Tbitmap b = 1 << i;
+			Tbitmap b = 1ULL << i;
 			if(hastwig(t, b)) {
 				printf("Tdump%*s twig %d\n", d, "", i);
 				dump_rec(twig(t, twigoff(t, b)), dd);
@@ -47,10 +48,12 @@ static void
 size_rec(Trie *t, uint d, size_t *rsize, size_t *rdepth, size_t *rleaves) {
 	*rsize += sizeof(*t);
 	if(isbranch(t)) {
-		for(Tbitmap b = 1; b != 0; b <<= 1)
+		for(uint i = 0; i < 64; i++) {
+			Tbitmap b = 1ULL << i;
 			if(hastwig(t, b))
 				size_rec(twig(t, twigoff(t, b)),
 					 d+1, rsize, rdepth, rleaves);
+		}
 	} else {
 		*rdepth += d;
 		*rleaves += 1;

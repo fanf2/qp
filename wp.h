@@ -90,7 +90,7 @@ isbranch(Trie *t) {
 static inline Tbitmap
 nibbit(uint k, uint flags) {
 	uint shift = 16 - 6 - (flags & 6);
-	return(1 << ((k >> shift) & 0xFFFULL));
+	return(1ULL << ((k >> shift) & 0xFFFULL));
 }
 
 // Extract a nibble from a key and turn it into a bitmask.
@@ -111,7 +111,7 @@ hastwig(Trie *t, Tbitmap bit) {
 
 static inline uint
 twigoff(Trie *t, Tbitmap b) {
-	return(popcount(t->branch.bitmap & (b-1)));
+	return(popcount(t->branch.bitmap & (b-1ULL)));
 }
 
 static inline Trie *
