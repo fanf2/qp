@@ -16,6 +16,9 @@ EOF
 
 my %stats;
 my $w = 0;
+for (@prog) {
+    $w = length if $w < length;
+}
 
 open my $rnd, '<', '/dev/urandom'
     or die "open /dev/urandom: $!\n";
@@ -37,17 +40,16 @@ for (my $N = 1 ;; ++$N) {
 				    or $stats{$test}{$prog}{min} > $time;
 				$stats{$test}{$prog}{tot} += $time;
 				$stats{$test}{$prog}{tot2} += $time * $time;
-				$w = length $test if $w < length $test;
 			}
 		}
 	}
 
 	printf "%-*s", $w, "";
-	printf " | %-31s", $_ for @prog;
+	printf " | %-31s", $_ for sort keys %stats;
 	print "\n";
-	for my $test (sort keys %stats) {
-		printf "%-*s", $w, $test;
-		for my $prog (@prog) {
+	for my $prog (@prog) {
+		printf "%-*s", $w, $prog;
+		for my $test (sort keys %stats) {
 			my $mean = $stats{$test}{$prog}{tot} / $N;
 			my $var = $stats{$test}{$prog}{tot2} / $N - $mean * $mean;
 			printf " | %.3f : %.3f < %.3f +/- %.3f",
