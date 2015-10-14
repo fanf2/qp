@@ -20,7 +20,7 @@ dump_rec(Trie *t, int d) {
 		    (size_t)t->branch.index, t->branch.flags);
 		int dd = 2 + t->branch.index * 6 + t->branch.flags - 1;
 		assert(dd > d);
-		for(uint i = 0; i < 16; i++) {
+		for(uint i = 0; i < 64; i++) {
 			Tbitmap b = 1 << i;
 			if(hastwig(t, b)) {
 				printf("Tdump%*s twig %d\n", d, "", i);
