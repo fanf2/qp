@@ -150,7 +150,7 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	t->leaf.val = val;
 	return(tbl);
 newkey:; // We have the branch's index; what are its flags?
-	byte k1 = (byte)key[i], k2 = (byte)t->leaf.key[i];
+	uint k1 = (byte)key[i], k2 = (byte)t->leaf.key[i];
 	uint f =  k1 ^ k2;
 	// See diagram in wp.h ... this can probably be faster.
 	switch(i % 3) {
