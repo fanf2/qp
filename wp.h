@@ -110,9 +110,10 @@ nibbit(uint k, uint flags) {
 static inline Tbitmap
 twigbit(Trie *t, const char *key, size_t len) {
 	uint64_t i = t->branch.index;
-	uint k = 0;
-	if(i < len) k |= (byte)key[i] << 8;
-	if(i+1 < len) k |= (byte)key[i+1];
+	if(i >= len) return(1ULL);
+	uint k = (byte)key[i] << 8;
+	if(i+1 < len)
+		k |= (byte)key[i+1];
 	return(nibbit(k, t->branch.flags));
 }
 
