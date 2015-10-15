@@ -60,26 +60,28 @@ Tdump(Tbl *tbl) {
 }
 
 static void
-size_rec(Trie *t, uint d, size_t *rsize, size_t *rdepth, size_t *rleaves) {
+size_rec(Trie *t, uint d,
+    size_t *rsize, size_t *rdepth, size_t *rbranches, size_t *rleaves) {
 	*rsize += sizeof(*t);
 	if(isbranch(t)) {
+		*rbranches += 1;
 		for(uint i = 0; i < 64; i++) {
 			Tbitmap b = 1ULL << i;
 			if(hastwig(t, b))
 				size_rec(twig(t, twigoff(t, b)),
-					 d+1, rsize, rdepth, rleaves);
+				    d+1, rsize, rdepth, rbranches, rleaves);
 		}
 	} else {
-		*rdepth += d;
 		*rleaves += 1;
+		*rdepth += d;
 	}
 }
 
 void
 Tsize(Tbl *tbl, const char **rtype,
-      size_t *rsize, size_t *rdepth, size_t *rleaves) {
+    size_t *rsize, size_t *rdepth, size_t *rbranches, size_t *rleaves) {
 	*rtype = "wp";
-	*rsize = *rdepth = *rleaves = 0;
+	*rsize = *rdepth = *rbranches = *rleaves = 0;
 	if(tbl != NULL)
-		size_rec(&tbl->root, 0, rsize, rdepth, rleaves);
+		size_rec(&tbl->root, 0, rsize, rdepth, rbranches, rleaves);
 }

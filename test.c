@@ -98,12 +98,12 @@ main(int argc, char *argv[]) {
 	putchar('\n');
 	if(ferror(stdin))
 		die("read");
-	size_t size, depth, leaves;
+	size_t size, depth, branches, leaves;
 	const char *type;
-	Tsize(t, &type, &size, &depth, &leaves);
+	Tsize(t, &type, &size, &depth, &branches, &leaves);
 	size_t overhead = size / sizeof(void*) - 2 * leaves;
 	fprintf(stderr, "SIZE %s leaves=%zu branches=%zu overhead=%.2f depth=%.2f\n",
-		type, leaves, overhead,
+		type, leaves, branches,
 		(double)overhead / leaves,
 		(double)depth / leaves);
 	const char *key = NULL;

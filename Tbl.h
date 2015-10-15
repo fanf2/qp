@@ -57,6 +57,6 @@ const char *Tnxt(Tbl *tbl, const char *key);
 //
 void Tdump(Tbl *tbl);
 void Tsize(Tbl *tbl, const char **rtype,
-	   size_t *rsize, size_t *rdepth, size_t *rleaves);
+    size_t *rsize, size_t *rdepth, size_t *rbranches, size_t *rleaves);
 
 #endif // Tbl_h
