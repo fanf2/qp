@@ -151,7 +151,12 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	t->leaf.val = val;
 	return(tbl);
 newkey:; // We have the branch's index; what are its flags?
-	// See diagram in wp.h ... this can probably be faster.
+	// Sometimes the first differing bits are in the low-order part
+	// of a 6-bit chunk which overlaps two bytes. In these cases we
+	// have to step back a byte so that the index points to the
+	// first byte that overlaps the first differing 6-bit chunk.
+	// See the diagram in wp.h ... This can probably be faster?
+	// Also, flags = shift | isbranch; and isbranch == 1.
 	switch(i % 3) {
 	case(0): f = (f & 0xFC) ?           1 : 7; break;
 	case(1): f = (f & 0xF0) ? (i -= 1), 7 : 5; break;

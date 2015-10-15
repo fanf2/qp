@@ -4,6 +4,17 @@
 // You may do anything with this. It has no warranty.
 // <http://creativecommons.org/publicdomain/zero/1.0/>
 
+// See qp.h for introductory comments about tries.
+//
+// The wp trie code is a straightforward clone-and-hack of the qp trie
+// code. The difference is that the key is used 6 bits at a time
+// instead of 4 bits, so the bitmap is 2^6 == 64 bits wide instead of
+// 2^4 == 16 bits wide. Trie nodes are three words instead of two words.
+//
+// These bigger nodes mean that (currently) space is wasted in the
+// leaf nodes. It might be possible to reclaim this space by embedding
+// (short) keys in the leaves - see notes-embed-key.md
+
 typedef unsigned char byte;
 typedef unsigned int uint;
 
@@ -71,23 +82,22 @@ isbranch(Trie *t) {
 //
 // Diagram of possible alignments of 6 bits relative to bytes.
 // Bits are numbered little-endian from 0, like in a register.
-// Shifts are numbered big-endian like key indexes.
+// Key indexes and shifts are numbered big-endian, so that they
+// increase as we go along the key from left to right.
 //
-//  ....key[0]..... ....key[1].....
-//  7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0
-// |           |                      index=0 shift=0
-//     |           |                  index=0 shift=2
-//         |           |              index=0 shift=4
-//             |           |          index=0 shift=6
-//                 |           |      index=1 shift=0
-//                     |           |  index=1 shift=2
+// 6-bit chunks never overlap, so they always have a fixed alignment
+// relative to groups of three bytes, as illustrated below. We only
+// need to care about this alignment when we are working out the
+// position of the critical 6-bit chunk of a new key. At other times
+// what matters is that a 6-bit chunk occupies part of at most two
+// bytes, so the shift tells us how to pull the relevant bits out of
+// those two bytes.
 //
-// BUT NOTE! We never use overlapping 6-bit sections as suggested
-// by that diagram, we use successive sections like:
-//
-// 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0  bit number
-// 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2  index % 3
-// 1 1 1 1 1 1 7 7 7 7 7 7 5 5 5 5 5 5 3 3 3 3 3 3  flags
+//  ..key[i%3==0].. ..key[i%3==1].. ..key[i%3==2]..
+// |               |               |               | bytes
+//  7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0
+// |           |           |           |           | 6bits
+//  ..shift=0.. ..shift=6.. ..shift=4.. ..shift=2..
 
 static inline Tbitmap
 nibbit(uint k, uint flags) {
