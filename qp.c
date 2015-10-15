@@ -21,7 +21,7 @@ Tgetkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	Trie *t = &tbl->root;
 	while(isbranch(t)) {
 		__builtin_prefetch(t->branch.twigs);
-		uint b = twigbit(t, key, len);
+		Tbitmap b = twigbit(t, key, len);
 		if(!hastwig(t, b))
 			return(false);
 		t = twig(t, twigoff(t, b));
@@ -38,7 +38,7 @@ next_rec(Trie *t, const char **pkey, size_t *plen, void **pval) {
 	if(isbranch(t)) {
 		// Recurse to find either this leaf (*pkey != NULL)
 		// or the next one (*pkey == NULL).
-		uint b = twigbit(t, *pkey, *plen);
+		Tbitmap b = twigbit(t, *pkey, *plen);
 		uint s, m; TWIGOFFMAX(s, m, t, b);
 		for(; s < m; s++)
 			if(next_rec(twig(t, s), pkey, plen, pval))
@@ -77,7 +77,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
 		return(NULL);
 	Trie *t = &tbl->root, *p = NULL;
-	uint b = 0;
+	Tbitmap b = 0;
 	while(isbranch(t)) {
 		__builtin_prefetch(t->branch.twigs);
 		b = twigbit(t, key, len);
@@ -136,7 +136,7 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	// detect a difference.
 	while(isbranch(t)) {
 		__builtin_prefetch(t->branch.twigs);
-		uint b = twigbit(t, key, len);
+		Tbitmap b = twigbit(t, key, len);
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
 		// twig we choose since the keys are all the same up to this
@@ -158,7 +158,7 @@ newkey:; // We have the branch's index; what are its flags?
 	uint f =  k1 ^ k2;
 	f = (f & 0xf0) ? 1 : 2;
 	// Prepare the new leaf.
-	uint b1 = nibbit(k1, f);
+	Tbitmap b1 = nibbit(k1, f);
 	Trie t1 = { .leaf = { .key = key, .val = val } };
 	// Find where to insert a branch or grow an existing branch.
 	t = &tbl->root;
@@ -170,7 +170,7 @@ newkey:; // We have the branch's index; what are its flags?
 			goto newbranch;
 		if(i < t->branch.index)
 			goto newbranch;
-		uint b = twigbit(t, key, len);
+		Tbitmap b = twigbit(t, key, len);
 		assert(hastwig(t, b));
 		t = twig(t, twigoff(t, b));
 	}
@@ -178,7 +178,7 @@ newbranch:;
 	Trie *twigs = malloc(sizeof(Trie) * 2);
 	if(twigs == NULL) return(NULL);
 	Trie t2 = *t; // Save before overwriting.
-	uint b2 = nibbit(k2, f);
+	Tbitmap b2 = nibbit(k2, f);
 	t->branch.twigs = twigs;
 	t->branch.flags = f;
 	t->branch.index = i;

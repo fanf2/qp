@@ -68,12 +68,14 @@
 typedef unsigned char byte;
 typedef unsigned int uint;
 
+typedef uint Tbitmap;
+
 #if defined(HAVE_NARROW_CPU) || defined(HAVE_SLOW_POPCOUNT)
 
 // NOTE: 16 bits only
 
 static inline uint
-popcount(uint w) {
+popcount(Tbitmap w) {
 	w -= (w >> 1) & 0x5555;
 	w = (w & 0x3333) + ((w >> 2) & 0x3333);
 	w = (w + (w >> 4)) & 0x0F0F;
@@ -84,7 +86,7 @@ popcount(uint w) {
 #else
 
 static inline uint
-popcount(uint w) {
+popcount(Tbitmap w) {
 	return((uint)__builtin_popcount(w));
 }
 
@@ -180,7 +182,7 @@ isbranch(Trie *t) {
 // 1 -> 1 -> 4
 // 2 -> 0 -> 0
 
-static inline uint
+static inline Tbitmap
 nibbit(byte k, uint flags) {
 	uint mask = ((flags - 2) ^ 0x0f) & 0xff;
 	uint shift = (2 - flags) << 2;
@@ -189,7 +191,7 @@ nibbit(byte k, uint flags) {
 
 // Extract a nibble from a key and turn it into a bitmask.
 
-static inline uint
+static inline Tbitmap
 twigbit(Trie *t, const char *key, size_t len) {
 	uint64_t i = t->branch.index;
 	if(i >= len) return(1);
@@ -197,12 +199,12 @@ twigbit(Trie *t, const char *key, size_t len) {
 }
 
 static inline bool
-hastwig(Trie *t, uint bit) {
+hastwig(Trie *t, Tbitmap bit) {
 	return(t->branch.bitmap & bit);
 }
 
 static inline uint
-twigoff(Trie *t, uint b) {
+twigoff(Trie *t, Tbitmap b) {
 	return(popcount(t->branch.bitmap & (b-1)));
 }
 
@@ -214,7 +216,7 @@ twig(Trie *t, uint i) {
 #ifdef HAVE_NARROW_CPU
 
 #define TWIGOFFMAX(off, max, t, b) do {				\
-		uint bitmap = t->branch.bitmap;			\
+		Tbitmap bitmap = t->branch.bitmap;		\
 		uint word = (bitmap << 16) | (bitmap & (b-1));	\
 		uint counts = popcount16x2(word);		\
 		off = counts & 0xFF;				\
