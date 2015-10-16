@@ -138,6 +138,8 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	while(isbranch(t)) {
 		__builtin_prefetch(t->branch.twigs);
 		Tbitmap b = twigbit(t, key, len);
+printf("i %zu\nf %u\n", t->branch.index, t->branch.flags);
+printf("b %s\n", dump_bitmap(b));
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
 		// twig we choose since the keys are all the same up to this
@@ -162,6 +164,7 @@ newkey:; // We have the branch's index; what are its flags?
 	// first byte that overlaps the first differing 5-bit chunk.
 	// See the diagram in fp.h ... This can probably be faster?
 	// Also, flags = shift * 2 + 1
+printf("key %s\nleaf %s\n", key, t->leaf.key);
 	switch(i % 5) {
 	case(0): f = (f & 0xF8) ?            1 : 11; break;
 	case(1): f = (f & 0xC0) ? (i -= 1), 11 :
@@ -176,6 +179,8 @@ newkey:; // We have the branch's index; what are its flags?
 	uint k2 = (byte)t->leaf.key[i] << 8;
 	k1 |= (k1 ? (byte)key[i+1] : 0);
 	k2 |= (k2 ? (byte)t->leaf.key[i+1] : 0);
+printf("i %zu\nf %u\n", i, f);
+printf("k1 %x\nk2 %x\n", k1, k2);
 	Tbitmap b1 = nibbit(k1, f);
 	// Prepare the new leaf.
 	Trie t1 = { .leaf = { .key = key, .val = val } };
@@ -183,6 +188,7 @@ newkey:; // We have the branch's index; what are its flags?
 	t = &tbl->root;
 	while(isbranch(t)) {
 		__builtin_prefetch(t->branch.twigs);
+printf("i %zu\nf %u\n", t->branch.index, t->branch.flags);
 		if(i == t->branch.index && f == t->branch.flags)
 			goto growbranch;
 		if(i == t->branch.index && f < t->branch.flags)
@@ -190,6 +196,7 @@ newkey:; // We have the branch's index; what are its flags?
 		if(i < t->branch.index)
 			goto newbranch;
 		Tbitmap b = twigbit(t, key, len);
+printf("b %s\n", dump_bitmap(b));
 		assert(hastwig(t, b));
 		t = twig(t, twigoff(t, b));
 	}
@@ -198,14 +205,18 @@ newbranch:;
 	if(twigs == NULL) return(NULL);
 	Trie t2 = *t; // Save before overwriting.
 	Tbitmap b2 = nibbit(k2, f);
+printf("b1 %s\n", dump_bitmap(b1));
+printf("b2 %s\n", dump_bitmap(b2));
 	t->branch.twigs = twigs;
 	t->branch.flags = f;
 	t->branch.index = i;
 	t->branch.bitmap = b1 | b2;
+printf("o1 %u\no2 %u\n", twigoff(t, b1), twigoff(t, b2));
 	*twig(t, twigoff(t, b1)) = t1;
 	*twig(t, twigoff(t, b2)) = t2;
 	return(tbl);
 growbranch:;
+printf("b1 %s\n", dump_bitmap(b1));
 	assert(!hastwig(t, b1));
 	uint s, m; TWIGOFFMAX(s, m, t, b1);
 	twigs = realloc(t->branch.twigs, sizeof(Trie) * (m + 1));
