@@ -2,13 +2,13 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
 # implementation codes
-XY=	qs wp #cb qp qn ht
+XY=	cb qs wp # qp qn ht
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 
 INPUT=	in-b9 in-usdw top-1m
 
-all: ${TEST} ${BENCH} top-1m
+all: ${TEST} ${BENCH} ${INPUT}
 
 test: all
 	./test-once.sh 10000 100000 top-1m
@@ -105,10 +105,7 @@ in-dns:
 
 in-b9: bind9
 	find bind9/ -name '*.c' -o -name '*.h' | \
-	xargs perl -ne ' \
-		$$a{$$_} = 1 for m{\b[A-Za-z0-9_]+\b}g; \
-		END { print "$$_\n" for keys %a } \
-	' >in-b9
+	xargs ./getwords.pl >in-b9
 
 bind9:
 	git clone https://source.isc.org/git/bind9.git
