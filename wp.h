@@ -102,7 +102,7 @@ isbranch(Trie *t) {
 static inline Tbitmap
 nibbit(uint k, uint flags) {
 	uint shift = 16 - 6 - (flags & 6);
-	return(1ULL << ((k >> shift) & 0xFFFULL));
+	return(1ULL << ((k >> shift) & 0x3FULL));
 }
 
 // Extract a nibble from a key and turn it into a bitmask.
