@@ -8,11 +8,12 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "Tbl.h"
-#include "wp.h"
+#include "fp.h"
 
 bool
 Tgetkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
@@ -127,7 +128,6 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 		if(tbl == NULL) return(NULL);
 		tbl->root.leaf.key = key;
 		tbl->root.leaf.val = val;
-		tbl->root.leaf.wasted = 0;
 		return(tbl);
 	}
 	Trie *t = &tbl->root;

@@ -9,9 +9,9 @@ typedef unsigned int uint;
 
 typedef uint32_t Tbitmap;
 
-#if defined(HAVE_NARROW_CPU) || defined(HAVE_SLOW_POPCOUNT)
+const char *dump_bitmap(Tbitmap w);
 
-// NOTE: 16 bits only
+#if defined(HAVE_SLOW_POPCOUNT)
 
 static inline uint
 popcount(Tbitmap w) {
@@ -39,8 +39,8 @@ typedef struct Tleaf {
 typedef struct Tbranch {
 	union Trie *twigs;
 	uint	flags : 4,
-		index : 28;
-	Tbitmap bitmap;
+		index : 28,
+		bitmap : 32;
 } Tbranch;
 
 typedef union Trie {
@@ -68,7 +68,7 @@ isbranch(Trie *t) {
 static inline Tbitmap
 nibbit(uint k, uint flags) {
 	uint shift = 16 - 5 - (flags >> 1);
-	return(1ULL << ((k >> shift) & 0x1FULL));
+	return(1U << ((k >> shift) & 0x1FU));
 }
 
 // Extract a nibble from a key and turn it into a bitmask.
@@ -76,7 +76,7 @@ nibbit(uint k, uint flags) {
 static inline Tbitmap
 twigbit(Trie *t, const char *key, size_t len) {
 	uint64_t i = t->branch.index;
-	if(i >= len) return(1ULL);
+	if(i >= len) return(1);
 	uint k = (byte)key[i] << 8;
 	if(i+1 < len)
 		k |= (byte)key[i+1];
