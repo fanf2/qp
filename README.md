@@ -69,11 +69,15 @@ articles
 	prefetching tries
 
 
+* [2015-10-13](https://9vx.org/post/qp-tries/) -
+	Devon O'Dell benchmarks qp tries against some alternatives
+
+
 thanks
 ------
 
-Marek Vavrusa enthusiastically put this code to work and provided
-encouraging feedback.
+Marek Vavrusa (NIC.CZ) and Devon O'Dell (Fastly) enthusiastically put
+this code to work and provided encouraging feedback.
 
 Simon Tatham proved that parent pointers are not needed for embedded
 crit-bit tries.
