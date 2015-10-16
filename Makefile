@@ -11,7 +11,7 @@ INPUT=	in-b9 in-usdw top-1m
 all: ${TEST} ${BENCH} ${INPUT}
 
 test: all
-	./test-once.sh 10000 100000 top-1m
+	./test-once.sh 10000 100000 top-1m ${XY}
 
 bench: all
 	./bench-more.pl 1000000 ${BENCH} -- ${INPUT}
@@ -34,6 +34,9 @@ bench-qs: bench.o Tbl.o qs.o
 bench-qn: bench.o Tbl.o qn.o
 	${CC} ${CFLAGS} -o $@ $^
 
+bench-fp: bench.o Tbl.o fp.o
+	${CC} ${CFLAGS} -o $@ $^
+
 bench-wp: bench.o Tbl.o wp.o
 	${CC} ${CFLAGS} -o $@ $^
 
@@ -52,6 +55,9 @@ test-qs: test.o Tbl.o qs.o qp-debug.o
 test-qn: test.o Tbl.o qn.o qp-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
+test-fp: test.o Tbl.o fp.o fp-debug.o
+	${CC} ${CFLAGS} -o $@ $^
+
 test-wp: test.o Tbl.o wp.o wp-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
@@ -67,6 +73,7 @@ qp.o: qp.c qp.h Tbl.h
 ht.o: ht.c ht.h Tbl.h
 cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
+fp-debug.o: fp-debug.c fp.h Tbl.h
 wp-debug.o: wp-debug.c wp.h Tbl.h
 ht-debug.o: ht-debug.c ht.h Tbl.h
 
@@ -77,6 +84,10 @@ qs.o: qp.c qp.h Tbl.h
 # use SWAR 16 bit x 2 popcount
 qn.o: qp.c qp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_NARROW_CPU -c -o qn.o $<
+
+# use hand coded 32 bit popcount
+fp.o: fp.c fp.h Tbl.h
+	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o fp.o $<
 
 # use hand coded 64 bit popcount
 wp.o: wp.c wp.h Tbl.h
