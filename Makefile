@@ -2,9 +2,11 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
 # implementation codes
-XY=	cb qp qs qn wp #ht
+XY=	qs wp #cb qp qn ht
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
+
+INPUT=	in-b9 in-usdw top-1m
 
 all: ${TEST} ${BENCH} top-1m
 
@@ -12,7 +14,7 @@ test: all
 	./test-once.sh 10000 100000 top-1m
 
 bench: all
-	./bench-multi.pl ${BENCH} -- 1000000 top-1m
+	./bench-more.pl 1000000 ${BENCH} -- ${INPUT}
 
 clean:
 	rm -f test-?? bench-?? *.o
@@ -80,6 +82,11 @@ qn.o: qp.c qp.h Tbl.h
 wp.o: wp.c wp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o wp.o $<
 
+input: ${INPUT}
+
+in-usdw:
+	ln -s /usr/share/dict/words in-usdw
+
 top-1m: top-1m.csv
 	sed 's/^[0-9]*,//' <$< >$@
 top-1m.csv: top-1m.csv.zip
@@ -89,12 +96,15 @@ top-1m.csv: top-1m.csv.zip
 top-1m.csv.zip:
 	curl -O http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
 
-bind9-words: bind9
+in-b9: bind9
 	find bind9/ -name '*.c' -o -name '*.h' | \
 	xargs perl -ne ' \
 		$$a{$$_} = 1 for m{\b[A-Za-z0-9_]+\b}g; \
 		END { print "$$_\n" for keys %a } \
-	' >bind9-words
+	' >in-b9
+
+bind9:
+	git clone https://source.isc.org/git/bind9.git
 
 html:
 	for f in *.md; do markdown <$$f >$${f%md}html; done
