@@ -102,13 +102,13 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		free(twigs);
 		return(tbl);
 	}
-	Trie *twigs = malloc(sizeof(Trie) * (m - 1));
-	if(twigs == NULL) return(NULL);
-	memcpy(twigs, t->branch.twigs, sizeof(Trie) * s);
-	memcpy(twigs+s, t->branch.twigs+s+1, sizeof(Trie) * (m - s - 1));
-	free(t->branch.twigs);
-	t->branch.twigs = twigs;
+	memmove(t->branch.twigs+s, t->branch.twigs+s+1, sizeof(Trie) * (m - s - 1));
 	t->branch.bitmap &= ~b;
+	// We have now correctly removed the twig from the trie, so if
+	// realloc() fails we can ignore it and continue to use the
+	// slightly oversized twig array.
+	Trie *twigs = realloc(t->branch.twigs, sizeof(Trie) * (m - 1));
+	if(twigs != NULL) t->branch.twigs = twigs;
 	return(tbl);
 }
 
@@ -199,12 +199,10 @@ newbranch:;
 growbranch:;
 	assert(!hastwig(t, b1));
 	uint s, m; TWIGOFFMAX(s, m, t, b1);
-	twigs = malloc(sizeof(Trie) * (m + 1));
+	twigs = realloc(t->branch.twigs, sizeof(Trie) * (m + 1));
 	if(twigs == NULL) return(NULL);
-	memcpy(twigs, t->branch.twigs, sizeof(Trie) * s);
-	memcpy(twigs+s, &t1, sizeof(Trie));
-	memcpy(twigs+s+1, t->branch.twigs+s, sizeof(Trie) * (m - s));
-	free(t->branch.twigs);
+	memmove(twigs+s+1, twigs+s, sizeof(Trie) * (m - s));
+	memmove(twigs+s, &t1, sizeof(Trie));
 	t->branch.twigs = twigs;
 	t->branch.bitmap |= b1;
 	return(tbl);
