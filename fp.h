@@ -38,9 +38,9 @@ typedef struct Tleaf {
 
 typedef struct Tbranch {
 	union Trie *twigs;
-	uint	flags : 4,
-		index : 28,
-		bitmap : 32;
+	uint64_t flags : 4,
+		 index : 28,
+		 bitmap : 32;
 } Tbranch;
 
 typedef union Trie {

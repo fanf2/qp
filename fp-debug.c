@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 #include "Tbl.h"
-#include "wp.h"
+#include "fp.h"
 
 const char *
 dump_bitmap(Tbitmap w) {
