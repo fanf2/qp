@@ -2,7 +2,7 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
 # implementation codes
-XY=	cb qs wp # qp qn ht
+XY=	cb qs fp wp # qp qn ht
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 
@@ -10,10 +10,10 @@ INPUT=	in-b9 in-usdw top-1m
 
 all: ${TEST} ${BENCH} ${INPUT}
 
-test: all
+test: ${TEST} top-1m
 	./test-once.sh 10000 100000 top-1m ${XY}
 
-bench: all
+bench: ${BENCH} ${INPUT}
 	./bench-more.pl 1000000 ${BENCH} -- ${INPUT}
 
 clean:
@@ -111,7 +111,7 @@ in-dns:
 	for z in cam.ac.uk private.cam.ac.uk \
 		eng.cam.ac.uk cl.cam.ac.uk \
 		maths.cam.ac.uk damtp.cam.ac.uk dpmms.cam.ac.uk; \
-	do dig axfr $z @131.111.8.37; done |\
+	do dig axfr $$z @131.111.8.37; done |\
 	sed '/^;/d;s/[ 	].*//' | uniq >in-dns
 
 in-b9: bind9
