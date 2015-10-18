@@ -37,7 +37,13 @@ bench-qn: bench.o Tbl.o qn.o
 bench-fp: bench.o Tbl.o fp.o
 	${CC} ${CFLAGS} -o $@ $^
 
+bench-fs: bench.o Tbl.o fs.o
+	${CC} ${CFLAGS} -o $@ $^
+
 bench-wp: bench.o Tbl.o wp.o
+	${CC} ${CFLAGS} -o $@ $^
+
+bench-ws: bench.o Tbl.o ws.o
 	${CC} ${CFLAGS} -o $@ $^
 
 bench-ht: bench.o Tbl.o ht.o siphash24.o
@@ -58,7 +64,13 @@ test-qn: test.o Tbl.o qn.o qp-debug.o
 test-fp: test.o Tbl.o fp.o fp-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
+test-fs: test.o Tbl.o fs.o fp-debug.o
+	${CC} ${CFLAGS} -o $@ $^
+
 test-wp: test.o Tbl.o wp.o wp-debug.o
+	${CC} ${CFLAGS} -o $@ $^
+
+test-ws: test.o Tbl.o ws.o wp-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
 test-ht: test.o Tbl.o ht.o ht-debug.o siphash24.o
@@ -70,6 +82,8 @@ bench.o: bench.c Tbl.h
 siphash24.o: siphash24.c
 cb.o: cb.c cb.h Tbl.h
 qp.o: qp.c qp.h Tbl.h
+fp.o: fp.c fp.h Tbl.h
+wp.o: wp.c wp.h Tbl.h
 ht.o: ht.c ht.h Tbl.h
 cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
@@ -86,12 +100,12 @@ qn.o: qp.c qp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_NARROW_CPU -c -o qn.o $<
 
 # use hand coded 32 bit popcount
-fp.o: fp.c fp.h Tbl.h
-	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o fp.o $<
+fs.o: fp.c fp.h Tbl.h
+	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o fs.o $<
 
 # use hand coded 64 bit popcount
-wp.o: wp.c wp.h Tbl.h
-	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o wp.o $<
+ws.o: wp.c wp.h Tbl.h
+	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o ws.o $<
 
 input: ${INPUT}
 
