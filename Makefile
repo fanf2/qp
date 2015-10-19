@@ -130,6 +130,9 @@ top-1m.csv: top-1m.csv.zip
 top-1m.csv.zip:
 	curl -O http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
 
+in-rdns: in-dns
+	rev in-dns >in-rdns
+
 in-dns:
 	for z in cam.ac.uk private.cam.ac.uk \
 		eng.cam.ac.uk cl.cam.ac.uk \
