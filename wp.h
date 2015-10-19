@@ -105,8 +105,6 @@ nibbit(uint k, uint flags) {
 	return(1ULL << ((k >> shift) & 0x3FULL));
 }
 
-// Extract a nibble from a key and turn it into a bitmask.
-
 static inline Tbitmap
 twigbit(Trie *t, const char *key, size_t len) {
 	uint64_t i = t->branch.index;
