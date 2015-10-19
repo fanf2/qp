@@ -77,9 +77,9 @@ articles
 	Devon O'Dell benchmarks qp tries against some alternatives
 
 * [2015-10-19](blog-2015-10-19.md) -
-	never mind the quadbits, feel the width
+	never mind the quadbits, feel the width!
 
-	benchmarking wider-fanout versions of qp tries
+	Benchmarking wider-fanout versions of qp tries.
 
 thanks
 ------
