@@ -16,6 +16,15 @@ test: ${TEST} top-1m
 bench: ${BENCH} ${INPUT}
 	./bench-more.pl 1000000 ${BENCH} -- ${INPUT}
 
+size: ${TEST} ${INPUT}
+	for f in ${INPUT}; do \
+		sed 's/^/+/' <$$f >test-$$f; \
+		echo $$f; \
+		for p in ${TEST}; do \
+			$$p <test-$$f >/dev/null; \
+		done; \
+	done
+
 clean:
 	rm -f test-?? bench-?? *.o
 
