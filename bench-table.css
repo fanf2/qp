@@ -1,0 +1,18 @@
+th {
+    font-weight: normal;
+    text-align: right;
+    width: 4em;
+}
+
+td {
+    text-align: right;
+}
+
+tr.break {
+    height: 0.5em;
+}
+
+.rightlabel {
+    padding-left: 1em;
+    text-align: left;
+}
