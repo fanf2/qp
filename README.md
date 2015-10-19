@@ -5,12 +5,17 @@ I have been working on radix trees / patricia tries / crit-bit tries
 with a larger fan-out per branch to reduce lookup costs without
 wasting memory.
 
-My best solution so far is the "qp trie", short for quadbit popcount
-patricia trie. (Nothing to do with cutie cupid dolls or Japanese
-mayonnaise!) A qp trie is like a crit-bit trie (aka patricia trie)
-except each branch is indexed by a quadbit (a nibble) at a time
+My best solution so far is the "qp trie", short for quelques-bits
+popcount patricia trie. (Nothing to do with cutie cupid dolls or
+Japanese mayonnaise!) A qp trie is like a crit-bit trie (aka patricia
+trie) except each branch is indexed by a few bits at a time
 instead of one bit. The array of sub-tries at a branch node is
 compressed using the popcount trick to omit unused branches.
+
+The original version of qp tries used 4 bits at a time, so it was a
+quadbit popcount patricia trie; I also have a 5 bit version, a
+quintuple-bit popcount patricia trie, which generally outperforms the
+4 bit version; and a 6 bit version which doesn't quite have a name.
 
 Based on a few benchmarks, qp tries have about 1/3 less memory
 overhead of crit-bit tries, 1.3 words vs 2 words of overhead per item;
@@ -68,10 +73,13 @@ articles
 * [2015-10-11](blog-2015-10-11.md) -
 	prefetching tries
 
-
 * [2015-10-13](https://9vx.org/post/qp-tries/) -
 	Devon O'Dell benchmarks qp tries against some alternatives
 
+* [2015-10-19](blog-2015-10-19.md) -
+	never mind the quadbits, feel the width
+
+	benchmarking wider-fanout versions of qp tries
 
 thanks
 ------
@@ -108,19 +116,27 @@ roadmap
 	My qp trie implementation. See qp.h for a longer description
 	of where the data structure comes from.
 
+* [fp.h][] [fp.c][]
+
+	5-bit clone-and-hack variant of qp tries.
+
+* [wp.h][] [wp.c][]
+
+	6-bit clone-and-hack variant of qp tries.
+
 * [cb.h][] [cb.c][]
 
 	My crit-bit trie implementation. See cb.h for a description of
 	how it differs from DJB's crit-bit code.
 
-* [qp-debug.c][] [cb-debug.c][]
+* [qp-debug.c][] [fp-debug.c][] [wp-debug.c][] [cb-debug.c][]
 
 	Debug support code.
 
-* [bench.c][] [bench-multi.pl][]
+* [bench.c][] [bench-multi.pl][] [bench-more.pl][]
 
-	Generic benchmark for Tbl.h implementations, and a benchmark
-	driver for comparing different implementations.
+	Generic benchmark for Tbl.h implementations, and benchmark
+	drivers for comparing different implementations.
 
 * [test.c][] [test.pl][]
 
@@ -134,18 +150,25 @@ roadmap
 
 [Tbl.c]:          https://github.com/fanf2/qp/blob/HEAD/Tbl.c
 [Tbl.h]:          https://github.com/fanf2/qp/blob/HEAD/Tbl.h
-[bench-multi.pl]: https://github.com/fanf2/qp/blob/HEAD/bench-multi.pl
-[bench.c]:        https://github.com/fanf2/qp/blob/HEAD/bench.c
 [cb-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/cb-debug.c
 [cb.c]:           https://github.com/fanf2/qp/blob/HEAD/cb.c
 [cb.h]:           https://github.com/fanf2/qp/blob/HEAD/cb.h
 [qp-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/qp-debug.c
 [qp.c]:           https://github.com/fanf2/qp/blob/HEAD/qp.c
 [qp.h]:           https://github.com/fanf2/qp/blob/HEAD/qp.h
+[fp-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/fp-debug.c
+[fp.c]:           https://github.com/fanf2/qp/blob/HEAD/fp.c
+[fp.h]:           https://github.com/fanf2/qp/blob/HEAD/fp.h
+[wp-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/wp-debug.c
+[wp.c]:           https://github.com/fanf2/qp/blob/HEAD/wp.c
+[wp.h]:           https://github.com/fanf2/qp/blob/HEAD/wp.h
 [test-gen.pl]:    https://github.com/fanf2/qp/blob/HEAD/test-gen.pl
 [test-once.sh]:   https://github.com/fanf2/qp/blob/HEAD/test-once.sh
 [test.c]:         https://github.com/fanf2/qp/blob/HEAD/test.c
 [test.pl]:        https://github.com/fanf2/qp/blob/HEAD/test.pl
+[bench-more.pl]:  https://github.com/fanf2/qp/blob/HEAD/bench-multi.pl
+[bench-multi.pl]: https://github.com/fanf2/qp/blob/HEAD/bench-multi.pl
+[bench.c]:        https://github.com/fanf2/qp/blob/HEAD/bench.c
 
 
 notes
