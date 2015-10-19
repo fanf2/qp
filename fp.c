@@ -158,7 +158,7 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 	size_t bit = i * 8 + __builtin_clz(f) + 8 - sizeof(uint) * 8;
 	size_t qi = bit / 5;
 	i = qi * 5 / 8;
-	f = qi % 8 * 5 % 8;
+	f = qi % 8 * 5 % 8 << 1 | 1;
 	// re-index keys with adjusted i
 	uint k1 = (byte)key[i] << 8;
 	uint k2 = (byte)t->leaf.key[i] << 8;
@@ -171,9 +171,11 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 	t = &tbl->root;
 	while(isbranch(t)) {
 		__builtin_prefetch(t->branch.twigs);
-		if(qi == t->branch.index)
+		if(i == t->branch.index && f == t->branch.flags)
 			goto growbranch;
-		if(qi < t->branch.index)
+		if(i == t->branch.index && f < t->branch.flags)
+			goto newbranch;
+		if(i < t->branch.index)
 			goto newbranch;
 		Tbitmap b = twigbit(t, key, len);
 		assert(hastwig(t, b));
@@ -185,8 +187,8 @@ newbranch:;
 	Trie t2 = *t; // Save before overwriting.
 	Tbitmap b2 = nibbit(k2, f);
 	t->branch.twigs = twigs;
-	t->branch.flags = 1;
-	t->branch.index = qi;
+	t->branch.flags = f;
+	t->branch.index = i;
 	t->branch.bitmap = b1 | b2;
 	*twig(t, twigoff(t, b1)) = t1;
 	*twig(t, twigoff(t, b2)) = t2;

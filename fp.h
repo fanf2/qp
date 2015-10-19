@@ -38,8 +38,8 @@ typedef struct Tleaf {
 
 typedef struct Tbranch {
 	union Trie *twigs;
-	uint64_t flags : 1,
-		 index : 31,
+	uint64_t flags : 4,
+		 index : 28,
 		 bitmap : 32;
 } Tbranch;
 
@@ -65,24 +65,20 @@ isbranch(Trie *t) {
 // |         |         |         |         |         |         |         |         |
 //  shift=0   shift=5   shift=2   shift=7   shift=4   shift=1   shift=6   shift=3
 
-// Extract a nibble from a key and turn it into a bitmask.
-
 static inline Tbitmap
-nibbit(uint k, uint shift) {
-	uint s = 16 - 5 - shift;
-	return(1U << ((k >> s) & 0x1FU));
+nibbit(uint k, uint flags) {
+	uint shift = 16 - 5 - (flags >> 1);
+	return(1U << ((k >> shift) & 0x1FU));
 }
 
 static inline Tbitmap
 twigbit(Trie *t, const char *key, size_t len) {
-	uint64_t qi = t->branch.index;
-	uint64_t i = qi * 5 / 8;
+	uint64_t i = t->branch.index;
 	if(i >= len) return(1);
-	uint shift = qi % 8 * 5 % 8;
 	uint k = (byte)key[i] << 8;
 	if(i+1 < len)
 		k |= (byte)key[i+1];
-	return(nibbit(k, shift));
+	return(nibbit(k, t->branch.flags));
 }
 
 static inline bool
