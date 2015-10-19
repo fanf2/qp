@@ -154,22 +154,11 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	}
 	t->leaf.val = val;
 	return(tbl);
-newkey:; // We have the branch's index; what are its flags?
-	// Sometimes the first differing bits are in the low-order part
-	// of a 5-bit chunk which overlaps two bytes. In these cases we
-	// have to step back a byte so that the index points to the
-	// first byte that overlaps the first differing 5-bit chunk.
-	// See the diagram in fp.h ... This can probably be faster?
-	// Also, flags = shift * 2 + 1
-	switch(i % 5) {
-	case(0): f = (f & 0xF8) ?            1 : 11; break;
-	case(1): f = (f & 0xC0) ? (i -= 1), 11 :
-                     (f & 0x3E) ?            5 : 15; break;
-	case(2): f = (f & 0xF0) ? (i -= 1), 15 :  9; break;
-	case(3): f = (f & 0x80) ? (i -= 1),  9 :
-                     (f & 0x7C) ?            3 : 13; break;
-	case(4): f = (f & 0xE0) ? (i -= 1), 13 :  7; break;
-	}
+newkey:; // We have the branch's byte index; what is its chunk index?
+	size_t bit = i * 8 + __builtin_clz(f) + 8 - sizeof(uint) * 8;
+	size_t qi = bit / 5;
+	i = qi * 5 / 8;
+	f = qi % 8 * 5 % 8;
 	// re-index keys with adjusted i
 	uint k1 = (byte)key[i] << 8;
 	uint k2 = (byte)t->leaf.key[i] << 8;
@@ -182,11 +171,9 @@ newkey:; // We have the branch's index; what are its flags?
 	t = &tbl->root;
 	while(isbranch(t)) {
 		__builtin_prefetch(t->branch.twigs);
-		if(i == t->branch.index && f == t->branch.flags)
+		if(qi == t->branch.index)
 			goto growbranch;
-		if(i == t->branch.index && f < t->branch.flags)
-			goto newbranch;
-		if(i < t->branch.index)
+		if(qi < t->branch.index)
 			goto newbranch;
 		Tbitmap b = twigbit(t, key, len);
 		assert(hastwig(t, b));
@@ -198,8 +185,8 @@ newbranch:;
 	Trie t2 = *t; // Save before overwriting.
 	Tbitmap b2 = nibbit(k2, f);
 	t->branch.twigs = twigs;
-	t->branch.flags = f;
-	t->branch.index = i;
+	t->branch.flags = 1;
+	t->branch.index = qi;
 	t->branch.bitmap = b1 | b2;
 	*twig(t, twigoff(t, b1)) = t1;
 	*twig(t, twigoff(t, b2)) = t2;
