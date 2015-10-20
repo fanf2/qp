@@ -2,11 +2,11 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
 # implementation codes
-XY=	cb qs fp wp # qp qn ht
+XY=	cb qp qs qn fp fs wp ws # ht
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 
-INPUT=	in-b9 in-usdw top-1m
+INPUT=	in-b9 in-dns in-rdns in-usdw top-1m
 
 all: ${TEST} ${BENCH} ${INPUT}
 
@@ -31,58 +31,16 @@ clean:
 realclean: clean
 	rm -f test-in test-out-??
 
-bench-cb: bench.o Tbl.o cb.o
-	${CC} ${CFLAGS} -o $@ $^
-
-bench-qp: bench.o Tbl.o qp.o
-	${CC} ${CFLAGS} -o $@ $^
-
-bench-qs: bench.o Tbl.o qs.o
-	${CC} ${CFLAGS} -o $@ $^
-
-bench-qn: bench.o Tbl.o qn.o
-	${CC} ${CFLAGS} -o $@ $^
-
-bench-fp: bench.o Tbl.o fp.o
-	${CC} ${CFLAGS} -o $@ $^
-
-bench-fs: bench.o Tbl.o fs.o
-	${CC} ${CFLAGS} -o $@ $^
-
-bench-wp: bench.o Tbl.o wp.o
-	${CC} ${CFLAGS} -o $@ $^
-
-bench-ws: bench.o Tbl.o ws.o
-	${CC} ${CFLAGS} -o $@ $^
-
 bench-ht: bench.o Tbl.o ht.o siphash24.o
 	${CC} ${CFLAGS} -o $@ $^
 
-test-cb: test.o Tbl.o cb.o cb-debug.o
-	${CC} ${CFLAGS} -o $@ $^
-
-test-qp: test.o Tbl.o qp.o qp-debug.o
-	${CC} ${CFLAGS} -o $@ $^
-
-test-qs: test.o Tbl.o qs.o qp-debug.o
-	${CC} ${CFLAGS} -o $@ $^
-
-test-qn: test.o Tbl.o qn.o qp-debug.o
-	${CC} ${CFLAGS} -o $@ $^
-
-test-fp: test.o Tbl.o fp.o fp-debug.o
-	${CC} ${CFLAGS} -o $@ $^
-
-test-fs: test.o Tbl.o fs.o fp-debug.o
-	${CC} ${CFLAGS} -o $@ $^
-
-test-wp: test.o Tbl.o wp.o wp-debug.o
-	${CC} ${CFLAGS} -o $@ $^
-
-test-ws: test.o Tbl.o ws.o wp-debug.o
-	${CC} ${CFLAGS} -o $@ $^
-
 test-ht: test.o Tbl.o ht.o ht-debug.o siphash24.o
+	${CC} ${CFLAGS} -o $@ $^
+
+bench-%: bench.o Tbl.o %.o
+	${CC} ${CFLAGS} -o $@ $^
+
+test-%: test.o Tbl.o %.o %-debug.o
 	${CC} ${CFLAGS} -o $@ $^
 
 Tbl.o: Tbl.c Tbl.h
@@ -100,13 +58,13 @@ fp-debug.o: fp-debug.c fp.h Tbl.h
 wp-debug.o: wp-debug.c wp.h Tbl.h
 ht-debug.o: ht-debug.c ht.h Tbl.h
 
-# use hand coded 16 bit popcount
-qs.o: qp.c qp.h Tbl.h
-	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o qs.o $<
-
 # use SWAR 16 bit x 2 popcount
 qn.o: qp.c qp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_NARROW_CPU -c -o qn.o $<
+
+# use hand coded 16 bit popcount
+qs.o: qp.c qp.h Tbl.h
+	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o qs.o $<
 
 # use hand coded 32 bit popcount
 fs.o: fp.c fp.h Tbl.h
@@ -115,6 +73,15 @@ fs.o: fp.c fp.h Tbl.h
 # use hand coded 64 bit popcount
 ws.o: wp.c wp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o ws.o $<
+
+qn-debug.c:
+	ln -s qp-debug.c qn-debug.c
+qs-debug.c:
+	ln -s qp-debug.c qs-debug.c
+fs-debug.c:
+	ln -s fp-debug.c fs-debug.c
+ws-debug.c:
+	ln -s wp-debug.c ws-debug.c
 
 input: ${INPUT}
 
