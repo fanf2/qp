@@ -158,7 +158,7 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 	size_t bit = i * 8 + __builtin_clz(f) + 8 - sizeof(uint) * 8;
 	size_t qi = bit / 5;
 	i = qi * 5 / 8;
-	f = qi % 8 * 5 % 8 << 1 | 1;
+	f = qi * 5 % 8 << 1 | 1;
 	// re-index keys with adjusted i
 	uint k1 = (byte)key[i] << 8;
 	uint k2 = (byte)t->leaf.key[i] << 8;

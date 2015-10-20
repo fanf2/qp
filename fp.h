@@ -38,9 +38,9 @@ typedef struct Tleaf {
 
 typedef struct Tbranch {
 	union Trie *twigs;
-	uint64_t flags : 4,
-		 index : 28,
-		 bitmap : 32;
+	uint32_t flags : 4,
+	         index : 28;
+	uint32_t bitmap;
 } Tbranch;
 
 typedef union Trie {
@@ -76,8 +76,7 @@ twigbit(Trie *t, const char *key, size_t len) {
 	uint64_t i = t->branch.index;
 	if(i >= len) return(1);
 	uint k = (byte)key[i] << 8;
-	if(i+1 < len)
-		k |= (byte)key[i+1];
+	if(k) k |= (byte)key[i+1];
 	return(nibbit(k, t->branch.flags));
 }
 
