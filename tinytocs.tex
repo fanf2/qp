@@ -1,0 +1,48 @@
+\documentclass{tinytocs}
+
+\usepackage{url}
+
+\title{QP tries are smaller and faster\\
+  than crit-bit trees}
+
+\author{Tony Finch\\
+  \affaddr{University of Cambridge}\\
+  \email{dot@dotat.at}}
+
+\begin{document}
+
+\maketitle
+
+\abstract{
+
+  Compact implementations of PATRICIA tries \cite{patricia} called
+  crit-bit trees \cite{djb} have two words of overhead per item
+  stored. HAMTs \cite{bagwell} index tree nodes using multiple key
+  bits; they use a bitmap and POPCNT to omit NULL child pointers from
+  tree nodes. Bagwell sketches a trie variant of HAMTs in section 5
+  but doesn't skip redundant nodes like crit-bit trees.
+
+  QP tries are similar to crit-bit trees but test 5 bits per
+  indirection instead of 1, using the HAMT bitmap POPCNT trick to keep
+  overhead to at most two 64 bit words per item. QP tries use cache
+  prefetching before child index calculation to reduce indirection
+  latency.
+
+  We created similar implementations of QP tries and crit-bit trees,
+  and benchmarked them using lists of: English words; identifiers in
+  the BIND9 source code; domain names from a university; Alexa top
+  million domain names. We measured average: trie depth; space
+  overhead per item; mutation and search time.
+
+}
+
+\tinybody{Typical QP trie\\
+depth is 0.35-0.40\\
+space is 0.5-0.6\\
+time is 0.6-0.8\\
+of equivalent crit-bit tree.}
+
+\bibliographystyle{abbrv}
+\bibliography{tinytocs}
+
+\end{document}

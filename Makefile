@@ -111,6 +111,12 @@ in-b9: bind9
 	find bind9/ -name '*.c' -o -name '*.h' | \
 	xargs ./getwords.pl >in-b9
 
+tex:
+	pdflatex tinytocs.tex
+	bibtex tinytocs
+	pdflatex tinytocs.tex
+	pdflatex tinytocs.tex
+
 bind9:
 	git clone https://source.isc.org/git/bind9.git
 
