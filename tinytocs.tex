@@ -24,9 +24,9 @@
 
   QP tries are similar to crit-bit trees but test 5 bits per
   indirection instead of 1, using the HAMT bitmap POPCNT trick to keep
-  overhead to at most two 64 bit words per item. QP tries use cache
-  prefetching before child index calculation to reduce indirection
-  latency.
+  overhead to at most two 64 bit words per item. QP tries prefetch the
+  child node array while calculating which child is next; this reduces
+  indirection latency and increases performance by about 5\%.
 
   We created similar implementations of QP tries and crit-bit trees,
   and benchmarked them using lists of: English words; identifiers in
