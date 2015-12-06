@@ -58,6 +58,10 @@ fp-debug.o: fp-debug.c fp.h Tbl.h
 wp-debug.o: wp-debug.c wp.h Tbl.h
 ht-debug.o: ht-debug.c ht.h Tbl.h
 
+# no cache prefetch
+qc.o: qp.c qp.h Tbl.h
+	${CC} ${CFLAGS} -D__builtin_prefetch='(void)' -c -o qc.o $<
+
 # use SWAR 16 bit x 2 popcount
 qn.o: qp.c qp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_NARROW_CPU -c -o qn.o $<
