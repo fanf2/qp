@@ -120,6 +120,8 @@ tex:
 	bibtex tinytocs
 	pdflatex tinytocs.tex
 	pdflatex tinytocs.tex
+	sed '/\\abstract{/,/^}$$/!d;/\\abstract{/d;/^}$$/d' tinytocs.tex | wc -w
+	sed '/\\tinybody{/,/}$$/!d;s/\\tinybody{//;s/}$$//;s/\\\\$$//' tinytocs.tex | wc -c
 
 bind9:
 	git clone https://source.isc.org/git/bind9.git
