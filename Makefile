@@ -2,7 +2,7 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
 # implementation codes
-XY=	cb qp qs qn fp fs wp ws # ht
+XY=	cb qp qs qn fp fs fc wp ws # ht
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 
@@ -65,6 +65,10 @@ qn.o: qp.c qp.h Tbl.h
 # use hand coded 16 bit popcount
 qs.o: qp.c qp.h Tbl.h
 	${CC} ${CFLAGS} -DHAVE_SLOW_POPCOUNT -c -o qs.o $<
+
+# no cache prefetch
+fc.o: fp.c fp.h Tbl.h
+	${CC} ${CFLAGS} -D__builtin_prefetch='(void)' -c -o fc.o $<
 
 # use hand coded 32 bit popcount
 fs.o: fp.c fp.h Tbl.h
