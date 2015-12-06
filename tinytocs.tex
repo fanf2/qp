@@ -15,14 +15,14 @@
 
 \abstract{
 
-  Compact implementations of PATRICIA tries \cite{patricia} called
-  crit-bit trees \cite{djb} have two words of overhead per item
-  stored. HAMTs \cite{bagwell} index tree nodes using multiple key
-  bits; they use a bitmap and POPCNT to omit NULL child pointers from
-  tree nodes. Bagwell sketches a trie variant of HAMTs in section 5
-  but doesn't skip redundant nodes like crit-bit trees.
+  Compact implementations of PATRICIA tries called crit-bit trees
+  \cite{djb} have two words of overhead per item stored. HAMTs
+  \cite{bagwell} index tree nodes using multiple key bits; they use a
+  bitmap and POPCNT to omit NULL child pointers from tree nodes.
+  Bagwell sketches a trie variant of HAMTs in section 5 but doesn't
+  skip redundant nodes like crit-bit trees.
 
-  QP tries are similar to crit-bit trees but test 5 bits per
+  QP tries \cite{qp} are similar to crit-bit trees but test 5 bits per
   indirection instead of 1, using the HAMT bitmap POPCNT trick to keep
   overhead to at most two 64 bit words per item. QP tries prefetch the
   child node array while calculating which child is next; this reduces
