@@ -15,17 +15,23 @@
 
 \abstract{
 
-  Compact implementations of PATRICIA tries called crit-bit trees
-  \cite{djb} have two words of overhead per item stored. HAMTs
-  \cite{bagwell} index tree nodes using multiple key bits; they use a
-  bitmap and POPCNT to omit NULL child pointers from tree nodes.
-  Bagwell sketches a trie variant of HAMTs in section 5 but doesn't
-  skip redundant nodes like crit-bit trees.
+  A trie data structure stores an ordered set of keys. The branching
+  structure of a trie depends on the lexical properties of its keys
+  independent of the order of insertion. Compact implementations of
+  PATRICIA tries called crit-bit trees \cite{djb} have two words of
+  overhead per item stored.
+
+  A hash array mapped trie (HAMT) \cite{bagwell} has wide fan-out,
+  indexing tree nodes using multiple key bits; each node is compressed
+  using the population count of a bitmap to omit NULL child pointers.
+  Bagwell sketches an un-hashed pure trie variant of HAMT in section 5
+  but doesn't eliminate redundant single-child nodes like crit-bit
+  trees.
 
   QP tries \cite{qp} are similar to crit-bit trees but test 5 bits per
-  indirection instead of 1, using the HAMT bitmap POPCNT trick to keep
+  indirection instead of 1, using the HAMT bitmap POPCOUNT trick to keep
   overhead to at most two 64 bit words per item. QP tries prefetch the
-  child node array while calculating which child is next; this reduces
+  child pointer array while calculating which child is next; this reduces
   indirection latency and increases performance by about 5\%.
 
   We created similar implementations of QP tries and crit-bit trees,
