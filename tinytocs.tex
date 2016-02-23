@@ -34,8 +34,8 @@
   QP tries prefetch the child pointer array while calculating which
   child is next; this reduces indirection latency and increases
   performance by about 5\%. QP tries have variable-sized nodes, so
-  stress memory allocation more than crit-bit tries; by other measures
-  they are cheaper.
+  stress memory allocation more than crit-bit tries, but are much
+  cheaper in other respects.
 
   We created similar implementations of QP tries and crit-bit trees,
   and benchmarked them using lists of: English words; identifiers in
