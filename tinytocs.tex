@@ -15,24 +15,27 @@
 
 \abstract{
 
-  A trie data structure stores an ordered set of keys. The branching
+  A trie data structure stores an ordered set of keys; the branching
   structure of a trie depends on the lexical properties of its keys
   independent of the order of insertion. Compact implementations of
-  PATRICIA binary tries called crit-bit trees \cite{djb} have two
+  PATRICIA binary tries called crit-bit trees \cite{djb} have just two
   words of overhead per item stored.
 
   A hash array mapped trie (HAMT) \cite{bagwell} has wide fan-out,
-  indexing tree nodes using multiple key bits; each node is compressed
-  using the population count of a bitmap to omit NULL child pointers.
-  Bagwell sketches an un-hashed pure trie variant of HAMT in section 5
-  but doesn't eliminate redundant single-child nodes like crit-bit
-  trees.
+  indexing each tree node using several key bits; each node is
+  compressed using the population count of a bitmap to omit NULL child
+  pointers. Bagwell sketches an un-hashed pure trie variant of HAMT in
+  section 5 but doesn't eliminate redundant single-child nodes like
+  crit-bit trees.
 
-  QP tries \cite{qp} are similar to crit-bit trees but test 5 bits per
-  indirection instead of 1, using the HAMT bitmap POPCOUNT trick to keep
-  overhead to at most two 64 bit words per item. QP tries prefetch the
-  child pointer array while calculating which child is next; this reduces
-  indirection latency and increases performance by about 5\%.
+  Our contribution, QP tries \cite{qp}, are similar to crit-bit trees
+  but test 5 bits per indirection instead of 1, using the HAMT bitmap
+  POPCNT trick to keep overhead to at most two 64 bit words per item.
+  QP tries prefetch the child pointer array while calculating which
+  child is next; this reduces indirection latency and increases
+  performance by about 5\%. QP tries have variable-sized nodes, so
+  stress memory allocation more than crit-bit tries; by other measures
+  they are cheaper.
 
   We created similar implementations of QP tries and crit-bit trees,
   and benchmarked them using lists of: English words; identifiers in
