@@ -81,6 +81,11 @@ articles
 
 	Benchmarking wider-fanout versions of qp tries.
 
+* [2016-20-23](blog-2016-02-23.md) -
+	How does a qp trie compare to a network routing trie?
+
+	Reading some vaguely-related academic literature.
+
 thanks
 ------
 
