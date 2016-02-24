@@ -51,10 +51,17 @@ caveats
 The code has only been tested on 64-bit little endian machines. It
 might work on 32-bit machines (provided the compiler supports 64 bit
 integers) and probably won't work on a big-endian machine. It should
-be easy to port by tweaking the struct bit-field layouts. Key strings
-can be byte-aligned but values must be word-aligned; you can swap this
-restriction (e.g. if you want to map from strings to integers) by
-tweaking the struct layout and adjusting the check in Tset().
+be easy to port by tweaking the struct bit-field layouts.
+
+Key strings can be byte-aligned but values must be word-aligned; you
+can swap this restriction (e.g. if you want to map from strings to
+integers) by tweaking the struct layout and adjusting the check in
+Tset().
+
+Keys are '\0' terminated C strings, which guarantees one key is not a
+prefix of another, so leaves and branches cannot occur at the same
+point. It should be possible to support arbitrary binary keys by being
+more clever about handling string termination.
 
 
 articles
