@@ -93,6 +93,16 @@ articles
 
 	Reading some vaguely-related academic literature.
 
+* [2016-03-06](tinytocs.pdf) -
+	[TinyToCS](http://tinytocs.org/) vol. 4 includes a paper on QP tries!
+
+	Nicest comment from a reviewer:
+
+	> The body of this paper is a masterpiece of economy:
+	> results are presented very clearly and understandably.
+	> The result here is simple, compact, and unambiguous,
+	> which makes it perfect for TinyToCS.
+
 thanks
 ------
 
