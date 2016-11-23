@@ -67,6 +67,8 @@ more clever about handling string termination.
 articles
 --------
 
+* [QP HOME PAGE](http://dotat.at/prog/qp)
+
 * [2015-10-04](blog-2015-10-04.md) -
 	qp tries: smaller and faster than crit-bit tries
 
@@ -103,11 +105,22 @@ articles
 	> The result here is simple, compact, and unambiguous,
 	> which makes it perfect for TinyToCS.
 
+* [2016-11-21] -
+	<https://gitlab.labs.nic.cz/labs/knot/merge_requests/574>
+
+	A greatly enhanced and properly engineered implementation of a
+	qp trie is being incorporated into NIC.CZ Knot DNS, for better
+	memory efficiency.
+
+
 thanks
 ------
 
 Marek Vavrusa (NIC.CZ) and Devon O'Dell (Fastly) enthusiastically put
 this code to work and provided encouraging feedback.
+
+Vladimír Čunát incorporated qp tries into NIC.CZ Knot DNS, at the
+suggestion of Jan Včelák.
 
 Simon Tatham proved that parent pointers are not needed for embedded
 crit-bit tries.
