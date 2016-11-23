@@ -105,7 +105,7 @@ articles
 	> The result here is simple, compact, and unambiguous,
 	> which makes it perfect for TinyToCS.
 
-* [2016-11-21] -
+* 2016-11-21 -
 	<https://gitlab.labs.nic.cz/labs/knot/merge_requests/574>
 
 	A greatly enhanced and properly engineered implementation of a
