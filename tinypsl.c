@@ -1,7 +1,7 @@
 // Compress the Public Suffix List in the style of a QP trie.
 
 #undef NDEBUG
-#define _GNU_SOURCE
+//#define _GNU_SOURCE
 
 #include <assert.h>
 #include <stdbool.h>
@@ -10,6 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static bool tracing = false;
+
+#define trace(fmt, ...) do {					\
+		if(tracing)					\
+			fprintf(stderr, fmt, __VA_ARGS__);	\
+	} while(0)
 
 typedef unsigned char byte;
 typedef unsigned int uint;
@@ -29,8 +36,8 @@ popcount(Tbitmap w) {
 	return((uint)__builtin_popcountll(w));
 }
 
-static byte
-ldh2i(byte c) {
+static char
+ldh2i(char c) {
 	if(c == '.') return(0);
 	if(c == '-') return(1);
 	if('0' <= c && c <= '9') return(c - '0' + 2);
@@ -42,14 +49,14 @@ ldh2i(byte c) {
 }
 
 static Tbitmap
-ldh2bit(byte c) {
-	return(1ULL << ldh2i(c));
+ldh2bit(char c) {
+	return(1ULL << (byte)ldh2i(c));
 }
 
 static inline Tbitmap
 twigbit(uint i, const char *key, size_t len) {
 	if(i >= len) return(ldh2bit(0));
-	return(ldh2bit((byte)key[i]));
+	return(ldh2bit(key[i]));
 }
 
 static inline bool
@@ -74,20 +81,21 @@ isbranch(Trie *t) {
 
 static void
 Tdump(Trie *t, int d) {
+	if(!tracing) return;
 	if(!isbranch(t)) {
-		fprintf(stderr, "%-16p %d %*c %s\n", t, d, d+1, '*', t->key);
+		trace("%-16p %d %*c %s\n", (void *)t, d, d+1, '*', t->key);
 		return;
 	}
-	fprintf(stderr, "%16jo %d\n", (uintmax_t)t->bmp, d);
+	trace("%16jo %d\n", (uintmax_t)t->bmp, d);
 	Tbitmap b;
 	if(hastwig(t, b = ldh2bit(0))) {
-		fprintf(stderr, "%-16p %d %*c\n", t, d, d+1, '!');
+		trace("%-16p %d %*c\n", (void *)t, d, d+1, '!');
 		Tdump(twig(t, twigoff(t, b)), d+1);
 	}
 	for(const char *s = ".-0123456789abcdefghijklmnopqrstuvwxyz";
 	    *s != '\0'; s++) {
 		if(hastwig(t, b = ldh2bit(*s))) {
-			fprintf(stderr, "%-16p %d %*c\n", t, d, d+1, *s);
+			trace("%-16p %d %*c\n", (void *)t, d, d+1, *s);
 			Tdump(twig(t, twigoff(t, b)), d+1);
 		}
 	}
@@ -109,7 +117,7 @@ static void
 Tadd(Trie *t, const char *key, size_t len) {
 	// First leaf in an empty tbl?
 	if(t->key == NULL) {
-		fprintf(stderr, "1st 0 %s\n", key);
+		trace("1st 0 %s\n", key);
 		t->key = key;
 		return;
 	}
@@ -118,7 +126,7 @@ Tadd(Trie *t, const char *key, size_t len) {
 		__builtin_prefetch(t->twigs);
 		Tbitmap b = twigbit(i, key, len);
 		if(!hastwig(t, b)) {
-			fprintf(stderr, "gro %d %s\n", i, key);
+			trace("gro %d %s\n", i, key);
 			uint s = twigoff(t, b);
 			uint m = popcount(t->bmp);
 			Trie *twigs = realloc(t->twigs, sizeof(Trie) * (m + 1));
@@ -139,23 +147,23 @@ Tadd(Trie *t, const char *key, size_t len) {
 	size_t len1 = strlen(t1.key);
 	size_t len2 = len;
 	while(t1.key[i] == t2.key[i]) {
-		fprintf(stderr, "ext %d %s %s\n", i, t1.key, t2.key);
+		trace("ext %d %s %s\n", i, t1.key, t2.key);
 		t->bmp = twigbit(i, key, len);
 		t->twigs = malloc(sizeof(Trie));
 		assert(t->twigs != NULL);
 		t = t->twigs;
 		i++;
 	}
-	fprintf(stderr, "new %d %s %s\n", i, t1.key, t2.key);
+	trace("new %d %s %s\n", i, t1.key, t2.key);
 	Trie *twigs = malloc(sizeof(Trie) * 2);
 	assert(twigs != NULL);
 	Tbitmap b1 = twigbit(i, t1.key, len1);
 	Tbitmap b2 = twigbit(i, t2.key, len2);
 	t->twigs = twigs;
 	t->bmp = b1 | b2;
-	fprintf(stderr, "%16jo %zu\n", (uintmax_t)b1, len1);
-	fprintf(stderr, "%16jo %zu\n", (uintmax_t)b2, len2);
-	fprintf(stderr, "%16jo\n", (uintmax_t)t->bmp);
+	trace("%16jo %zu\n", (uintmax_t)b1, len1);
+	trace("%16jo %zu\n", (uintmax_t)b2, len2);
+	trace("%16jo\n", (uintmax_t)t->bmp);
 	*twig(t, twigoff(t, b1)) = t1;
 	*twig(t, twigoff(t, b2)) = t2;
 	return;
@@ -183,6 +191,7 @@ int main(void) {
 
 	Trie *t = malloc(sizeof(*t));
 	assert(t != NULL);
+	*t = (Trie){ .key = NULL };
 
 	while((len = getline(&buf, &size, stdin)) >= 0) {
 		if(len > 1 && buf[len-1] == '\n')
