@@ -67,7 +67,7 @@ more clever about handling string termination.
 articles
 --------
 
-* [QP HOME PAGE](http://dotat.at/prog/qp)
+* [QP TRIE HOME PAGE](http://dotat.at/prog/qp)
 
 * [2015-10-04](blog-2015-10-04.md) -
 	qp tries: smaller and faster than crit-bit tries
