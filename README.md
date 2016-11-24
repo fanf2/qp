@@ -109,17 +109,17 @@ articles
 	<https://gitlab.labs.nic.cz/labs/knot/merge_requests/574>
 
 	A greatly enhanced and properly engineered implementation of a
-	qp trie is being incorporated into NIC.CZ Knot DNS, for better
+	qp trie is being incorporated into CZ.NIC Knot DNS, for better
 	memory efficiency.
 
 
 thanks
 ------
 
-Marek Vavrusa (NIC.CZ) and Devon O'Dell (Fastly) enthusiastically put
+Marek Vavrusa (CZ.NIC) and Devon O'Dell (Fastly) enthusiastically put
 this code to work and provided encouraging feedback.
 
-Vladimír Čunát incorporated qp tries into NIC.CZ Knot DNS, at the
+Vladimír Čunát incorporated qp tries into CZ.NIC Knot DNS, at the
 suggestion of Jan Včelák.
 
 Simon Tatham proved that parent pointers are not needed for embedded
