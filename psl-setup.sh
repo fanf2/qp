@@ -11,4 +11,5 @@ cat public_suffix_list.dat |
 	sed 's| *//.*||;s|^\*\.||' |
 	$idn |
 	egrep '^[a-z0-9.-]+$' |
+	rev |
 	env -i LANG=C sort > psl.dat

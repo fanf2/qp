@@ -1,7 +1,6 @@
 // Compress the Public Suffix List in the style of a QP trie.
 
 #undef NDEBUG
-//#define _GNU_SOURCE
 
 #include <assert.h>
 #include <stdbool.h>
@@ -80,7 +79,7 @@ isbranch(Trie *t) {
 }
 
 static void
-Tdump(Trie *t, int d) {
+Tdump(Trie *t, uint d) {
 	if(!tracing) return;
 	if(!isbranch(t)) {
 		trace("%-16p %d %*c %s\n", (void *)t, d, d+1, '*', t->key);
@@ -184,6 +183,24 @@ Tprint(Trie *t) {
 			Tprint(twig(t, twigoff(t, b)));
 }
 
+static void
+Tcount(Trie *t, uint d, uint *nodes, uint *string) {
+	if(isbranch(t)) {
+		*nodes += 1;
+		// end-of-string nodes are omitted
+		uint m = popcount(t->bmp & ~ldh2bit(0));
+		for(uint i = 0; i < m; i++)
+			Tcount(&t->twigs[i], d+1, nodes, string);
+	} else {
+		size_t len = strlen(t->key);
+		assert(len >= d);
+		*nodes += 1;
+		// short keys are stored in the node
+		if(len > 6)
+			*string += len - d;
+	}
+x}
+
 int main(void) {
 	char *buf = NULL;
 	size_t size = 0;
@@ -201,6 +218,11 @@ int main(void) {
 	}
 
 	Tprint(t);
+
+	uint nodes = 0, string = 0;
+	Tcount(t, 0, &nodes, &string);
+	fprintf(stderr, "%u nodes, %u string, %u bytes\n",
+		nodes, string, nodes * 7 + string);
 
 	return(0);
 }
