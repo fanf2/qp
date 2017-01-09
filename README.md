@@ -211,7 +211,7 @@ notes
 
 * [jumbo branches](notes-jumbo.md)
 * [embedded keys](notes-embed-key.md)
-* [write buffers](notes-write-buffers.md)
+* [write buffers](notes-write-buffer.md)
 * [todo](notes-todo.md)
 
 ---------------------------------------------------------------------------
