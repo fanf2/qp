@@ -1,8 +1,9 @@
-Buffered writes in qp tries
-===========================
+Buffered writes in [qp tries](http://dotat.at/prog/qp)
+=============================
 
-Based on a conversation with @tef on Twitter, inspired by
-https://www.percona.com/files/presentations/percona-live/PLMCE2012/PLMCE2012-The_Right_Read_Optimization_is_Actually_Write_Optimization.pdf
+Based on a conversation with [@tef on
+Twitter](https://twitter.com/tef), inspired by
+<https://www.percona.com/files/presentations/percona-live/PLMCE2012/PLMCE2012-The_Right_Read_Optimization_is_Actually_Write_Optimization.pdf>
 
 @tef wrote,
 
@@ -115,9 +116,9 @@ pointer to an array of nodes, called the branch's "twigs".
         |           |       |
         |           |       |         +----------+----------+
         | index bmp | twigs |  ---->  |          |          |
-	|           |       |         |          |          |
-	|           |       |         :          :          :
-	:           :       :
+        |           |       |         |          |          |
+        |           |       |         :          :          :
+        :           :       :
 
 
 Tricky points
@@ -263,3 +264,10 @@ Bad points:
 Overall my guess is this will favour update-heavy workloads at the
 expense of lookup-heavy workloads, though the change in depth is
 likely to lead to surprises.
+
+
+---------------------------------------------------------------------------
+
+Written by Tony Finch <dot@dotat.at> <http://dotat.at/>;
+You may do anything with this. It has no warranty.
+<http://creativecommons.org/publicdomain/zero/1.0/>
