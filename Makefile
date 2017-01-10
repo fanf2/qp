@@ -131,7 +131,7 @@ bind9:
 	git clone https://source.isc.org/git/bind9.git
 
 html:
-	for f in *.md; do markdown <$$f >$${f%md}html; done
+	for f in *.md; do ./markdown-entities <$$f >$${f%md}html; done
 
 upload: html
 	git push chiark:public-git/qp.git
