@@ -112,6 +112,14 @@ articles
 	qp trie is being incorporated into CZ.NIC Knot DNS, for better
 	memory efficiency.
 
+* 2016-12-20 -
+	<https://github.com/jedisct1/rust-qptrie>
+
+	Frank Denis's Rust version of qp tries
+
+* [2017-01-09](blog-2017-01-09.md) -
+	qp trie news roundup
+
 
 thanks
 ------
