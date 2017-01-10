@@ -1,5 +1,5 @@
-Buffered writes in [qp tries](http://dotat.at/prog/qp)
-=============================
+Buffered writes and compressed spines in [qp tries](http://dotat.at/prog/qp)
+===================================================
 
 Based on a conversation with [@tef on
 Twitter](https://twitter.com/tef), inspired by

@@ -217,9 +217,9 @@ roadmap
 notes
 -----
 
+* [buffered writes and compressed spines](notes-write-buffer.md)
 * [jumbo branches](notes-jumbo.md)
 * [embedded keys](notes-embed-key.md)
-* [write buffers](notes-write-buffer.md)
 * [DNS names](notes-dns.md)
 * [todo](notes-todo.md)
 
