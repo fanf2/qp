@@ -6,8 +6,6 @@ use strict;
 use open qw(:std :utf8);
 
 use HTML::Entities;
-use Text::Markdown;
 
 undef $/;
-my $html = Text::Markdown::Markdown(<>);
-print encode_entities $html, q{^\s!-~};
+print encode_entities <>, q{^\s!-~};
