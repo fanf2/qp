@@ -243,6 +243,89 @@ buffer when a new entry collides with an existing one, as if there
 were no space for the new entry.
 
 
+How to expand a write buffer
+----------------------------
+
+Some observations:
+
+* If we expand write buffer entries out to classic qp branch + twigs
+  layout, we aren't actually avoiding allocations, just delaying them.
+
+* Scanning a write buffer is faster than repeated indirections down a
+  spine.
+
+* A three-word write buffer entry is smaller than a four-word branch +
+  leaf pair.
+
+This suggests that it's usually better to keep a spine in write buffer
+layout as much as possible. When we run out of space in an allocation
+(too many twigs or too many write buffer entries), just make it
+bigger, without changing the layout.
+
+The layout needs to change when the spine grows a side-branch, as
+noted in the previous section.
+
+Another case where it could make sense to change the layout is when
+there are many twigs at one point on the spine. e.g.
+
+        +--------------+-------+
+        | i=4 bmp wb=3 | twigs |
+        +--------------+-------+
+                           |
+                           V
+                  +-----------+-------+
+                  |   child   |  ptr  |
+                  |   child   |  ptr  |
+                  +-----------+-------+-------+
+        wr buf    | i=2 nib=1 |  key  | value |
+                  | i=2 nib=3 |  key  | value |
+                  | i=2 nib=5 |  key  | value |
+                  +-----------+-------+-------+
+
+At some point when the fanout gets wide enough a classic qp indexed
+indirection will be faster than a linear scan. (benchmarks needed!)
+After expansion the layout becomes:
+
+        +--------------+-------+
+        | i=2 bmp wb=0 | twigs |
+        +--------------+-------+
+                           |
+                           V
+             +--------------+-------+
+             |     key      | value |
+             | 1=4 bmp wb=0 | twigs | --> +-----------+-------+
+             |     key      | value |     |   child   |  ptr  |
+             |     key      | value |     |   child   |  ptr  |
+             +--------------+-------+     +-----------+-------+
+
+
+Alternative point of view
+-------------------------
+
+After the previous section I think we have strayed from tef's original
+suggestion to a different area of the design space.
+
+Instead of a write buffer, we have a compressed spine.
+
+This change of perspective is useful, because it allows us to separate
+the idea of spine compression from the idea of using larger
+allocations to avoid `realloc()` calls.
+
+A compressed spine reduces the number of indirections needed to scan
+past a sequence of leaves.
+
+It can also save space if the spine has at most one leaf at each index
+(not counting unused space in the write buffer). It uses the same
+space as a classic qp trie layout if there are two leaves at a
+particular index, and costs a word more each time the fanout
+increases.
+
+So compressed spines can be better than classic qp tries, even when it
+is important to minimize space overhead. In this case, use the
+compressed spine layout, but do not leave any write buffer space, and
+`realloc()` eagerly.
+
+
 Performance handwaving
 ----------------------
 
