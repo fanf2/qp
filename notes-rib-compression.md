@@ -2,11 +2,12 @@ Notes on qp trie rib compression
 ================================
 
 Since January I have been thinking on and off about the details of
-what started as @tef's write buffer suggestion.
+what started as @tef's write buffer suggestion. It has taken a long
+time to distill down to something reasonably simple...
 
 
-Terminology
------------
+A third kind of compression
+---------------------------
 
 There are two kinds of compression in the original version of qp tries:
 
@@ -20,115 +21,102 @@ There are two kinds of compression in the original version of qp tries:
   bitmap indicating which child nodes are present.
 
 The new idea will add a third kind of compression, which I will call
-"rib compression", in which a branch where all but one child is a leaf
-is concatenated with its child branch, to save a pointer indirection.
+"rib compression", in which a branch that has leaves for all its
+children except for one child branch, is concatenated with its child
+branch to save a pointer indirection.
+
+(The term "rib compression" was inspired by "spine compression". The
+idea is that a linear sequence of nodes with leaves sprouting off to
+the sides is a bit like a rib cage.)
+
+
+Rib branches
+------------
+
+A "rib" branch needs to identify which nybble values have leaf
+children, and which nybble value is the branch child. We want to move
+the branch out of the twig array, so that we aren't wasting a word on
+the unused branch pointer. This implies that it should not be in the
+bitmap; instead there needs to be a field containing the nybble value
+of the branch child.
+
+(Actually, it's probably possible to omit this extra field, since we
+can recover its value from a stored child key when updating the trie.
+But the disadvantage is that we lose the ability to stop early when
+looking for a missing key, and we need some other way to identify rib
+branches.)
+
+The single branch child of a rib branch is concatenated onto its
+parent. Instead of following a pointer, the child appears
+consecutively in memory after its parent's twig array.
+
+
+Indirect and concatenated branches
+----------------------------------
+
+In an original qp trie, all branches have an indirect layout. They
+have two parts:
+
+* a twig containing an index word and a pointer;
+
+* an array of child twigs.
+
+With rib compression, the child branch of a rib branch has a
+concatenated layout:
+
+* a bare index word, consecutively followed by
+
+* an array of child twigs.
+
+
+Trunks
+------
+
+We'll call a consecutive sequence of concatenated branches a "trunk".
+A trunk corresponds to a single allocation.
+
+Every branch in a trunk except for the last must be a rib branch, i.e.
+must have exactly one branch child, the rest being leaves.
+
+The first branch in a trunk has an indirect layout - the pointer is
+how we find the trunk. All the rest are concatenated.
+
+A branch (of any shape) is concatenated to its parent exactly when its
+parent is a rib branch.
 
 
 Index word layout
 -----------------
 
-My starting point is the quintuple-bit qp trie version, where the
-nybbles are 5 bits and the bitmap is 32 bits.
+On a little-endian machine the layout of an index word for a
+quintuple-bit qp trie with rib compression is:
 
-There will be two kinds of index words, for branches (similar to
-before) and for ribs.
+        uint64_t    tag    : 1,
+                    shift  : 3,
+                    offset : 23,
+                    branch : 5,
+                    bitmap : 32;
 
-A rib index needs to identify which nybble values have leaf children,
-which nybble value is the branch child, and which are omitted. There
-are a couple of reasonable layouts:
+For a quadruple-bit qp trie it is:
 
-1. A bitmap for the leaf children, plus a nybble value for the branch
-   child, requiring 32 + 5 = 37 bits.
+        uint64_t    tag    : 1,
+                    shift  : 1,
+                    offset : 42,
+                    branch : 4,
+                    bitmap : 16;
 
-2. A list of nybble values, consisting of N leaf children and 1 branch
-   child, plus a count of children. This requires 5*(N+1) + log(N+1)
-   bits. If N is 6, this makes 7*5 + 3 = 38 bits.
+The branch field is only used in the index word of a rib branch, and
+it refers to the child node concatenated after the rib node. In this
+case the bit corresponding to the branch field is clear in the bitmap.
 
-The parent branch index word also needs something to indicate how many
-ribs precede the main branch array.
+To distinguish a rib branch from another kind of branch from looking
+at its index, the concatenated child branch field should correspond
+to one of the bits set in the bitmap.
 
-The branch index needs a flag bit set to distinguish branches from
-leaves (tagged pointers). But rib indexes do not need a flag bit
-because their type is clear from context.
-
-The flag bit has to be at the little end of the word, so the parts of
-the words that vary between branches and ribs have to be at the little
-end. So whereas the original qp trie put the octet offset at the
-bottom of the word, it now makes more sense to put it at the top of
-the word.
-
-Option 1 branch:
-
-    +-------------+-----------+-------------+----------+---+
-    | offset (24) | shift (3) | bitmap (32) | ribs (4) | 1 |
-    +-------------+-----------+-------------+----------+---+
-
-Option 1 rib:
-
-    +-------------+-----------+-------------+--------------+
-    | offset (24) | shift (3) | bitmap (32) |  child  (5)  |
-    +-------------+-----------+-------------+--------------+
-
-Option 2 branch:
-
-    +-------------+-----------+-------------+----------+---+
-    | offset (23) | shift (3) | bitmap (32) | ribs (5) | 1 |
-    +-------------+-----------+-------------+----------+---+
-
-Option 2 rib:
-
-    +-------------+-----------+----------------+-----------+
-    | offset (23) | shift (3) | children (5*7) | count (3) |
-    +-------------+-----------+----------------+-----------+
-
-
-Rib selection
--------------
-
-In both cases the rib index word is followed by N leaves (key/value
-pairs).
-
-For option 1, the leaves can be indexed using the popcount trick. When
-the nybble's bit is not set, check the child field for a match, and
-either quit or continue searching.
-
-For option 2, we can iterate through the children nybbles, or we can use
-[Mycroft's SWAR strlen() trick](https://www.cl.cam.ac.uk/~am21/progtricks.html)
-combined with CLZ to work out if a child matches.
-
-
-Discussion
-----------
-
-I was stuck on choosing a good memory layout for a long time, I think
-because I couldn't find any clear constraints to guide the choice of
-field sizes - especially for the rib count.
-
-When I thought of sawpping the order of the octet offset / byte shift
-/ bitmap fields, it became a lot more clear how to make good use of
-the available space.
-
-For a while I was planning to use Mycroft's strlen() trick, because it
-is enormously fun. But after working through the layouts in more
-detail it looks like option 1 will be better.
-
-
-Other fan-out widths
---------------------
-
-Option 1 also works well in a 4-bit qp trie:
-
-4-bit option 1 branch:
-
-    +-------------+-----------+-------------+----------+---+
-    | offset (43) | shift (1) | bitmap (16) | ribs (3) | 1 |
-    +-------------+-----------+-------------+----------+---+
-
-4-bit option 1 rib:
-
-    +-------------+-----------+-------------+--------------+
-    | offset (43) | shift (1) | bitmap (16) |  child  (4)  |
-    +-------------+-----------+-------------+--------------+
+When looking up a key in the qp trie, the lookup code first checks the
+bitmap for a match (in which case the child is found in the twig
+array), then checks the branch field for a match (in which case the
+child is concatenated), otherwise the key is missing.
 
 
 Binary keys
@@ -149,7 +137,7 @@ In the Knot DNS qp trie implementation, there is an extra bit in the
 bitmap to indicate a non-octet, which sorts before a zero octet. This
 is probably a better solution than my hack.
 
-But does the knot not bit work for rib compression?
+But does the Knot not bit work for rib compression?
 
 There is a potential problem in the rib index word where there is a
 copy of the child nybble corresponding to the following branch. There
