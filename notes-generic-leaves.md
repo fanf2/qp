@@ -78,6 +78,16 @@ However splitting the arrays is likely to make array indexing more
 expensive.
 
 
+Concatenated nodes
+------------------
+
+This new layout works with concatenated branch nodes. There is no
+longer any need for a branch nybble field. If there is a single bit
+set in the branch bitmap, the branch array just contains an index
+word, and instead of a pointer, the child branch's arrays follow
+consecutively in memory.
+
+
 Portability and genericity
 --------------------------
 
