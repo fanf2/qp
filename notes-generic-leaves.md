@@ -107,3 +107,10 @@ The main requirement on leaves is that they can be moved around
 freely, when arrays are resized to insert or delete child nodes.
 
 Overall, this new layout should be a lot more friendly to C++ and Rust.
+
+
+---------------------------------------------------------------------------
+
+Written by Tony Finch <dot@dotat.at> <http://dotat.at/>;
+You may do anything with this. It has no warranty.
+<http://creativecommons.org/publicdomain/zero/1.0/>
