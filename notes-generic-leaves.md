@@ -88,6 +88,36 @@ word, and instead of a pointer, the child branch's arrays follow
 consecutively in memory.
 
 
+Binary keys and prefix agnosticism
+----------------------------------
+
+Two observations:
+
+* To support binary keys as described at the end of the [notes on rib
+  compression](notes-rib-compression.md), the leaf bitmap needs an
+  extra bit. This is annoying with wide fanouts, because the bitmaps
+  no longer fit in a word.
+
+* The two bitmaps are somewhat redundant: zero in both means no nodes
+  with this prefix; a one and a zero means either a leaf or a branch;
+  but two ones doesn't have an assigned meaning.
+
+Having both a leaf and a branch at the same point in the trie implies
+that we have relaxed the requirement for prefix-freedom. This
+relaxation also means we no longer have a problem with binary keys, so
+we don't need the extra valueless bit in the leaf bitmap.
+
+When a child has bits set in both bitmaps, this means that the the
+leaf key is longer than the offset of this nybble, but shorter than
+the offsets of all children in the branch. In other words, a leaf is
+pushed down the tree as far as possible.
+
+When searching, if there is a leaf at a node, compare keys; if they
+match, you have succeeded, else you need to check for a branch; if
+there is a branch, continue down the trie, or if not, the search key
+is not in the trie.
+
+
 Portability and genericity
 --------------------------
 
