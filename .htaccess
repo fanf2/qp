@@ -1,2 +1,6 @@
 RedirectMatch ^/prog/qp/?$       https://dotat.at/prog/qp/README.html
 RedirectMatch ^/prog/qp/(.*)\.md https://dotat.at/prog/qp/$1.html
+
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule (.*) https://%{SERVER_NAME}%{REQUEST_URI}$1 [R,L]
