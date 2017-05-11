@@ -1,4 +1,4 @@
-Buffered writes and compressed spines in [qp tries](http://dotat.at/prog/qp)
+Buffered writes and compressed spines in [qp tries](https://dotat.at/prog/qp)
 ===================================================
 
 Based on a conversation with [@tef on
@@ -351,6 +351,6 @@ likely to lead to surprises.
 
 ---------------------------------------------------------------------------
 
-Written by Tony Finch <dot@dotat.at> <http://dotat.at/>;
+Written by Tony Finch <dot@dotat.at> <https://dotat.at/>;
 You may do anything with this. It has no warranty.
-<http://creativecommons.org/publicdomain/zero/1.0/>
+<https://creativecommons.org/publicdomain/zero/1.0/>

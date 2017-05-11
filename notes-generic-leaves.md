@@ -1,4 +1,4 @@
-Generic leaf types in a [qp trie](http://dotat.at/prog/qp)
+Generic leaf types in a [qp trie](https://dotat.at/prog/qp)
 =================================
 
 _May 2017_
@@ -141,6 +141,6 @@ Overall, this new layout should be a lot more friendly to C++ and Rust.
 
 ---------------------------------------------------------------------------
 
-Written by Tony Finch <dot@dotat.at> <http://dotat.at/>;
+Written by Tony Finch <dot@dotat.at> <https://dotat.at/>;
 You may do anything with this. It has no warranty.
-<http://creativecommons.org/publicdomain/zero/1.0/>
+<https://creativecommons.org/publicdomain/zero/1.0/>

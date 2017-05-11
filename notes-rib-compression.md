@@ -1,5 +1,5 @@
-Notes on qp trie rib compression
-================================
+Notes on [qp trie](https://dotat.at/prog/qp) rib compression
+============================================================
 
 Since January I have been thinking on and off about the details of
 what started as @tef's write buffer suggestion. It has taken a long
@@ -161,6 +161,6 @@ following branches.
 
 ---------------------------------------------------------------------------
 
-Written by Tony Finch <dot@dotat.at> <http://dotat.at/>;
+Written by Tony Finch <dot@dotat.at> <https://dotat.at/>;
 You may do anything with this. It has no warranty.
-<http://creativecommons.org/publicdomain/zero/1.0/>
+<https://creativecommons.org/publicdomain/zero/1.0/>

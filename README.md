@@ -67,7 +67,7 @@ more clever about handling string termination.
 articles
 --------
 
-* [QP TRIE HOME PAGE](http://dotat.at/prog/qp)
+* [QP TRIE HOME PAGE](https://dotat.at/prog/qp)
 
 * [2015-10-04](blog-2015-10-04.md) -
 	qp tries: smaller and faster than crit-bit tries
@@ -140,7 +140,7 @@ download
 You can clone or browse the repository from:
 
 * git://dotat.at/qp.git
-* <http://dotat.at/cgi/git/qp.git>
+* <https://dotat.at/cgi/git/qp.git>
 * <https://github.com/fanf2/qp.git>
 * <https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git>
 
@@ -227,6 +227,6 @@ notes
 
 ---------------------------------------------------------------------------
 
-Written by Tony Finch <dot@dotat.at> <http://dotat.at/>;
+Written by Tony Finch <dot@dotat.at> <https://dotat.at/>;
 You may do anything with this. It has no warranty.
-<http://creativecommons.org/publicdomain/zero/1.0/>
+<https://creativecommons.org/publicdomain/zero/1.0/>
