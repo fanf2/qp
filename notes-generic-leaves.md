@@ -57,25 +57,48 @@ Making space
 
 We need to find space for this second bitmap.
 
-In a 4-bit qp trie, we can steal 16 bits from the nybble offset, so
-the index word contains two 16 bit fields for bitmaps, and a 32 bit
+In a 4-bit qp trie, we can steal 16 bits from the nybble offset, so a
+64 bit index word contains two 16 bit fields for bitmaps, and a 32 bit
 nybble offset.
 
 In a 5-bit qp trie, there isn't space in a 64 bit word for all three
-fields, but we have enough flexibility to use a packed array of 3x32
-bit words.
+fields, so we have to spill into another word.
 
 With the old layout, a 6-bit qp trie was not an attractive option
 since it wastes a word per leaf, but that is no longer a problem with
 this new layout.
 
-To pack the branch array as effectively as possible, it might be
-helpful in some cases to split it into two or three separate arrays
-(of pointers, bitmaps, and offsets) so that smaller fields don't mess
-up the alignment requirements of larger fields. This can make it
-possible to save more space by limiting offsets to (say) 16 bits.
-However splitting the arrays is likely to make array indexing more
-expensive.
+The following table shows how branches can fit reasonably nicely on
+the two common word sizes and the three sensible nybble sizes. We want
+to keep a branch object to a whole number of words so an array of
+branches can be packed tightly.
+
+    nybble
+    size        word size       32          64
+
+    4 bit       pointer         32          64
+                offset          31+1        31+1
+                bitmaps         16 x 2      16 x 2
+
+                words           3           2
+
+    5 bit       pointer         32          64
+                offset          29+3        61+3
+                bitmaps         32 x 2      32 x 2
+
+                words           4           3
+
+    6 bit       pointer         32          64
+                offset          30+2        62+2
+                bitmaps         64 x 2      64 x 2
+
+                words           6           4
+
+It's possible to reduce the size of branches by reducing the size of
+the offset field (the pointer and bitmap sizes are fixed) but to get
+the benefit of smaller offsets we would need to reorganize the branch
+array into separate arrays so that small offsets can be packed
+tightly. However this is likely to make array indexing more expensive.
 
 
 Concatenated nodes
