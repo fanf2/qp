@@ -110,8 +110,12 @@ name's length.
 If a DNS server stores names with descriptors, it can need up to
 1+128+255 bytes for a name, for descriptor length, descriptor, and
 name. (Descriptors are usually much shorter, except for 35-element
-ip6.arpa domain names.)
+ip6.arpa domain names.) Indexing a name stored in this compressed
+format is the same as above, starting with,
 
+	desclen = base[0];
+	desc = base + 1;
+	name = desc + desclen;
 
 Caveat
 ------
