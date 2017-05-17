@@ -79,7 +79,7 @@ converted to some kind of non-byte value.
 
 Instead of doing this with string manipulation, which might require
 doubling the memory used to store names, it might make more sense to
-use a descriptor of the string to make embedded octet lengths more
+use a descriptor of the string to make embedded byte lengths more
 easy to use. The descriptor is just a list of the indexes of the
 length bytes in reverse order, terminated with an extra zero. For
 example, (using \digit to represent the length bytes)
@@ -89,6 +89,11 @@ example, (using \digit to represent the length bytes)
 needs a descriptor like
 
         19 16 13 9 5 0 0
+
+The descriptor for a bare name can use one-byte indexes, because
+names are up to 255 bytes long. A name in a packet needs two-byte
+indexes, because packets can be up to 255 bytes long, and name
+compression allows names to be widely scattered.
 
 The indexing code scans through the descriptor as you index further
 into the name. There's an init step which can be run once before a qp
@@ -112,6 +117,29 @@ Then each index looks like this, as long as i only increases.
                 return(-1);
         else
                 return(key[base + i - offset]);
+
+
+Another way to turn names into keys
+-----------------------------------
+
+A domain name can be up to 255 bytes, with at most 127 labels
+(1 byte length plus 1 byte contents for each label, plus one
+byte root terminator). Each label can be up to 63 bytes.
+
+This means an byte in a name can be identified using 7 + 6 = 13 bits
+with a fixed radix.
+
+There is enough space in a branch node for 47 bits of bitmap, 13 bits
+of index, and two bits of node type, with two bits spare.
+
+Code to get an byte from a name, given a label and an offset, the
+same descriptor as before, and a descriptor length,
+
+	if(label >= desclen)
+		return(-1);
+	if(offset >= name[desc[label]])
+		return(-1);
+	return(name[desc[label]+offset+1]);
 
 Caveat
 ------
