@@ -87,9 +87,9 @@ names are up to 255 bytes long. A name in a packet needs two-byte
 indexes, because packets can be up to 65535 bytes long, and name
 compression allows names to be widely scattered.
 
-A domain name can have at most 127 labels (1 byte length plus 1 byte
-contents for each label, plus one byte root terminator). Each label
-can be up to 63 bytes.
+A domain name can have at most 127 labels not counting the root
+(1 byte length plus 1 byte contents for each label, plus one byte
+root terminator). Each label can be up to 63 bytes.
 
 This means an byte in a name can be indexed using 7 + 6 = 13 bits with
 a fixed radix, which fits inside the spare space in the branch node.
@@ -99,9 +99,19 @@ same descriptor as before, and a descriptor length,
 
 	if(label >= desclen)
 		return(-1);
-	if(offset >= name[desc[label]])
+	if(offset >= name[desc[label+1]])
 		return(-1);
-	return(name[desc[label]+offset+1]);
+	return(name[desc[label+1]+offset+1]);
+
+The descriptor is one element longer than the number of labels since
+it includes the root terminator. In a bare name this can double as the
+name's length.
+
+If a DNS server stores names with descriptors, it can need up to
+1+128+255 bytes for a name, for descriptor length, descriptor, and
+name. (Descriptors are usually much shorter, except for 35-element
+ip6.arpa domain names.)
+
 
 Caveat
 ------
