@@ -49,7 +49,7 @@ typedef struct Tbl {
 	void *ptr;
 } Trie;
 
-// index word accessors
+// index word layout
 
 #define Tix_width_tag    1
 #define Tix_width_shift  3
@@ -60,6 +60,8 @@ typedef struct Tbl {
 #define Tix_base_shift  (Tix_base_tag  +   Tix_width_tag)
 #define Tix_base_offset (Tix_base_shift +  Tix_width_shift)
 #define Tix_base_bitmap (Tix_base_offset + Tix_width_offset)
+
+#define Tix_place(field) ((uint64_t)(field) << Tix_base_##field)
 
 #define Tunmask(field,index) ((uint)((index >> Tix_base_##field)	\
 				     & ((1ULL << Tix_width_##field)	\
@@ -98,6 +100,8 @@ isbranch(Trie *t) {
 #define Tbranch(t) assert(isbranch(t))
 #define Tleaf(t)  assert(!isbranch(t))
 
+// accessor functions
+
 #define Tcheck_get(type, tag, field, expr)	\
 	static inline type			\
 	tag##_##field(Trie *t) {		\
@@ -117,6 +121,38 @@ Tbranch_get(Tbitmap, bitmap);
 Tcheck_get(Trie *,       Tbranch, twigs, t->ptr);
 Tcheck_get(const char *, Tleaf,   key,   t->ptr);
 Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
+
+#define Tset_field(cast, elem, type, field)	\
+	static inline void			\
+	Tset_##field(Trie *t, type field) {	\
+		t->elem = cast field;		\
+	}					\
+	struct dummy
+
+Tset_field((void *),           ptr,   Trie *,       twigs);
+Tset_field((void *)(uint64_t), ptr,   const char *, key);
+Tset_field((uint64_t),         index, void *,       val);
+
+static inline void
+Tset_index(Trie *t, uint shift, uint offset, Tbitmap bitmap) {
+	uint tag = 1;
+	t->index = Tix_place(tag)
+		 | Tix_place(shift)
+		 | Tix_place(offset)
+		 | Tix_place(bitmap);
+}
+
+static inline void
+Tbitmap_add(Trie *t, Tbitmap bit) {
+	Tset_index(t, Tbranch_shift(t), Tbranch_offset(t),
+		   Tbranch_bitmap(t) | bit);
+}
+
+static inline void
+Tbitmap_del(Trie *t, Tbitmap bit) {
+	Tset_index(t, Tbranch_shift(t), Tbranch_offset(t),
+		   Tbranch_bitmap(t) & ~bit);
+}
 
 //  ..key[o%5==0].. ..key[o%5==1].. ..key[o%5==2].. ..key[o%5==3].. ..key[o%5==4]..
 // |               |               |               |               |               |
