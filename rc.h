@@ -49,6 +49,36 @@ typedef struct Tbl {
 	void *ptr;
 } Trie;
 
+// accessor functions, except for the index word
+
+#define Tset_field(cast, elem, type, field)	\
+	static inline void			\
+	Tset_##field(Trie *t, type field) {	\
+		t->elem = cast field;		\
+	}					\
+	struct dummy
+
+Tset_field((void *),           ptr,   Trie *,       twigs);
+Tset_field((void *)(uint64_t), ptr,   const char *, key);
+Tset_field((uint64_t),         index, void *,       val);
+
+static inline bool isbranch(Trie *t);
+
+#define Tbranch(t) assert(isbranch(t))
+#define Tleaf(t)  assert(!isbranch(t))
+
+#define Tcheck_get(type, tag, field, expr)	\
+	static inline type			\
+	tag##_##field(Trie *t) {		\
+		tag(t);				\
+		return(expr);			\
+	}					\
+	struct dummy
+
+Tcheck_get(Trie *,       Tbranch, twigs, t->ptr);
+Tcheck_get(const char *, Tleaf,   key,   t->ptr);
+Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
+
 // index word layout
 
 #define Tix_width_tag    1
@@ -67,6 +97,42 @@ typedef struct Tbl {
 				     & ((1ULL << Tix_width_##field)	\
 					- 1ULL)				\
 				      ))
+
+// index word accessor functions
+
+static inline bool
+isbranch(Trie *t) {
+	return(Tunmask(tag, t->index));
+}
+
+#define Tbranch_get(type, field)		\
+	Tcheck_get(type, Tbranch, field,	\
+		   Tunmask(field, t->index))
+
+Tbranch_get(uint, shift);
+Tbranch_get(uint, offset);
+Tbranch_get(Tbitmap, bitmap);
+
+static inline void
+Tset_index(Trie *t, uint shift, uint offset, Tbitmap bitmap) {
+	uint tag = 1;
+	t->index = Tix_place(tag)
+		 | Tix_place(shift)
+		 | Tix_place(offset)
+		 | Tix_place(bitmap);
+}
+
+static inline void
+Tbitmap_add(Trie *t, Tbitmap bit) {
+	Tset_index(t, Tbranch_shift(t), Tbranch_offset(t),
+		   Tbranch_bitmap(t) | bit);
+}
+
+static inline void
+Tbitmap_del(Trie *t, Tbitmap bit) {
+	Tset_index(t, Tbranch_shift(t), Tbranch_offset(t),
+		   Tbranch_bitmap(t) & ~bit);
+}
 
 // sanity checks!
 
@@ -91,68 +157,6 @@ static_assert(Tunmask(offset,0x0420ULL) == 0x42,
 
 static_assert(Tunmask(shift,0xFEDCBAULL) == 5,
 	      "extracting the shift works");
-
-static inline bool
-isbranch(Trie *t) {
-	return(Tunmask(tag, t->index));
-}
-
-#define Tbranch(t) assert(isbranch(t))
-#define Tleaf(t)  assert(!isbranch(t))
-
-// accessor functions
-
-#define Tcheck_get(type, tag, field, expr)	\
-	static inline type			\
-	tag##_##field(Trie *t) {		\
-		tag(t);				\
-		return(expr);			\
-	}					\
-	struct dummy
-
-#define Tbranch_get(type, field)		\
-	Tcheck_get(type, Tbranch, field,	\
-		   Tunmask(field, t->index))
-
-Tbranch_get(uint, shift);
-Tbranch_get(uint, offset);
-Tbranch_get(Tbitmap, bitmap);
-
-Tcheck_get(Trie *,       Tbranch, twigs, t->ptr);
-Tcheck_get(const char *, Tleaf,   key,   t->ptr);
-Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
-
-#define Tset_field(cast, elem, type, field)	\
-	static inline void			\
-	Tset_##field(Trie *t, type field) {	\
-		t->elem = cast field;		\
-	}					\
-	struct dummy
-
-Tset_field((void *),           ptr,   Trie *,       twigs);
-Tset_field((void *)(uint64_t), ptr,   const char *, key);
-Tset_field((uint64_t),         index, void *,       val);
-
-static inline void
-Tset_index(Trie *t, uint shift, uint offset, Tbitmap bitmap) {
-	uint tag = 1;
-	t->index = Tix_place(tag)
-		 | Tix_place(shift)
-		 | Tix_place(offset)
-		 | Tix_place(bitmap);
-}
-
-static inline void
-Tbitmap_add(Trie *t, Tbitmap bit) {
-	Tset_index(t, Tbranch_shift(t), Tbranch_offset(t),
-		   Tbranch_bitmap(t) | bit);
-}
-
-static inline void
-Tbitmap_del(Trie *t, Tbitmap bit) {
-	Tset_index(t, Tbranch_shift(t), Tbranch_offset(t),
-		   Tbranch_bitmap(t) & ~bit);
-}
 
 //  ..key[o%5==0].. ..key[o%5==1].. ..key[o%5==2].. ..key[o%5==3].. ..key[o%5==4]..
 // |               |               |               |               |               |
