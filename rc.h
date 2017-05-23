@@ -68,6 +68,14 @@ typedef struct Tbl {
 
 // sanity checks!
 
+#ifndef static_assert
+#define static_assert_cat(a,b) a##b
+#define static_assert_name(line) static_assert_cat(static_assert,line)
+#define static_assert(predicate,message)		\
+	static const char *static_assert_name(__LINE__)	\
+		[predicate ? 1 : -1] = { message }
+#endif
+
 static_assert(Tix_base_bitmap + Tix_width_bitmap == 64,
 	      "index fields must fill a 64 bit word");
 
