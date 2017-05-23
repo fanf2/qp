@@ -13,3 +13,21 @@
 
 #include "Tbl.h"
 #include "rc.h"
+
+bool
+Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
+	if(t == NULL)
+		return(false);
+	while(isbranch(t)) {
+		__builtin_prefetch(Tbranch_twigs(t));
+		Tbitmap b = twigbit(t, key, len);
+		if(!hastwig(t, b))
+			return(false);
+		t = twig(t, twigoff(t, b));
+	}
+	if(strcmp(key, Tleaf_key(t)) != 0)
+		return(false);
+	*pkey = Tleaf_key(t);
+	*pval = Tleaf_val(t);
+	return(true);
+}
