@@ -33,6 +33,46 @@ Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 	return(true);
 }
 
+static bool
+next_rec(Trie *t, const char **pkey, size_t *plen, void **pval) {
+	if(isbranch(t)) {
+		// Recurse to find either this leaf (*pkey != NULL)
+		// or the next one (*pkey == NULL).
+		Tindex i = t->index;
+		Tbitmap b = twigbit(i, *pkey, *plen);
+		uint s, m; TWIGOFFMAX(s, m, i, b);
+		for(; s < m; s++)
+			if(next_rec(Tbranch_twigs(t)+s, pkey, plen, pval))
+				return(true);
+		return(false);
+	}
+	// We have found the next leaf.
+	if(*pkey == NULL) {
+		*pkey = Tleaf_key(t);
+		*plen = strlen(*pkey);
+		*pval = Tleaf_val(t);
+		return(true);
+	}
+	// We have found this leaf, so start looking for the next one.
+	if(strcmp(*pkey, Tleaf_key(t)) == 0) {
+		*pkey = NULL;
+		*plen = 0;
+		return(false);
+	}
+	// No match.
+	return(false);
+}
+
+bool
+Tnextl(Tbl *tbl, const char **pkey, size_t *plen, void **pval) {
+	if(tbl == NULL) {
+		*pkey = NULL;
+		*plen = 0;
+		return(NULL);
+	}
+	return(next_rec(tbl, pkey, plen, pval));
+}
+
 Tbl *
 Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
