@@ -16,6 +16,7 @@
 #include "Tbl.h"
 
 static const char *progname;
+static bool debug = false;
 
 static void
 die(const char *cause) {
@@ -35,13 +36,20 @@ usage(void) {
 
 static void
 trace(Tbl *t, int s, const char *key) {
-//	printf("%c%s\n", s, key);
-//	Tdump(t);
+	if(debug) {
+		printf("%c%s\n", s, key);
+		Tdump(t);
+	}
 }
 
 int
 main(int argc, char *argv[]) {
 	progname = argv[0];
+	if(argc > 1 && strcmp(argv[1], "-d") == 0) {
+		debug = true;
+		argv++;
+		argc--;
+	}
 	if(argc > 2)
 		usage();
 	if(argc == 2) {
