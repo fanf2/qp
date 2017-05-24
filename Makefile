@@ -2,7 +2,7 @@
 CFLAGS= -O3 -std=gnu99 -Wall -Wextra
 
 # implementation codes
-XY=	cb qp qs qn fp fs fc wp ws # ht
+XY=	cb qp qs qn fp fs fc wp ws rc # ht
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 
@@ -51,11 +51,13 @@ cb.o: cb.c cb.h Tbl.h
 qp.o: qp.c qp.h Tbl.h
 fp.o: fp.c fp.h Tbl.h
 wp.o: wp.c wp.h Tbl.h
+rc.o: rc.c rc.h Tbl.h
 ht.o: ht.c ht.h Tbl.h
 cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
 fp-debug.o: fp-debug.c fp.h Tbl.h
 wp-debug.o: wp-debug.c wp.h Tbl.h
+rc-debug.o: rc-debug.c rc.h Tbl.h
 ht-debug.o: ht-debug.c ht.h Tbl.h
 
 # no cache prefetch
@@ -88,6 +90,8 @@ qs-debug.c:
 	ln -s qp-debug.c qs-debug.c
 fs-debug.c:
 	ln -s fp-debug.c fs-debug.c
+fc-debug.c:
+	ln -s fp-debug.c fc-debug.c
 ws-debug.c:
 	ln -s wp-debug.c ws-debug.c
 
