@@ -73,3 +73,96 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(t != NULL) Tset_twigs(p, t);
 	return(tbl);
 }
+
+Tbl *
+Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
+	if(Tunmask(tag, (Tindex)val) || len > Tmaxlen) {
+		errno = EINVAL;
+		return(NULL);
+	}
+	if(val == NULL)
+		return(Tdell(tbl, key, len));
+	// First leaf in an empty tbl?
+	if(tbl == NULL) {
+		tbl = malloc(sizeof(*tbl));
+		if(tbl == NULL) return(NULL);
+		Tset_key(tbl, key);
+		Tset_val(tbl, val);
+		return(tbl);
+	}
+	Trie *t = tbl;
+	// Find the most similar leaf node in the trie. We will compare
+	// its key with our new key to find the first differing nibble,
+	// which can be at a lower index than the point at which we
+	// detect a difference.
+	while(isbranch(t)) {
+		__builtin_prefetch(Tbranch_twigs(t));
+		Tindex i = t->index;
+		Tbitmap b = twigbit(i, key, len);
+		// Even if our key is missing from this branch we need to
+		// keep iterating down to a leaf. It doesn't matter which
+		// twig we choose since the keys are all the same up to this
+		// index. Note that blindly using twigoff(t, b) can cause
+		// an out-of-bounds index if it equals twigmax(t).
+		uint s = hastwig(i, b) ? twigoff(i, b) : 0;
+		t = Tbranch_twigs(t) + s;
+	}
+	// Do the keys differ, and if so, where?
+	uint off, xor, shf;
+	const char *tkey = Tleaf_key(t);
+	for(off = 0; off <= len; off++) {
+		xor = (byte)key[off] ^ (byte)tkey[off];
+		if(xor != 0) goto newkey;
+	}
+	Tset_val(t, val);
+	return(tbl);
+newkey:; // We have the branch's byte index; what is its chunk index?
+	uint bit = off * 8 + (uint)__builtin_clz(xor) + 8 - sizeof(uint) * 8;
+	uint qo = bit / 5;
+	off = qo * 5 / 8;
+	shf = qo * 5 % 8;
+	// re-index keys with adjusted offset
+	uint k1 = word_up(key+off);
+	uint k2 = word_up(tkey+off);
+	Tbitmap b1 = nibbit(k1, shf);
+	// Prepare the new leaf.
+	Trie t1;
+	Tset_key(&t1, key);
+	Tset_val(&t1, val);
+	// Find where to insert a branch or grow an existing branch.
+	t = tbl;
+	Tindex i = 0;
+	while(isbranch(t)) {
+		__builtin_prefetch(Tbranch_twigs(t));
+		i = t->index;
+		if(off == Tindex_offset(i) && shf == Tindex_shift(i))
+			goto growbranch;
+		if(off == Tindex_offset(i) && shf < Tindex_shift(i))
+			goto newbranch;
+		if(off < Tindex_offset(i))
+			goto newbranch;
+		Tbitmap b = twigbit(i, key, len);
+		assert(hastwig(i, b));
+		t = Tbranch_twigs(t) + twigoff(i, b);
+	}
+newbranch:;
+	Trie *twigs = malloc(sizeof(Trie) * 2);
+	if(twigs == NULL) return(NULL);
+	Trie t2 = *t; // Save before overwriting.
+	Tbitmap b2 = nibbit(k2, shf);
+	Tset_twigs(t, twigs);
+	Tindex_set(&t->index, shf, off, b1 | b2);
+	twigs[twigoff(i, b1)] = t1;
+	twigs[twigoff(i, b2)] = t2;
+	return(tbl);
+growbranch:;
+	assert(!hastwig(i, b1));
+	uint s, m; TWIGOFFMAX(s, m, i, b1);
+	twigs = realloc(Tbranch_twigs(t), sizeof(Trie) * (m + 1));
+	if(twigs == NULL) return(NULL);
+	memmove(twigs+s+1, twigs+s, sizeof(Trie) * (m - s));
+	memmove(twigs+s, &t1, sizeof(Trie));
+	Tset_twigs(t, twigs);
+	Tbitmap_add(&t->index, b1);
+	return(tbl);
+}

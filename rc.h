@@ -25,6 +25,18 @@ typedef uint64_t Tindex;
 
 const char *dump_bitmap(Tbitmap w);
 
+static inline uint
+byte_me(char c) {
+	return(c & 0xFF);
+}
+
+static inline uint
+word_up(const char *p) {
+	uint w = byte_me(p[0]) << 8;
+	if(w) w |= byte_me(p[1]);
+	return(w);
+}
+
 #if defined(HAVE_SLOW_POPCOUNT)
 
 static inline uint
@@ -94,10 +106,12 @@ Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
 
 #define Tix_place(field) ((Tindex)(field) << Tix_base_##field)
 
+#define Tix_mask(field) ((1ULL << Tix_width_##field) - 1ULL)
+
 #define Tunmask(field,index) ((uint)(((index) >> Tix_base_##field)	\
-				     & ((1ULL << Tix_width_##field)	\
-					- 1ULL)				\
-				      ))
+				     & Tix_mask(field)))
+
+#define Tmaxlen Tix_mask(offset)
 
 // index word accessor functions
 
@@ -180,8 +194,7 @@ static inline Tbitmap
 twigbit(Tindex i, const char *key, size_t len) {
 	uint o = Tindex_offset(i);
 	if(o >= len) return(1);
-	uint k = (uint)(key[o] & 0xFF) << 8U;
-	if(k) k |= (uint)(key[o+1] & 0xFF);
+	uint k = word_up(key+o);
 	return(nibbit(k, Tindex_shift(i)));
 }
 
@@ -191,8 +204,8 @@ hastwig(Tindex i, Tbitmap bit) {
 }
 
 static inline uint
-twigoff(Tindex i, Tbitmap b) {
-	return(popcount(Tindex_bitmap(i) & (b-1)));
+twigoff(Tindex i, Tbitmap bit) {
+	return(popcount(Tindex_bitmap(i) & (bit-1)));
 }
 
 #define TWIGOFFMAX(off, max, i, b) do {			\
