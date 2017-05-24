@@ -35,8 +35,7 @@ dump_rec(Trie *t, uint d) {
 		printf("Tdump%*s branch %p %s %zu %d\n", d, "", (void*)t,
 		       dump_bitmap(Tindex_bitmap(i)),
 		       (size_t)Tindex_offset(i), Tindex_shift(i));
-		// why isn't this offset * 8 + shift + 1
-		uint dd = 2 + Tindex_offset(i) * 6 + Tindex_shift(i) * 2;
+		uint dd = 1 + Tindex_offset(i) * 8 + Tindex_shift(i);
 		assert(dd > d);
 		for(uint s = 0; s < 32; s++) {
 			Tbitmap b = 1 << s;
