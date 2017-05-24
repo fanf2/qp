@@ -135,10 +135,11 @@ leaf key is longer than the offset of this nybble, but shorter than
 the offsets of all children in the branch. In other words, a leaf is
 pushed down the tree as far as possible.
 
-When searching, if there is a leaf at a node, compare keys; if they
-match, you have succeeded, else you need to check for a branch; if
-there is a branch, continue down the trie, or if not, the search key
-is not in the trie.
+When searching, if there is a leaf at a node, compare keys. If they
+match, you have succeeded. If the leaf is not a prefix of the search
+key we have found a subtrie where we cannot match, so quit. Else check
+for a branch; if there is a branch, continue down the trie, or if not,
+the search key is not in the trie, so quit.
 
 
 Portability and genericity
