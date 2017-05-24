@@ -217,6 +217,7 @@ roadmap
 notes
 -----
 
+* [bitstrings and prefixes](notes-bitstrings-prefixes.md)
 * [generic leaf types](notes-generic-leaves.md)
 * [rib compression](notes-rib-compression.md)
 * [buffered writes and compressed spines](notes-write-buffer.md)
