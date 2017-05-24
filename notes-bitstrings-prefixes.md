@@ -90,7 +90,8 @@ key, not a search for an exact match.
 There is a lot of literature for IP address prefix matching, and some
 of it describes data structures that are very similar to a qp trie. [I
 have previously reviewed a few papers on this
-topic.](blog-2016-02-23.md)
+topic](blog-2016-02-23.md) - a poptrie is probably better than a qp
+trie for this application.
 
 But anyway, how would I go about doing this in a qp style?
 
@@ -147,6 +148,22 @@ match, this leaf is now our longest match. Keep going.
 
 Next check for a branch; if there is a branch, continue down the trie,
 or if not, return the longest match found so far.
+
+
+Exact match search
+------------------
+
+To search for a specific prefix in the trie (rather than searching for
+a match for an IP address), it may be necessary to scan the leaf array
+to skip over longer prefixes.
+
+Start with the element in the leaf array identified by zero-padding
+the prefix up to the next nybble boundary. If it is for a longer
+prefix, skip the number of leaves determined by the difference in
+prefix lengths (e.g. 2 longer -> skip 4).
+
+This search can fail if you are looking for a shorter prefix that is
+completely covered by longer prefixes.
 
 
 ---------------------------------------------------------------------------
