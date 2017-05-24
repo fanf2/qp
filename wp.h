@@ -12,8 +12,8 @@
 // 2^4 == 16 bits wide. Trie nodes are three words instead of two words.
 //
 // These bigger nodes mean that (currently) space is wasted in the
-// leaf nodes. It might be possible to reclaim this space by embedding
-// (short) keys in the leaves - see notes-embed-key.md
+// leaf nodes. It's possible to make better use of space by embedding
+// key+value structures in the trie - see notes-generic-leaves.md
 
 typedef unsigned char byte;
 typedef unsigned int uint;
