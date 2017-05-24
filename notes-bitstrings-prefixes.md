@@ -1,5 +1,5 @@
-Bitstrings and prefixes in a [qp trie](https://dotat.at/prog/qp)
-======================================
+Bitstring keys and longest prefix search in a [qp trie](https://dotat.at/prog/qp)
+=======================================================
 
 _May 2017_
 
