@@ -20,10 +20,11 @@ Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 		return(false);
 	while(isbranch(t)) {
 		__builtin_prefetch(Tbranch_twigs(t));
-		Tbitmap b = twigbit(t, key, len);
-		if(!hastwig(t, b))
+		Tindex i = t->index;
+		Tbitmap b = twigbit(i, key, len);
+		if(!hastwig(i, b))
 			return(false);
-		t = twig(t, twigoff(t, b));
+		t = Tbranch_twigs(t) + twigoff(i, b);
 	}
 	if(strcmp(key, Tleaf_key(t)) != 0)
 		return(false);
@@ -38,12 +39,14 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		return(NULL);
 	Trie *t = tbl, *p = NULL;
 	Tbitmap b = 0;
+	Tindex i = 0;
 	while(isbranch(t)) {
 		__builtin_prefetch(Tbranch_twigs(t));
-		b = twigbit(t, key, len);
-		if(!hastwig(t, b))
+		i = t->index;
+		b = twigbit(i, key, len);
+		if(!hastwig(i, b))
 			return(tbl);
-		p = t; t = twig(t, twigoff(t, b));
+		p = t; t = Tbranch_twigs(t) + twigoff(i, b);
 	}
 	if(strcmp(key, Tleaf_key(t)) != 0)
 		return(tbl);
@@ -53,21 +56,20 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		free(tbl);
 		return(NULL);
 	}
-	t = p; p = NULL; // Becuase t is the usual name
-	uint s, m; TWIGOFFMAX(s, m, t, b);
+	t = Tbranch_twigs(p);
+	uint s, m; TWIGOFFMAX(s, m, i, b);
 	if(m == 2) {
 		// Move the other twig to the parent branch.
-		p = Tbranch_twigs(t);
-		*t = *twig(t, !s);
-		free(p);
+		*p = t[!s];
+		free(t);
 		return(tbl);
 	}
-	memmove(twig(t,s), twig(t,s+1), sizeof(Trie) * (m - s - 1));
-	Tbitmap_del(t,b);
+	memmove(t+s, t+s+1, sizeof(Trie) * (m - s - 1));
+	Tbitmap_del(&p->index, b);
 	// We have now correctly removed the twig from the trie, so if
 	// realloc() fails we can ignore it and continue to use the
 	// slightly oversized twig array.
-	p = realloc(Tbranch_twigs(t), sizeof(Trie) * (m - 1));
-	if(p != NULL) Tset_twigs(t, p);
+	t = realloc(t, sizeof(Trie) * (m - 1));
+	if(t != NULL) Tset_twigs(p, t);
 	return(tbl);
 }

@@ -21,6 +21,7 @@ typedef unsigned char byte;
 typedef unsigned int uint;
 
 typedef uint32_t Tbitmap;
+typedef uint64_t Tindex;
 
 const char *dump_bitmap(Tbitmap w);
 
@@ -45,7 +46,7 @@ popcount(Tbitmap w) {
 #endif
 
 typedef struct Tbl {
-	uint64_t index;
+	Tindex index;
 	void *ptr;
 } Trie;
 
@@ -60,7 +61,7 @@ typedef struct Tbl {
 
 Tset_field((void *),           ptr,   Trie *,       twigs);
 Tset_field((void *)(uint64_t), ptr,   const char *, key);
-Tset_field((uint64_t),         index, void *,       val);
+Tset_field((Tindex),           index, void *,       val);
 
 static inline bool isbranch(Trie *t);
 
@@ -91,9 +92,9 @@ Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
 #define Tix_base_offset (Tix_base_shift +  Tix_width_shift)
 #define Tix_base_bitmap (Tix_base_offset + Tix_width_offset)
 
-#define Tix_place(field) ((uint64_t)(field) << Tix_base_##field)
+#define Tix_place(field) ((Tindex)(field) << Tix_base_##field)
 
-#define Tunmask(field,index) ((uint)((index >> Tix_base_##field)	\
+#define Tunmask(field,index) ((uint)(((index) >> Tix_base_##field)	\
 				     & ((1ULL << Tix_width_##field)	\
 					- 1ULL)				\
 				      ))
@@ -105,33 +106,38 @@ isbranch(Trie *t) {
 	return(Tunmask(tag, t->index));
 }
 
-#define Tbranch_get(type, field)		\
-	Tcheck_get(type, Tbranch, field,	\
-		   Tunmask(field, t->index))
+#define Tindex_get(type, field)					\
+	static inline type					\
+	Tindex_##field(Tindex i) {				\
+		return(Tunmask(field, i));			\
+	}							\
+	struct dummy
 
-Tbranch_get(uint, shift);
-Tbranch_get(uint, offset);
-Tbranch_get(Tbitmap, bitmap);
+Tindex_get(uint, shift);
+Tindex_get(uint, offset);
+Tindex_get(Tbitmap, bitmap);
 
 static inline void
-Tset_index(Trie *t, uint shift, uint offset, Tbitmap bitmap) {
+Tindex_set(Tindex *ip, uint shift, uint offset, Tbitmap bitmap) {
 	uint tag = 1;
-	t->index = Tix_place(tag)
-		 | Tix_place(shift)
-		 | Tix_place(offset)
-		 | Tix_place(bitmap);
+	*ip = Tix_place(tag)
+	    | Tix_place(shift)
+	    | Tix_place(offset)
+	    | Tix_place(bitmap);
 }
 
 static inline void
-Tbitmap_add(Trie *t, Tbitmap bit) {
-	Tset_index(t, Tbranch_shift(t), Tbranch_offset(t),
-		   Tbranch_bitmap(t) | bit);
+Tbitmap_add(Tindex *ip, Tbitmap bit) {
+	Tindex i = *ip;
+	Tindex_set(ip, Tindex_shift(i), Tindex_offset(i),
+		   Tindex_bitmap(i) | bit);
 }
 
 static inline void
-Tbitmap_del(Trie *t, Tbitmap bit) {
-	Tset_index(t, Tbranch_shift(t), Tbranch_offset(t),
-		   Tbranch_bitmap(t) & ~bit);
+Tbitmap_del(Tindex *ip, Tbitmap bit) {
+	Tindex i = *ip;
+	Tindex_set(ip, Tindex_shift(i), Tindex_offset(i),
+		   Tindex_bitmap(i) & ~bit);
 }
 
 // sanity checks!
@@ -171,30 +177,25 @@ nibbit(uint k, uint shift) {
 }
 
 static inline Tbitmap
-twigbit(Trie *t, const char *key, size_t len) {
-	uint o = Tbranch_offset(t);
+twigbit(Tindex i, const char *key, size_t len) {
+	uint o = Tindex_offset(i);
 	if(o >= len) return(1);
 	uint k = (uint)(key[o] & 0xFF) << 8U;
 	if(k) k |= (uint)(key[o+1] & 0xFF);
-	return(nibbit(k, Tbranch_shift(t)));
+	return(nibbit(k, Tindex_shift(i)));
 }
 
 static inline bool
-hastwig(Trie *t, Tbitmap bit) {
-	return(Tbranch_bitmap(t) & bit);
+hastwig(Tindex i, Tbitmap bit) {
+	return(Tindex_bitmap(i) & bit);
 }
 
 static inline uint
-twigoff(Trie *t, Tbitmap b) {
-	return(popcount(Tbranch_bitmap(t) & (b-1)));
+twigoff(Tindex i, Tbitmap b) {
+	return(popcount(Tindex_bitmap(i) & (b-1)));
 }
 
-static inline Trie *
-twig(Trie *t, uint i) {
-	return(&Tbranch_twigs(t)[i]);
-}
-
-#define TWIGOFFMAX(off, max, t, b) do {			\
-		off = twigoff(t, b);			\
-		max = popcount(Tbranch_bitmap(t));	\
+#define TWIGOFFMAX(off, max, i, b) do {			\
+		off = twigoff(i, b);			\
+		max = popcount(Tindex_bitmap(i));	\
 	} while(0)
