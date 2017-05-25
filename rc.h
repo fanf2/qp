@@ -1,5 +1,10 @@
 // rc.h: quintet bit popcount patricia tries, with rib compression
 //
+// Derived from the "fn" five-bit new variant - see the comments at
+// the top of fn.h for notes on terminology.
+//
+// See notes-rib-compression for an overview.
+//
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
 // <http://creativecommons.org/publicdomain/zero/1.0/>
@@ -59,6 +64,7 @@ typedef struct Tbl {
 	struct dummy
 
 Tset_field((void *),           ptr,   Trie *,       twigs);
+Tset_field((Tindex),           index, Tindex,       index);
 Tset_field((void *)(uint64_t), ptr,   const char *, key);
 Tset_field((Tindex),           index, void *,       val);
 
@@ -92,13 +98,15 @@ Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
 
 #define Tix_width_branch 1
 #define Tix_width_shift  3
-#define Tix_width_offset 28
+#define Tix_width_offset 23
+#define Tix_width_next   5
 #define Tix_width_bitmap 32
 
 #define Tix_base_branch 0
 #define Tix_base_shift  (Tix_base_branch + Tix_width_branch)
 #define Tix_base_offset (Tix_base_shift  + Tix_width_shift)
-#define Tix_base_bitmap (Tix_base_offset + Tix_width_offset)
+#define Tix_base_next   (Tix_base_offset + Tix_width_offset)
+#define Tix_base_bitmap (Tix_base_next   + Tix_width_next)
 
 #define Tix_place(field) ((Tindex)(field) << Tix_base_##field)
 
@@ -121,30 +129,27 @@ Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
 Tindex_get(bool, branch);
 Tindex_get(uint, shift);
 Tindex_get(uint, offset);
+Tindex_get(byte, next);
 Tindex_get(Tbitmap, bitmap);
 
 static inline Tindex
-Tindex_set(Tindex *ip, uint shift, uint offset, Tbitmap bitmap) {
+Tindex_new(uint shift, uint offset, uint next, Tbitmap bitmap) {
 	uint branch = 1;
-	Tindex i = Tix_place(branch)
-		 | Tix_place(shift)
-		 | Tix_place(offset)
-		 | Tix_place(bitmap);
-	return(*ip = i);
+	return( Tix_place(branch) |
+		Tix_place(shift)  |
+		Tix_place(offset) |
+		Tix_place(next)   |
+		Tix_place(bitmap) );
 }
 
 static inline Tindex
-Tbitmap_add(Tindex *ip, Tbitmap bit) {
-	Tindex i = *ip;
-	return(Tindex_set(ip, Tindex_shift(i), Tindex_offset(i),
-			  Tindex_bitmap(i) | bit));
+Tbitmap_add(Tindex i, Tbitmap bitmap) {
+	return(i | Tix_place(bitmap));
 }
 
 static inline Tindex
-Tbitmap_del(Tindex *ip, Tbitmap bit) {
-	Tindex i = *ip;
-	return(Tindex_set(ip, Tindex_shift(i), Tindex_offset(i),
-			  Tindex_bitmap(i) & ~bit));
+Tbitmap_del(Tindex i, Tbitmap bitmap) {
+	return(i & ~Tix_place(bitmap));
 }
 
 // sanity checks!
@@ -177,18 +182,18 @@ static_assert(Tunmask(shift,0xFEDCBAULL) == 5,
 // |         |         |         |         |         |         |         |         |
 //  shift=0   shift=5   shift=2   shift=7   shift=4   shift=1   shift=6   shift=3
 
-static inline Tbitmap
-nibbit(uint k, uint shift) {
+static inline byte
+knybble(const char *key, uint off, uint shift) {
+	uint word = word_up(key+off);
 	uint right = 16 - 5 - shift;
-	return(1U << ((k >> right) & 0x1FU));
+	return((word >> right) & 0x1FU);
 }
 
-static inline Tbitmap
-twigbit(Tindex i, const char *key, size_t len) {
-	uint o = Tindex_offset(i);
-	if(o >= len) return(1);
-	uint k = word_up(key+o);
-	return(nibbit(k, Tindex_shift(i)));
+static inline byte
+nibble(Tindex i, const char *key, size_t len) {
+	uint off = Tindex_offset(i);
+	if(off >= len) return(0);
+	else return(knybble(key, off, Tindex_shift(i)));
 }
 
 static inline bool

@@ -21,10 +21,14 @@ Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 	while(isbranch(t)) {
 		__builtin_prefetch(t->ptr);
 		Tindex i = t->index;
-		Tbitmap b = twigbit(i, key, len);
-		if(!hastwig(i, b))
+		byte n = inybble(i, key, len);
+		Tbitmap b = 1U << n;
+		if(hastwig(i, b))
+			t = Tbranch_twigs(t) + twigoff(i, b);
+		else if(Tindex_next(i) == n)
+			;
+		else
 			return(false);
-		t = Tbranch_twigs(t) + twigoff(i, b);
 	}
 	if(strcmp(key, Tleaf_key(t)) != 0)
 		return(false);
@@ -39,7 +43,7 @@ next_rec(Trie *t, const char **pkey, size_t *plen, void **pval) {
 	if(Tindex_branch(i)) {
 		// Recurse to find either this leaf (*pkey != NULL)
 		// or the next one (*pkey == NULL).
-		Tbitmap b = twigbit(i, *pkey, *plen);
+		Tbitmap b = 1U << nibble(i, *pkey, *plen);
 		uint s, m; TWIGOFFMAX(s, m, i, b);
 		for(; s < m; s++)
 			if(next_rec(Tbranch_twigs(t)+s, pkey, plen, pval))
@@ -83,7 +87,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	while(isbranch(t)) {
 		__builtin_prefetch(t->ptr);
 		i = t->index;
-		b = twigbit(i, key, len);
+		b = 1U << nibble(i, key, len);
 		if(!hastwig(i, b))
 			return(tbl);
 		p = t; t = Tbranch_twigs(t) + twigoff(i, b);
@@ -105,7 +109,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		return(tbl);
 	}
 	memmove(t+s, t+s+1, sizeof(Trie) * (m - s - 1));
-	i = Tbitmap_del(&p->index, b);
+	p->index = Tbitmap_del(i, b);
 	// We have now correctly removed the twig from the trie, so if
 	// realloc() fails we can ignore it and continue to use the
 	// slightly oversized twig array.
@@ -138,7 +142,7 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	while(isbranch(t)) {
 		__builtin_prefetch(t->ptr);
 		Tindex i = t->index;
-		Tbitmap b = twigbit(i, key, len);
+		Tbitmap b = 1U << nibble(i, key, len);
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
 		// twig we choose since the keys are all the same up to this
@@ -162,13 +166,12 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 	off = qo * 5 / 8;
 	shf = qo * 5 % 8;
 	// re-index keys with adjusted offset
-	uint k1 = word_up(key+off);
-	uint k2 = word_up(tkey+off);
-	Tbitmap b1 = nibbit(k1, shf);
+	Tbitmap nb = 1U << knybble(key,off,shf);
+	Tbitmap tb = 1U << knybble(tkey,off,shf);
 	// Prepare the new leaf.
-	Trie t1;
-	Tset_key(&t1, key);
-	Tset_val(&t1, val);
+	Trie nt;
+	Tset_key(&nt, key);
+	Tset_val(&nt, val);
 	// Find where to insert a branch or grow an existing branch.
 	t = tbl;
 	Tindex i = 0;
@@ -181,28 +184,27 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 			goto newbranch;
 		if(off < Tindex_offset(i))
 			goto newbranch;
-		Tbitmap b = twigbit(i, key, len);
+		Tbitmap b = 1U << nibble(i, key, len);
 		assert(hastwig(i, b));
 		t = Tbranch_twigs(t) + twigoff(i, b);
 	}
 newbranch:;
 	Trie *twigs = malloc(sizeof(Trie) * 2);
 	if(twigs == NULL) return(NULL);
-	Trie t2 = *t; // Save before overwriting.
-	Tbitmap b2 = nibbit(k2, shf);
+	i = Tindex_new(shf, off, nb | tb);
+	twigs[twigoff(i, nb)] = nt;
+	twigs[twigoff(i, tb)] = *t;
 	Tset_twigs(t, twigs);
-	i = Tindex_set(&t->index, shf, off, b1 | b2);
-	twigs[twigoff(i, b1)] = t1;
-	twigs[twigoff(i, b2)] = t2;
+	Tset_index(t, i);
 	return(tbl);
 growbranch:;
-	assert(!hastwig(i, b1));
-	uint s, m; TWIGOFFMAX(s, m, i, b1);
+	assert(!hastwig(i, nb));
+	uint s, m; TWIGOFFMAX(s, m, i, nb);
 	twigs = realloc(Tbranch_twigs(t), sizeof(Trie) * (m + 1));
 	if(twigs == NULL) return(NULL);
 	memmove(twigs+s+1, twigs+s, sizeof(Trie) * (m - s));
-	memmove(twigs+s, &t1, sizeof(Trie));
+	memmove(twigs+s, &nt, sizeof(Trie));
 	Tset_twigs(t, twigs);
-	i = Tbitmap_add(&t->index, b1);
+	Tset_index(t, Tbitmap_add(i, nb));
 	return(tbl);
 }
