@@ -1,4 +1,17 @@
-// rc.h: quintet bit popcount patricia tries, with rib compression
+// fn.h: quintet bit popcount patricia tries, new version
+//
+// This version uses somewhat different terminology than older
+// variants. The location of a quintet in the key is now called its
+// "offset", and the whole word containing the offset, bitmap, and tag
+// bit is called the "index word" (by analogy with a database index).
+// The precise quintet location is represented as a byte offset and a
+// shift. Previously a flags field contained the isbranch tag and shift,
+// but these are now separate.
+//
+// Instead of trying to use bit fields, this code uses accessor
+// functions to split up a pair of words into their constituent parts.
+// This should improve portability to machines with varying endianness
+// and/or word size.
 //
 // Written by Tony Finch <dot@dotat.at>
 // You may do anything with this. It has no warranty.
