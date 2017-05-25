@@ -75,10 +75,15 @@ Tset_field((void *),           ptr,   Trie *,       twigs);
 Tset_field((void *)(uint64_t), ptr,   const char *, key);
 Tset_field((Tindex),           index, void *,       val);
 
-#ifdef WITH_EXTRA_CHECKS
 static inline bool Tindex_branch(Tindex i);
-#define Tbranch(t) assert(Tindex_branch(t->index))
-#define Tleaf(t)  assert(!Tindex_branch(t->index))
+
+static inline bool isbranch(Trie *t) {
+	return(Tindex_branch(t->index));
+}
+
+#ifdef WITH_EXTRA_CHECKS
+#define Tbranch(t) assert(isbranch(t))
+#define Tleaf(t)  assert(!isbranch(t))
 #else
 #define Tbranch(t)
 #define Tleaf(t)
