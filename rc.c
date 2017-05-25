@@ -100,7 +100,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	}
 	t = Tbranch_twigs(p);
 	Tindex i = p->index;
-	Tbitmap b = Tindex_bitmap(i);
+	Tbitmap b = twigbit(i, key, len);
 	uint s, m; TWIGOFFMAX(s, m, i, b);
 	if(m == 2) {
 		// Move the other twig to the parent branch.
@@ -204,6 +204,7 @@ newbranch:;
 	twigs[twigoff(i, b2)] = t2;
 	return(tbl);
 growbranch:;
+	assert(i == t->index);
 	assert(!hastwig(i, b1));
 	uint s, m; TWIGOFFMAX(s, m, i, b1);
 	twigs = realloc(Tbranch_twigs(t), sizeof(Trie) * (m + 1));
