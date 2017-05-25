@@ -18,17 +18,27 @@ bool
 Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 	if(t == NULL)
 		return(false);
-	while(isbranch(t)) {
-		__builtin_prefetch(t->ptr);
-		Tindex i = t->index;
-		byte n = inybble(i, key, len);
+	Tindex i = t->index;
+	Trie *twigs = t->ptr;
+	__builtin_prefetch(twigs);
+	while(Tindex_branch(i)) {
+		byte n = nibble(i, key, len);
 		Tbitmap b = 1U << n;
-		if(hastwig(i, b))
-			t = Tbranch_twigs(t) + twigoff(i, b);
-		else if(Tindex_next(i) == n)
-			;
-		else
+		if(hastwig(i, b)) {
+			t = twigs + twigoff(i, b);
+			i = t->index;
+			twigs = t->ptr;
+			__builtin_prefetch(twigs);
+		} else if(Tindex_next(i) == n) {
+			uint max = popcount(Tindex_bitmap(i));
+			Tindex *ip = (void*)(twigs + max);
+			t = NULL;
+			i = *ip++;
+			twigs = (void*)ip;
+			assert(Tindex_branch(i));
+		} else {
 			return(false);
+		}
 	}
 	if(strcmp(key, Tleaf_key(t)) != 0)
 		return(false);
