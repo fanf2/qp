@@ -73,7 +73,7 @@ main(int argc, char *argv[]) {
 	progname = argv[0];
 	if(argc != 4 || argv[1][0] == '-') usage();
 	if(ssrandom(argv[1]) < 0) usage();
-	uint N = (uint)atoi(argv[2]);
+	size_t N = (size_t)atoi(argv[2]);
 
 	int fd = open(argv[3], O_RDONLY);
 	if(fd < 0) die("open");
@@ -113,14 +113,14 @@ main(int argc, char *argv[]) {
 
 	start("search");
 	l = 0;
-	for(uint i = 0; i < N; i++)
+	for(size_t i = 0; i < N; i++)
 		if(Tget(t, line[random() % lines]) != NULL)
 			++l;
 	assert(l == N);
 	done();
 
 	start("mutate");
-	for(uint i = 0; i < N; i++)
+	for(size_t i = 0; i < N; i++)
 		t = Tset(t, line[random() % lines],
 			 random() % 2 ? main : NULL);
 	done();
