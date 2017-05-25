@@ -44,6 +44,7 @@ for (my $N = 1 ;; ++$N) {
 		}
 	}
 
+	printf "round $N with @ARGV\n";
 	printf "%-*s", $w, "";
 	printf " | %-31s", $_ for sort keys %stats;
 	print "\n";

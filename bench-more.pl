@@ -57,6 +57,7 @@ for (my $N = 1 ;; ++$N) {
 		}
 	}
 
+	printf "round $N\n";
 	printf "%-*s ", $wp, "";
 	printf "| %-*s", $waf, $_ for sort keys %stats;
 	print "\n";
