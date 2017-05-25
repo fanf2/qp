@@ -163,6 +163,10 @@ roadmap
 
 	5-bit clone-and-hack variant of qp tries.
 
+* [fn.h][] [fn.c][]
+
+	Newer version of 5-bit qp trie, which should be more portable.
+
 * [wp.h][] [wp.c][]
 
 	6-bit clone-and-hack variant of qp tries.
@@ -172,11 +176,11 @@ roadmap
 	My crit-bit trie implementation. See cb.h for a description of
 	how it differs from DJB's crit-bit code.
 
-* [qp-debug.c][] [fp-debug.c][] [wp-debug.c][] [cb-debug.c][]
+* [qp-debug.c][] [fp-debug.c][] [fn-debug.c][] [wp-debug.c][] [cb-debug.c][]
 
 	Debug support code.
 
-* [bench.c][] [bench-multi.pl][] [bench-more.pl][]
+* [bench.c][] [bench-multi.pl][] [bench-more.pl][] [bench-cross.pl][]
 
 	Generic benchmark for Tbl.h implementations, and benchmark
 	drivers for comparing different implementations.
@@ -202,6 +206,9 @@ roadmap
 [fp-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/fp-debug.c
 [fp.c]:           https://github.com/fanf2/qp/blob/HEAD/fp.c
 [fp.h]:           https://github.com/fanf2/qp/blob/HEAD/fp.h
+[fn-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/fn-debug.c
+[fn.c]:           https://github.com/fanf2/qp/blob/HEAD/fn.c
+[fn.h]:           https://github.com/fanf2/qp/blob/HEAD/fn.h
 [wp-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/wp-debug.c
 [wp.c]:           https://github.com/fanf2/qp/blob/HEAD/wp.c
 [wp.h]:           https://github.com/fanf2/qp/blob/HEAD/wp.h
