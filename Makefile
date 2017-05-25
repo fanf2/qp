@@ -14,7 +14,7 @@ test: ${TEST} top-1m
 	./test-once.sh 10000 100000 top-1m ${XY}
 
 bench: ${BENCH} ${INPUT}
-	./bench-more.pl 1000000 ${BENCH} -- ${INPUT}
+	./bench-cross.pl 1000000 ${BENCH} -- ${INPUT}
 
 size: ${TEST} ${INPUT}
 	for f in ${INPUT}; do \
