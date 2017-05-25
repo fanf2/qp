@@ -30,8 +30,8 @@ dump_bitmap(Tbitmap w) {
 
 static void
 dump_rec(Trie *t, uint d) {
-	if(isbranch(t)) {
-		Tindex i = t->index;
+	Tindex i = t->index;
+	if(Tindex_branch(i)) {
 		printf("Tdump%*s branch %p %s %zu %d\n", d, "", (void*)t,
 		       dump_bitmap(Tindex_bitmap(i)),
 		       (size_t)Tindex_offset(i), Tindex_shift(i));
@@ -65,8 +65,8 @@ static void
 size_rec(Trie *t, uint d,
     size_t *rsize, size_t *rdepth, size_t *rbranches, size_t *rleaves) {
 	*rsize += sizeof(*t);
-	if(isbranch(t)) {
-		Tindex i = t->index;
+	Tindex i = t->index;
+	if(Tindex_branch(i)) {
 		*rbranches += 1;
 		for(uint s = 0; s < 32; s++) {
 			Tbitmap b = 1 << s;

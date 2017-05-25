@@ -75,10 +75,14 @@ Tset_field((void *),           ptr,   Trie *,       twigs);
 Tset_field((void *)(uint64_t), ptr,   const char *, key);
 Tset_field((Tindex),           index, void *,       val);
 
-static inline bool isbranch(Trie *t);
-
-#define Tbranch(t) assert(isbranch(t))
-#define Tleaf(t)  assert(!isbranch(t))
+#ifdef WITH_EXTRA_CHECKS
+static inline bool Tindex_branch(Tindex i);
+#define Tbranch(t) assert(Tindex_branch(t->index))
+#define Tleaf(t)  assert(!Tindex_branch(t->index))
+#else
+#define Tbranch(t)
+#define Tleaf(t)
+#endif
 
 #define Tcheck_get(type, tag, field, expr)	\
 	static inline type			\
@@ -94,14 +98,14 @@ Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
 
 // index word layout
 
-#define Tix_width_tag    1
+#define Tix_width_branch 1
 #define Tix_width_shift  3
 #define Tix_width_offset 28
 #define Tix_width_bitmap 32
 
-#define Tix_base_tag    0
-#define Tix_base_shift  (Tix_base_tag  +   Tix_width_tag)
-#define Tix_base_offset (Tix_base_shift +  Tix_width_shift)
+#define Tix_base_branch 0
+#define Tix_base_shift  (Tix_base_branch + Tix_width_branch)
+#define Tix_base_offset (Tix_base_shift  + Tix_width_shift)
 #define Tix_base_bitmap (Tix_base_offset + Tix_width_offset)
 
 #define Tix_place(field) ((Tindex)(field) << Tix_base_##field)
@@ -115,11 +119,6 @@ Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
 
 // index word accessor functions
 
-static inline bool
-isbranch(Trie *t) {
-	return(Tunmask(tag, t->index));
-}
-
 #define Tindex_get(type, field)					\
 	static inline type					\
 	Tindex_##field(Tindex i) {				\
@@ -127,17 +126,18 @@ isbranch(Trie *t) {
 	}							\
 	struct dummy
 
+Tindex_get(bool, branch);
 Tindex_get(uint, shift);
 Tindex_get(uint, offset);
 Tindex_get(Tbitmap, bitmap);
 
 static inline Tindex
 Tindex_set(Tindex *ip, uint shift, uint offset, Tbitmap bitmap) {
-	uint tag = 1;
-	Tindex i = Tix_place(tag)
-		| Tix_place(shift)
-		| Tix_place(offset)
-		| Tix_place(bitmap);
+	uint branch = 1;
+	Tindex i = Tix_place(branch)
+		 | Tix_place(shift)
+		 | Tix_place(offset)
+		 | Tix_place(bitmap);
 	return(*ip = i);
 }
 

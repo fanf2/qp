@@ -18,9 +18,14 @@ bool
 Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 	if(t == NULL)
 		return(false);
-	while(isbranch(t)) {
-		__builtin_prefetch(Tbranch_twigs(t));
+	for(;;) {
+		// Prefetch the pointer (might be twigs or key) before
+		// looking at the index, to discourage the compiler
+		// from delaying the prefetch
+		__builtin_prefetch(t->ptr);
 		Tindex i = t->index;
+		if(!Tindex_branch(i))
+			break;
 		Tbitmap b = twigbit(i, key, len);
 		if(!hastwig(i, b))
 			return(false);
@@ -35,10 +40,10 @@ Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 
 static bool
 next_rec(Trie *t, const char **pkey, size_t *plen, void **pval) {
-	if(isbranch(t)) {
+	Tindex i = t->index;
+	if(Tindex_branch(i)) {
 		// Recurse to find either this leaf (*pkey != NULL)
 		// or the next one (*pkey == NULL).
-		Tindex i = t->index;
 		Tbitmap b = twigbit(i, *pkey, *plen);
 		uint s, m; TWIGOFFMAX(s, m, i, b);
 		for(; s < m; s++)
@@ -80,9 +85,11 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	Trie *t = tbl, *p = NULL;
 	Tbitmap b = 0;
 	Tindex i = 0;
-	while(isbranch(t)) {
-		__builtin_prefetch(Tbranch_twigs(t));
+	for(;;) {
+		__builtin_prefetch(t->ptr);
 		i = t->index;
+		if(!Tindex_branch(i))
+			break;
 		b = twigbit(i, key, len);
 		if(!hastwig(i, b))
 			return(tbl);
@@ -116,7 +123,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 
 Tbl *
 Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
-	if(Tunmask(tag, (Tindex)val) || len > Tmaxlen) {
+	if(Tindex_branch((Tindex)val) || len > Tmaxlen) {
 		errno = EINVAL;
 		return(NULL);
 	}
@@ -135,9 +142,11 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	// its key with our new key to find the first differing nibble,
 	// which can be at a lower index than the point at which we
 	// detect a difference.
-	while(isbranch(t)) {
-		__builtin_prefetch(Tbranch_twigs(t));
+	for(;;) {
+		__builtin_prefetch(t->ptr);
 		Tindex i = t->index;
+		if(!Tindex_branch(i))
+			break;
 		Tbitmap b = twigbit(i, key, len);
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
@@ -172,9 +181,11 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 	// Find where to insert a branch or grow an existing branch.
 	t = tbl;
 	Tindex i = 0;
-	while(isbranch(t)) {
-		__builtin_prefetch(Tbranch_twigs(t));
+	for(;;) {
+		__builtin_prefetch(t->ptr);
 		i = t->index;
+		if(!Tindex_branch(i))
+			break;
 		if(off == Tindex_offset(i) && shf == Tindex_shift(i))
 			goto growbranch;
 		if(off == Tindex_offset(i) && shf < Tindex_shift(i))
