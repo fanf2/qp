@@ -50,12 +50,14 @@ siphash24.o: siphash24.c
 cb.o: cb.c cb.h Tbl.h
 qp.o: qp.c qp.h Tbl.h
 fp.o: fp.c fp.h Tbl.h
+fn.o: fn.c fn.h Tbl.h
 wp.o: wp.c wp.h Tbl.h
 rc.o: rc.c rc.h Tbl.h
 ht.o: ht.c ht.h Tbl.h
 cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
 fp-debug.o: fp-debug.c fp.h Tbl.h
+fn-debug.o: fn-debug.c fn.h Tbl.h
 wp-debug.o: wp-debug.c wp.h Tbl.h
 rc-debug.o: rc-debug.c rc.h Tbl.h
 ht-debug.o: ht-debug.c ht.h Tbl.h
