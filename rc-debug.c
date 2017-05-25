@@ -69,7 +69,7 @@ size_rec(Trie *t, uint d,
 	if(Tindex_branch(i)) {
 		*rbranches += 1;
 		for(uint s = 0; s < 32; s++) {
-			Tbitmap b = 1 << s;
+			Tbitmap b = 1U << s;
 			if(hastwig(i, b))
 				size_rec(Tbranch_twigs(t) + twigoff(i, b),
 				    d+1, rsize, rdepth, rbranches, rleaves);
