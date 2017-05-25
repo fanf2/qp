@@ -113,14 +113,14 @@ main(int argc, char *argv[]) {
 
 	start("search");
 	l = 0;
-	for(int i = 0; i < N; i++)
+	for(uint i = 0; i < N; i++)
 		if(Tget(t, line[random() % lines]) != NULL)
 			++l;
 	assert(l == N);
 	done();
 
 	start("mutate");
-	for(int i = 0; i < N; i++)
+	for(uint i = 0; i < N; i++)
 		t = Tset(t, line[random() % lines],
 			 random() % 2 ? main : NULL);
 	done();
