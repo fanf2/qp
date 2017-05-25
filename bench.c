@@ -54,7 +54,8 @@ done(void) {
 		tv.tv_sec -= 1;
 		tv.tv_usec += 1000000;
 	}
-	printf("%ld.%06d s\n", tv.tv_sec, tv.tv_usec);
+	printf("%ld.%06ld s\n",
+	       (long)tv.tv_sec, (long)tv.tv_usec);
 }
 
 static int
@@ -72,7 +73,7 @@ main(int argc, char *argv[]) {
 	progname = argv[0];
 	if(argc != 4 || argv[1][0] == '-') usage();
 	if(ssrandom(argv[1]) < 0) usage();
-	int N = atoi(argv[2]);
+	uint N = (uint)atoi(argv[2]);
 
 	int fd = open(argv[3], O_RDONLY);
 	if(fd < 0) die("open");
