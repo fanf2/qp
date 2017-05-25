@@ -18,9 +18,11 @@ bool
 Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 	if(t == NULL)
 		return(false);
-	while(Tindex_branch(t->index)) {
+	for(;;) {
 		__builtin_prefetch(t->ptr);
 		Tindex i = t->index;
+		if(!Tindex_branch(i))
+			break;
 		Tbitmap b = twigbit(i, key, len);
 		if(!hastwig(i, b))
 			return(false);
@@ -78,12 +80,12 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
 		return(NULL);
 	Trie *t = tbl, *p = NULL;
-	Tbitmap b = 0;
-	Tindex i = 0;
-	while(Tindex_branch(t->index)) {
+	for(;;) {
 		__builtin_prefetch(t->ptr);
-		i = t->index;
-		b = twigbit(i, key, len);
+		Tindex i = t->index;
+		if(!Tindex_branch(i))
+			break;
+		Tbitmap b = twigbit(i, key, len);
 		if(!hastwig(i, b))
 			return(tbl);
 		p = t; t = Tbranch_twigs(t) + twigoff(i, b);
@@ -97,6 +99,8 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		return(NULL);
 	}
 	t = Tbranch_twigs(p);
+	Tindex i = p->index;
+	Tbitmap b = Tindex_bitmap(i);
 	uint s, m; TWIGOFFMAX(s, m, i, b);
 	if(m == 2) {
 		// Move the other twig to the parent branch.
@@ -135,9 +139,11 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	// its key with our new key to find the first differing nibble,
 	// which can be at a lower index than the point at which we
 	// detect a difference.
-	while(Tindex_branch(t->index)) {
+	for(;;) {
 		__builtin_prefetch(t->ptr);
 		Tindex i = t->index;
+		if(!Tindex_branch(i))
+			break;
 		Tbitmap b = twigbit(i, key, len);
 		// Even if our key is missing from this branch we need to
 		// keep iterating down to a leaf. It doesn't matter which
@@ -172,9 +178,11 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 	// Find where to insert a branch or grow an existing branch.
 	t = tbl;
 	Tindex i = 0;
-	while(Tindex_branch(t->index)) {
+	for(;;) {
 		__builtin_prefetch(t->ptr);
 		i = t->index;
+		if(!Tindex_branch(i))
+			goto newbranch;
 		if(off == Tindex_offset(i) && shf == Tindex_shift(i))
 			goto growbranch;
 		if(off == Tindex_offset(i) && shf < Tindex_shift(i))
