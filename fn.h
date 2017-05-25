@@ -137,27 +137,22 @@ Tindex_get(uint, offset);
 Tindex_get(Tbitmap, bitmap);
 
 static inline Tindex
-Tindex_set(Tindex *ip, uint shift, uint offset, Tbitmap bitmap) {
+Tindex_new(uint shift, uint offset, Tbitmap bitmap) {
 	uint branch = 1;
-	Tindex i = Tix_place(branch)
-		 | Tix_place(shift)
-		 | Tix_place(offset)
-		 | Tix_place(bitmap);
-	return(*ip = i);
+	return( Tix_place(branch) |
+		Tix_place(shift)  |
+		Tix_place(offset) |
+		Tix_place(bitmap) );
 }
 
 static inline Tindex
-Tbitmap_add(Tindex *ip, Tbitmap bit) {
-	Tindex i = *ip;
-	return(Tindex_set(ip, Tindex_shift(i), Tindex_offset(i),
-			  Tindex_bitmap(i) | bit));
+Tbitmap_add(Tindex i, Tbitmap bitmap) {
+	return(i | Tix_place(bitmap));
 }
 
 static inline Tindex
-Tbitmap_del(Tindex *ip, Tbitmap bit) {
-	Tindex i = *ip;
-	return(Tindex_set(ip, Tindex_shift(i), Tindex_offset(i),
-			  Tindex_bitmap(i) & ~bit));
+Tbitmap_del(Tindex i, Tbitmap bitmap) {
+	return(i & ~Tix_place(bitmap));
 }
 
 // sanity checks!

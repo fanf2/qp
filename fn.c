@@ -105,7 +105,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		return(tbl);
 	}
 	memmove(t+s, t+s+1, sizeof(Trie) * (m - s - 1));
-	i = Tbitmap_del(&p->index, b);
+	p->index = Tbitmap_del(i, b);
 	// We have now correctly removed the twig from the trie, so if
 	// realloc() fails we can ignore it and continue to use the
 	// slightly oversized twig array.
@@ -191,7 +191,7 @@ newbranch:;
 	Trie t2 = *t; // Save before overwriting.
 	Tbitmap b2 = nibbit(k2, shf);
 	Tset_twigs(t, twigs);
-	i = Tindex_set(&t->index, shf, off, b1 | b2);
+	t->index = i = Tindex_new(shf, off, b1 | b2);
 	twigs[twigoff(i, b1)] = t1;
 	twigs[twigoff(i, b2)] = t2;
 	return(tbl);
@@ -203,6 +203,6 @@ growbranch:;
 	memmove(twigs+s+1, twigs+s, sizeof(Trie) * (m - s));
 	memmove(twigs+s, &t1, sizeof(Trie));
 	Tset_twigs(t, twigs);
-	i = Tbitmap_add(&t->index, b1);
+	t->index = Tbitmap_add(i, b1);
 	return(tbl);
 }
