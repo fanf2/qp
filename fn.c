@@ -162,13 +162,12 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 	off = qo * 5 / 8;
 	shf = qo * 5 % 8;
 	// re-index keys with adjusted offset
-	uint k1 = word_up(key+off);
-	uint k2 = word_up(tkey+off);
-	Tbitmap b1 = nibbit(k1, shf);
+	Tbitmap nb = 1U << knybble(key,off,shf);
+	Tbitmap tb = 1U << knybble(tkey,off,shf);
 	// Prepare the new leaf.
-	Trie t1;
-	Tset_key(&t1, key);
-	Tset_val(&t1, val);
+	Trie nt;
+	Tset_key(&nt, key);
+	Tset_val(&nt, val);
 	// Find where to insert a branch or grow an existing branch.
 	t = tbl;
 	Tindex i = 0;
@@ -188,21 +187,20 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 newbranch:;
 	Trie *twigs = malloc(sizeof(Trie) * 2);
 	if(twigs == NULL) return(NULL);
-	Trie t2 = *t; // Save before overwriting.
-	Tbitmap b2 = nibbit(k2, shf);
+	i = Tindex_new(shf, off, nb | tb);
+	twigs[twigoff(i, nb)] = nt;
+	twigs[twigoff(i, tb)] = *t;
 	Tset_twigs(t, twigs);
-	t->index = i = Tindex_new(shf, off, b1 | b2);
-	twigs[twigoff(i, b1)] = t1;
-	twigs[twigoff(i, b2)] = t2;
+	Tset_index(t, i);
 	return(tbl);
 growbranch:;
-	assert(!hastwig(i, b1));
-	uint s, m; TWIGOFFMAX(s, m, i, b1);
+	assert(!hastwig(i, nb));
+	uint s, m; TWIGOFFMAX(s, m, i, nb);
 	twigs = realloc(Tbranch_twigs(t), sizeof(Trie) * (m + 1));
 	if(twigs == NULL) return(NULL);
 	memmove(twigs+s+1, twigs+s, sizeof(Trie) * (m - s));
-	memmove(twigs+s, &t1, sizeof(Trie));
+	memmove(twigs+s, &nt, sizeof(Trie));
 	Tset_twigs(t, twigs);
-	t->index = Tbitmap_add(i, b1);
+	Tset_index(t, Tbitmap_add(i, nb));
 	return(tbl);
 }

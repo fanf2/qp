@@ -72,6 +72,7 @@ typedef struct Tbl {
 	struct dummy
 
 Tset_field((void *),           ptr,   Trie *,       twigs);
+Tset_field((Tindex),           index, Tindex,       index);
 Tset_field((void *)(uint64_t), ptr,   const char *, key);
 Tset_field((Tindex),           index, void *,       val);
 
@@ -185,18 +186,23 @@ static_assert(Tunmask(shift,0xFEDCBAULL) == 5,
 // |         |         |         |         |         |         |         |         |
 //  shift=0   shift=5   shift=2   shift=7   shift=4   shift=1   shift=6   shift=3
 
-static inline Tbitmap
-nibbit(uint k, uint shift) {
+static inline byte
+knybble(const char *key, uint off, uint shift) {
+	uint word = word_up(key+off);
 	uint right = 16 - 5 - shift;
-	return(1U << ((k >> right) & 0x1FU));
+	return((word >> right) & 0x1FU);
+}
+
+static inline byte
+nibble(Tindex i, const char *key, size_t len) {
+	uint off = Tindex_offset(i);
+	if(off >= len) return(0);
+	else return(knybble(key, off, Tindex_shift(i)));
 }
 
 static inline Tbitmap
 twigbit(Tindex i, const char *key, size_t len) {
-	uint o = Tindex_offset(i);
-	if(o >= len) return(1);
-	uint k = word_up(key+o);
-	return(nibbit(k, Tindex_shift(i)));
+	return(1U << nibble(i, key, len));
 }
 
 static inline bool
