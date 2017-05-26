@@ -96,21 +96,22 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		free(tbl);
 		return(NULL);
 	}
-	t = Tbranch_twigs(p);
-	uint s, m; TWIGOFFMAX(s, m, i, b);
+	Trie *twigs = Tbranch_twigs(p);
+	uint m = popcount(Tindex_bitmap(i));
+	assert(twigs <= t && t < twigs+m);
 	if(m == 2) {
 		// Move the other twig to the parent branch.
-		*p = t[!s];
-		free(t);
+		*p = twigs[twigs == t];
+		free(twigs);
 		return(tbl);
 	}
-	memmove(t+s, t+s+1, sizeof(Trie) * (m - s - 1));
+	memmove(t, t+1, ((twigs + m) - (t + 1)) * sizeof(Trie));
 	p->index = Tbitmap_del(i, b);
 	// We have now correctly removed the twig from the trie, so if
 	// realloc() fails we can ignore it and continue to use the
 	// slightly oversized twig array.
-	t = realloc(t, sizeof(Trie) * (m - 1));
-	if(t != NULL) Tset_twigs(p, t);
+	twigs = realloc(twigs, sizeof(Trie) * (m - 1));
+	if(twigs != NULL) Tset_twigs(p, twigs);
 	return(tbl);
 }
 
