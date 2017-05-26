@@ -165,15 +165,9 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		// to remove the whole branch from the trunk. The
 		// following index word, for the concatenated branch,
 		// needs to be moved to the parent.
-		Tindex *ci = (Tindex *)(t + 1);
-		Trie *ct = (Trie *)(ci + 1);
-		*ip = *ci;
-		memmove(t, ct, s - ((byte *)ct - (byte *)trunk));
-		// We have now correctly removed the branch from the
-		// trie, so if realloc() fails we can ignore it and
-		// continue to use the slightly oversized twig array.
-		trunk = realloc(trunk, s - ((byte *)ct - (byte *)t));
-		if(trunk != NULL) Tset_twigs(p, trunk);
+		*ip = *(Tindex *)(t + 1);
+		Tset_twigs(p, mdelete(trunk, s, t,
+				      sizeof(Trie) + sizeof(Tindex)));
 		return(tbl);
 	}
 	if(m == 2) {
