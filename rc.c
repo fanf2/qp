@@ -96,7 +96,7 @@ trunksize(Trie *t) {
 		assert(Tindex_branch(i));
 		uint max = popcount(Tindex_bitmap(i));
 		s += max * sizeof(Trie);
-		if(!hasconcat(i))
+		if(trunkend(i))
 			return(s);
 		Tindex *ip = (void*)(twigs + max);
 		s += sizeof(Tindex);

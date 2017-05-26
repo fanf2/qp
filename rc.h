@@ -202,9 +202,9 @@ hastwig(Tindex i, Tbitmap bit) {
 }
 
 static inline bool
-hasconcat(Tindex i) {
+trunkend(Tindex i) {
 	Tbitmap b = 1U << Tindex_concat(i);
-	return(!hastwig(i, b));
+	return(hastwig(i, b));
 }
 
 static inline uint
