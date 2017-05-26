@@ -87,6 +87,25 @@ Tnextl(Tbl *tbl, const char **pkey, size_t *plen, void **pval) {
 	return(next_rec(tbl, pkey, plen, pval));
 }
 
+static size_t
+trunksize(Trie *t) {
+	size_t s = 0;
+	Tindex i = t->index;
+	Trie *twigs = t->ptr;
+	for(;;) {
+		assert(Tindex_branch(i));
+		uint max = popcount(Tindex_bitmap(i));
+		s += max * sizeof(Trie);
+		Tbitmap b = 1U << Tindex_concat(i);
+		if(hastwig(i, b))
+			return(s);
+		Tindex *ip = (void*)(twigs + max);
+		s += sizeof(Tindex);
+		i = *ip++;
+		twigs = (void*)ip;
+	}
+}
+
 Tbl *
 Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
