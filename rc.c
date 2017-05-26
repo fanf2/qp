@@ -176,13 +176,9 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		free(t);
 		return(tbl);
 	}
-	memmove(t+s, t+s+1, sizeof(Trie) * (m - s - 1));
-	p->index = Tbitmap_del(i, b);
-	// We have now correctly removed the twig from the trie, so if
-	// realloc() fails we can ignore it and continue to use the
-	// slightly oversized twig array.
-	t = realloc(t, sizeof(Trie) * (m - 1));
-	if(t != NULL) Tset_twigs(p, t);
+	// Usual case
+	*ip = Tbitmap_del(i, b);
+	Tset_twigs(p, mdelete(trunk, s, t, sizeof(Trie)));
 	return(tbl);
 }
 
