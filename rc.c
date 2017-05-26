@@ -106,31 +106,45 @@ trunksize(Trie *t) {
 }
 
 static void *
-mdelete(void *vouter, size_t osize, void *vsplit, size_t dsize) {
-	byte *outer = vouter, *split = vsplit;
-	assert(outer <= split);
-	assert(split < outer + osize);
-	assert(split + dsize <= outer + osize);
-	size_t suffix = (outer + osize) - (split + dsize);
-	memmove(split, split + dsize, suffix);
+mdelete(void *vbase, size_t size, void *vsplit, size_t loss) {
+	byte *base = vbase, *split = vsplit;
+	assert(size > loss);
+	assert(base <= split);
+	assert(split < base + size);
+	assert(split + loss <= base + size);
+	size_t suffix = (base + size) - (split + loss);
+	memmove(split, split + loss, suffix);
 	// If realloc() fails, continue to use the oversized allocation.
-	void *maybe = realloc(outer, osize - dsize);
-	return(maybe ? maybe : outer);
+	void *maybe = realloc(base, size - loss);
+	return(maybe ? maybe : base);
 }
 
 static void *
-minsert(void *vouter, size_t osize, void *vsplit, void *vinsert, size_t isize) {
-	byte *outer = vouter, *split = vsplit, *insert = vinsert;
-	assert(outer <= split);
-	assert(split < outer + osize);
-	size_t prefix = split - outer;
-	size_t suffix = (outer + osize) - split;
-	outer = realloc(outer, osize + isize);
-	if(outer == NULL) return(NULL);
-	split = outer + prefix;
-	memmove(split + isize, split, suffix);
-	memmove(split, insert, isize);
-	return(outer);
+mtrimsert(void *vbase, size_t size, size_t trim, void *vsplit,
+	  void *vinsert, size_t gain) {
+	byte *base = vbase, *split = vsplit, *insert = vinsert;
+	assert(size > trim);
+	assert(base <= split);
+	assert(split < base + size);
+	size -= trim;
+	size_t prefix = split - base;
+	size_t suffix = (base + size) - split;
+	void *maybe = realloc(base, size + gain);
+	if(maybe != NULL)
+		base = maybe;
+	else if(gain > trim)
+		return(NULL);
+	// If realloc() fails, continue to use the old allocation
+	// provided we will not gain more than we trimmed.
+	split = base + prefix;
+	memmove(split + gain, split, suffix);
+	memmove(split, insert, gain);
+	return(base);
+}
+
+static void *
+minsert(void *base, size_t size, void *split, void *insert, size_t gain) {
+	return(mtrimsert(base, size, 0, split, insert, gain));
 }
 
 Tbl *
@@ -182,19 +196,18 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 			*p = t[t == trunk ? +1 : -1];
 			free(trunk);
 		} else {
-			// We need to shift the other leaf into the preceding
-			// twig array.
+			// We were concatenated, so we need to shift the
+			// other leaf into the preceding twig array.
 			void *end = (byte *)trunk + s;
 			Trie other = t[t + 1 == end ? -1 : +1];
-			// Drop this branch from the end of the trunk.
-			s -= sizeof(Tindex) + sizeof(Trie) * 2;
 			// Update preceding index.
 			i = *pip;
 			Tbitmap b = 1U << Tindex_concat(i);
 			t = (Trie *)(pip + 1) + twigoff(i, b);
 			*pip = Tbitmap_add(i, b);
-			Tset_twigs(p, minsert(trunk, s, t,
-					      &other, sizeof(Trie)));
+			Tset_twigs(p, mtrimsert(trunk, s,
+						sizeof(Tindex) + sizeof(Trie) * 2,
+						t, &other, sizeof(Trie)));
 		}
 		return(tbl);
 	}
