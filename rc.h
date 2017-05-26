@@ -201,6 +201,12 @@ hastwig(Tindex i, Tbitmap bit) {
 	return(Tindex_bitmap(i) & bit);
 }
 
+static inline bool
+hasconcat(Tindex i) {
+	Tbitmap b = 1U << Tindex_concat(i);
+	return(!hastwig(i, b));
+}
+
 static inline uint
 twigoff(Tindex i, Tbitmap bit) {
 	return(popcount(Tindex_bitmap(i) & (bit-1)));
