@@ -33,8 +33,8 @@ Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 			uint max = popcount(Tindex_bitmap(i));
 			Tindex *ip = (void*)(twigs + max);
 			t = NULL;
-			i = *ip++;
-			twigs = (void*)ip;
+			i = *ip;
+			twigs = (void*)(ip+1);
 			assert(Tindex_branch(i));
 		} else {
 			return(false);
@@ -152,15 +152,31 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
 		return(NULL);
 	Trie *t = tbl, *p = NULL;
-	Tindex i = 0;
+	Tindex i = t->index, *ip = NULL, *pip = NULL;
+	Trie *twigs = t->ptr;
+	__builtin_prefetch(twigs);
 	Tbitmap b = 0;
-	while(isbranch(t)) {
-		__builtin_prefetch(t->ptr);
-		i = t->index;
-		b = 1U << nibble(i, key, len);
-		if(!hastwig(i, b))
-			return(tbl);
-		p = t; t = Tbranch_twigs(t) + twigoff(i, b);
+	while(Tindex_branch(i)) {
+		byte n = nibble(i, key, len);
+		b = 1U << n;
+		if(hastwig(i, b)) {
+			p = t;
+			pip = NULL;
+			ip = &t->index;
+			t = twigs + twigoff(i, b);
+			i = t->index;
+			twigs = t->ptr;
+			__builtin_prefetch(twigs);
+		} else if(Tindex_concat(i) == n) {
+			uint max = popcount(Tindex_bitmap(i));
+			pip = ip;
+			ip = (void*)(twigs + max);
+			i = *ip;
+			twigs = (void*)(ip+1);
+			assert(Tindex_branch(i));
+		} else {
+			return(false);
+		}
 	}
 	if(strcmp(key, Tleaf_key(t)) != 0)
 		return(tbl);
@@ -195,6 +211,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 			// We were an indirect branch, so p is the parent.
 			*p = t[t == trunk ? +1 : -1];
 			free(trunk);
+			return(tbl);
 		} else {
 			// We were concatenated, so we need to shift the
 			// other leaf into the preceding twig array.
@@ -202,14 +219,14 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 			Trie other = t[t + 1 == end ? -1 : +1];
 			// Update preceding index.
 			i = *pip;
-			Tbitmap b = 1U << Tindex_concat(i);
+			b = 1U << Tindex_concat(i);
 			t = (Trie *)(pip + 1) + twigoff(i, b);
 			*pip = Tbitmap_add(i, b);
 			Tset_twigs(p, mtrimsert(trunk, s,
 						sizeof(Tindex) + sizeof(Trie) * 2,
 						t, &other, sizeof(Trie)));
+			return(tbl);
 		}
-		return(tbl);
 	}
 	// Usual case
 	*ip = Tbitmap_del(i, b);
