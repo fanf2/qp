@@ -29,7 +29,7 @@ Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 			i = t->index;
 			twigs = t->ptr;
 			__builtin_prefetch(twigs);
-		} else if(Tindex_next(i) == n) {
+		} else if(Tindex_concat(i) == n) {
 			uint max = popcount(Tindex_bitmap(i));
 			Tindex *ip = (void*)(twigs + max);
 			t = NULL;

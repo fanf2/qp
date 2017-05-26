@@ -99,14 +99,14 @@ Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
 #define Tix_width_branch 1
 #define Tix_width_shift  3
 #define Tix_width_offset 23
-#define Tix_width_next   5
+#define Tix_width_concat 5
 #define Tix_width_bitmap 32
 
 #define Tix_base_branch 0
 #define Tix_base_shift  (Tix_base_branch + Tix_width_branch)
 #define Tix_base_offset (Tix_base_shift  + Tix_width_shift)
-#define Tix_base_next   (Tix_base_offset + Tix_width_offset)
-#define Tix_base_bitmap (Tix_base_next   + Tix_width_next)
+#define Tix_base_concat (Tix_base_offset + Tix_width_offset)
+#define Tix_base_bitmap (Tix_base_concat   + Tix_width_concat)
 
 #define Tix_place(field) ((Tindex)(field) << Tix_base_##field)
 
@@ -129,16 +129,16 @@ Tcheck_get(void *,       Tleaf,   val,   (void*)t->index);
 Tindex_get(bool, branch);
 Tindex_get(uint, shift);
 Tindex_get(uint, offset);
-Tindex_get(byte, next);
+Tindex_get(byte, concat);
 Tindex_get(Tbitmap, bitmap);
 
 static inline Tindex
-Tindex_new(uint shift, uint offset, uint next, Tbitmap bitmap) {
+Tindex_new(uint shift, uint offset, uint concat, Tbitmap bitmap) {
 	uint branch = 1;
 	return( Tix_place(branch) |
 		Tix_place(shift)  |
 		Tix_place(offset) |
-		Tix_place(next)   |
+		Tix_place(concat) |
 		Tix_place(bitmap) );
 }
 
