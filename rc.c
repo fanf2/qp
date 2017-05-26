@@ -175,7 +175,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 			twigs = (void*)(ip+1);
 			assert(Tindex_branch(i));
 		} else {
-			return(false);
+			return(tbl);
 		}
 	}
 	if(strcmp(key, Tleaf_key(t)) != 0)
