@@ -105,6 +105,34 @@ trunksize(Trie *t) {
 	}
 }
 
+static void *
+mdelete(void *vouter, size_t osize, void *vsplit, size_t dsize) {
+	byte *outer = vouter, *split = vsplit;
+	assert(outer <= split);
+	assert(split < outer + osize);
+	assert(split + dsize <= outer + osize);
+	size_t suffix = (outer + osize) - (split + dsize);
+	memmove(split, split + dsize, suffix);
+	// If realloc() fails, continue to use the oversized allocation.
+	void *maybe = realloc(outer, osize - dsize);
+	return(maybe ? maybe : outer);
+}
+
+static void *
+minsert(void *vouter, size_t osize, void *vsplit, void *vinsert, size_t isize) {
+	byte *outer = vouter, *split = vsplit, *insert = vinsert;
+	assert(outer <= split);
+	assert(split < outer + osize);
+	size_t prefix = split - outer;
+	size_t suffix = (outer + osize) - split;
+	outer = realloc(outer, osize + isize);
+	if(outer == NULL) return(NULL);
+	split = outer + prefix;
+	memmove(split + isize, split, suffix);
+	memmove(split, insert, isize);
+	return(outer);
+}
+
 Tbl *
 Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
