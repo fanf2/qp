@@ -164,16 +164,38 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		// Our twig is the last in a rib branch, so we need
 		// to remove the whole branch from the trunk. The
 		// following index word, for the concatenated branch,
-		// needs to be moved to the parent.
+		// needs to be moved to where our index word was.
 		*ip = *(Tindex *)(t + 1);
+		// If our branch was indirect, this will update the pointer
+		// properly; if our branch was concatenated we do not have a
+		// pointer to update.
 		Tset_twigs(p, mdelete(trunk, s, t,
 				      sizeof(Trie) + sizeof(Tindex)));
 		return(tbl);
 	}
-	if(m == 2) {
-		// Move the other twig to the parent branch.
-		*p = t[!s];
-		free(t);
+	if(m == 2 && trunkend(i)) {
+		// Both twigs have to be leaves, otherwise this would not be
+		// the end of the trunk. We need to move the other twig into
+		// its parent.
+		if(pip == NULL) {
+			// We were an indirect branch, so p is the parent.
+			*p = t[t == trunk ? +1 : -1];
+			free(trunk);
+		} else {
+			// We need to shift the other leaf into the preceding
+			// twig array.
+			void *end = (byte *)trunk + s;
+			Trie other = t[t + 1 == end ? -1 : +1];
+			// Drop this branch from the end of the trunk.
+			s -= sizeof(Tindex) + sizeof(Trie) * 2;
+			// Update preceding index.
+			i = *pip;
+			Tbitmap b = 1U << Tindex_concat(i);
+			t = (Trie *)(pip + 1) + twigoff(i, b);
+			*pip = Tbitmap_add(i, b);
+			Tset_twigs(p, minsert(trunk, s, t,
+					      &other, sizeof(Trie)));
+		}
 		return(tbl);
 	}
 	// Usual case
