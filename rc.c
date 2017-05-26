@@ -128,8 +128,26 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		free(tbl);
 		return(NULL);
 	}
-	t = Tbranch_twigs(p);
-	uint s, m; TWIGOFFMAX(s, m, i, b);
+	Trie *trunk = Tbranch_twigs(p);
+	uint s = trunksize(p);
+	assert(trunk <= t && t < trunk+s);
+	uint m = popcount(Tindex_bitmap(i));
+	if(m == 1) {
+		// Our twig is the last in a rib branch, so we need
+		// to remove the whole branch from the trunk. The
+		// following index word, for the concatenated branch,
+		// needs to be moved to the parent.
+		Tindex *ci = (Tindex *)(t + 1);
+		Trie *ct = (Trie *)(ci + 1);
+		*ip = *ci;
+		memmove(t, ct, s - ((byte *)ct - (byte *)trunk));
+		// We have now correctly removed the branch from the
+		// trie, so if realloc() fails we can ignore it and
+		// continue to use the slightly oversized twig array.
+		trunk = realloc(trunk, s - ((byte *)ct - (byte *)t));
+		if(trunk != NULL) Tset_twigs(p, trunk);
+		return(tbl);
+	}
 	if(m == 2) {
 		// Move the other twig to the parent branch.
 		*p = t[!s];
