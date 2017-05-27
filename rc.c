@@ -151,27 +151,40 @@ Tbl *
 Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
 		return(NULL);
-	Trie *t = tbl, *p = NULL;
-	Tindex i = t->index, *ip = NULL, *pip = NULL;
-	Trie *twigs = t->ptr;
-	__builtin_prefetch(twigs);
-	Tbitmap b = 0;
-	while(Tindex_branch(i)) {
+	// p is the parent of the current trunk
+	Trie *p = NULL;
+	// i abbreviates *ip; b is always wrt i
+	Tindex *ip, i;
+	Tbitmap b;
+	// i and twigs start off as elements of p
+	// then bump along the trunk together
+	Trie *twigs;
+	// previous ip is only valid when stepping along a trunk
+	Tindex *pip = NULL;
+	// t is a twig of the current branch we might delete or follow
+	Trie *t = tbl;
+	goto start;
+	for(;;) {
 		byte n = nibble(i, key, len);
 		b = 1U << n;
 		if(hastwig(i, b)) {
-			p = t;
-			pip = NULL;
-			ip = &t->index;
 			t = twigs + twigoff(i, b);
-			i = t->index;
-			twigs = t->ptr;
+		start:
+			if(!isbranch(t))
+				break;
+			// step into next trunk
+			p = t;
+			t = NULL;
+			pip = NULL;
+			ip = &p->index; i = *ip;
+			twigs = p->ptr;
 			__builtin_prefetch(twigs);
 		} else if(Tindex_concat(i) == n) {
 			uint max = popcount(Tindex_bitmap(i));
+			p = p;
+			t = NULL;
 			pip = ip;
-			ip = (void*)(twigs + max);
-			i = *ip;
+			ip = (void*)(twigs + max); i = *ip;
 			twigs = (void*)(ip+1);
 			assert(Tindex_branch(i));
 		} else {
