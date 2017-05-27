@@ -151,25 +151,23 @@ Tbl *
 Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	if(tbl == NULL)
 		return(NULL);
-	// p is the parent of the current trunk
-	Trie *p = NULL;
+	// parent and grandparent twigs of the current trunk
+	Trie *p = NULL, *gp = NULL;
 	// i abbreviates *ip; b is always wrt i
 	Tindex *ip, i;
 	Tbitmap b;
 	// i and twigs start off as elements of p
 	// then bump along the trunk together
 	Trie *twigs;
-	// previous ip is only valid when stepping along a trunk
+	// previous ip
 	Tindex *pip = NULL;
 	// t is a twig of the current branch we might delete or follow
 	Trie *t = tbl;
 	goto start;
 	while(isbranch(t)) {
 		// step into next trunk
-		p = t;
-		t = NULL;
-		pip = NULL;
-		ip = &p->index; i = *ip;
+		gp = p; p = t; t = NULL;
+		pip = ip; ip = &p->index; i = *ip;
 		twigs = p->ptr;
 		__builtin_prefetch(twigs);
 		for(;;) {
@@ -183,8 +181,7 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 			if(Tindex_concat(i) == n) {
 				uint max = popcount(Tindex_bitmap(i));
 				// step along trunk
-				pip = ip;
-				ip = (void*)(twigs + max); i = *ip;
+				pip = ip; ip = (void*)(twigs + max); i = *ip;
 				twigs = (void*)(ip+1);
 				assert(Tindex_branch(i));
 				continue; // inner loop
@@ -218,24 +215,19 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		return(tbl);
 	}
 	if(m == 2 && trunkend(i)) {
-		// Both twigs have to be leaves, otherwise this would not be
-		// the end of the trunk. We need to move the other twig into
-		// its parent.
-		if(pip == NULL) {
-			// We were an indirect branch, so p is the parent.
-			*p = t[t == trunk ? +1 : -1];
-			// We just changed a branch into a leaf, which means
-			// there might be only one other branch in the twig
-			// array containing p, which means we need to
-			// concatenate the other branch's trunk onto its
-			// parent. Jeepers.
-			free(trunk);
-			return(tbl);
-		} else {
+		// We need to move the other twig into its parent.
+		// There should be two leaves in this situation, but if
+		// realloc() fails when we want to concatenate two trunks, we
+		// will be unable to keep the trie as tight as we want. So we
+		// need to allow for trunks that end with one branch.
+		if(ip != &p->index) {
 			// We were concatenated, so we need to shift the
-			// other leaf into the preceding twig array.
+			// other twig into the preceding twig array. This
+			// will normally convert the preceding twig array
+			// into all twigs. The abnormal case should be
+			// vanishingly rare, so don't worry about it.
 			void *end = (byte *)trunk + s;
-			Trie other = t[t + 1 == end ? -1 : +1];
+			Trie save = t[t + 1 == end ? -1 : +1];
 			// Update preceding index.
 			i = *pip;
 			b = 1U << Tindex_concat(i);
@@ -243,9 +235,58 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 			*pip = Tbitmap_add(i, b);
 			Tset_twigs(p, mtrimsert(trunk, s,
 						sizeof(Tindex) + sizeof(Trie) * 2,
-						t, &other, sizeof(Trie)));
+						t, &save, sizeof(Trie)));
 			return(tbl);
 		}
+		// We were an indirect branch, so p is the parent.
+		*p = t[t == trunk ? +1 : -1];
+		free(trunk);
+		// We probably changed a branch into a leaf, which means
+		// there might be only one other branch in the twig array
+		// containing p, in which case we need to concatenate the
+		// other branch's trunk onto its parent. We need to recover
+		// the location of the twig array so we can scan it.
+		i = *pip;
+		b = 1U << nibble(i, key, len);
+		twigs = p - twigoff(i, b);
+		m = popcount(Tindex_bitmap(i));
+		uint n = 0;
+		for(t = twigs; t < twigs + m; t++)
+			if(isbranch(t))
+				p = t, n++;
+		if(n != 1)
+			return(tbl);
+		// Now we need to concatenate p's trunk onto gp's trunk.
+		uint gs = trunksize(gp);
+		s = trunksize(p);
+		Trie save = *p;
+		trunk = Tbranch_twigs(gp);
+		size_t split = (byte*)p - (byte*)trunk;
+		byte *gt = realloc(trunk, gs + s
+				   - sizeof(Trie) + sizeof(Tindex));
+		if(gt == NULL) {
+			// Well, we can't concatenate them this time,
+			// maybe there will be another opportunity.
+			return(tbl);
+		}
+		// Delete p from the twigs
+		memmove(gt + split, gt + split + sizeof(Trie),
+				    gs - split - sizeof(Trie));
+		// Was probably moved by realloc()
+		pip = (Tindex*)( gt + ((byte*)pip - (byte*)trunk) );
+		// The index must say p is a concatenated branch
+		n = nibble(i, key, len);
+		b = 1U << n;
+		*pip = Tindex_new(Tindex_shift(i), Tindex_offset(i),
+				  n, Tindex_bitmap(i) & ~b);
+		// Place concatenated index word
+		gs -= sizeof(Trie);
+		ip = (Tindex*)(gt + gs);
+		*ip = save.index;
+		// Concatenate!
+		memmove(ip+1, save.ptr, s);
+		free(save.ptr);
+		return(tbl);
 	}
 	// Usual case
 	*ip = Tbitmap_del(i, b);
