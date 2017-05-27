@@ -224,6 +224,11 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 		if(pip == NULL) {
 			// We were an indirect branch, so p is the parent.
 			*p = t[t == trunk ? +1 : -1];
+			// We just changed a branch into a leaf, which means
+			// there might be only one other branch in the twig
+			// array containing p, which means we need to
+			// concatenate the other branch's trunk onto its
+			// parent. Jeepers.
 			free(trunk);
 			return(tbl);
 		} else {
