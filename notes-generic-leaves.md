@@ -163,6 +163,25 @@ freely, when arrays are resized to insert or delete child nodes.
 Overall, this new layout should be a lot more friendly to C++ and Rust.
 
 
+Caveats
+-------
+
+The risk of completely user-defined leaf types that embed both key and
+value is that the user must take care not to alter the key, otherwise
+they will corrupt the trie. I don't know of any way to get the
+compiler to help enforce this constraint, and also allow in-place
+mutation of the value part.
+
+It's also mildly awkward from the syntax point of view. When the key
+and value are the same object, a sugary
+
+        trie[key] = value;
+
+syntax doesn't work. Instead it has to be more like
+
+        trie.insert(leaf);
+
+
 ---------------------------------------------------------------------------
 
 Written by Tony Finch <dot@dotat.at> <https://dotat.at/>;
