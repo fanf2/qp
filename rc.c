@@ -19,11 +19,11 @@ Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 	if(t == NULL)
 		return(false);
 	while(isbranch(t)) {
-		// step into next trunk
-		Tindex i = t->index;
+		// step into trunk
 		Trie *twigs = t->ptr;
-		t = NULL;
 		__builtin_prefetch(twigs);
+		Tindex i = t->index;
+		t = NULL;
 		for(;;) {
 			// examine this branch
 			byte n = nibble(i, key, len);
@@ -318,11 +318,11 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	// which can be at a lower index than the point at which we
 	// detect a difference.
 	while(isbranch(t)) {
-		// step into next trunk
-		Tindex i = t->index;
+		// step into trunk
 		Trie *twigs = t->ptr;
-		t = NULL;
 		__builtin_prefetch(twigs);
+		Tindex i = t->index;
+		t = NULL;
 		for(;;) {
 			// examine this branch
 			byte n = nibble(i, key, len);
@@ -372,17 +372,35 @@ newkey:; // We have the branch's byte index; what is its chunk index?
 	t = tbl;
 	Tindex i = 0;
 	while(isbranch(t)) {
-		__builtin_prefetch(t->ptr);
+		// step into trunk
+		Trie *twigs = t->ptr;
+		__builtin_prefetch(twigs);
 		i = t->index;
-		if(off == Tindex_offset(i) && shf == Tindex_shift(i))
-			goto growbranch;
-		if(off == Tindex_offset(i) && shf < Tindex_shift(i))
-			goto newbranch;
-		if(off < Tindex_offset(i))
-			goto newbranch;
-		Tbitmap b = 1U << nibble(i, key, len);
-		assert(hastwig(i, b));
-		t = Tbranch_twigs(t) + twigoff(i, b);
+		t = NULL;
+		for(;;) {
+			// examine this branch
+			if(off == Tindex_offset(i) && shf == Tindex_shift(i))
+				goto growbranch;
+			if(off == Tindex_offset(i) && shf < Tindex_shift(i))
+				goto newbranch;
+			if(off < Tindex_offset(i))
+				goto newbranch;
+			byte n = nibble(i, key, len);
+			Tbitmap b = 1U << n;
+			if(hastwig(i, b)) {
+				t = twigs + twigoff(i, b);
+				break; // to outer loop
+			} else if(Tindex_concat(i) == n) {
+				uint max = popcount(Tindex_bitmap(i));
+				// step along trunk
+				Tindex *ip = (void*)(twigs + max); i = *ip;
+				twigs = (void*)(ip+1);
+				assert(Tindex_branch(i));
+				continue; // inner loop
+			} else {
+				assert(false);
+			}
+		}
 	}
 newbranch:;
 	Trie *twigs = malloc(sizeof(Trie) * 2);
