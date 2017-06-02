@@ -140,19 +140,13 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 		__builtin_prefetch(t->ptr);
 		Tindex i = t->index;
 		Tbitmap b = twigbit(i, key, len);
-		if(hastwig(i, b)) {
-			t = Tbranch_twigs(t) + twigoff(i, b);
-		} else {
-			// Even if our key is missing from this branch
-			// we need to keep iterating down to a leaf.
-			// Try to find a leaf so we can stop ASAP.
-			uint s, m = popcount(Tindex_bitmap(i));
-			t = Tbranch_twigs(t);
-			for(s = 0; s < m; s++)
-				if(!isbranch(t+s))
-					break;
-			if(s < m) t += s;
-		}
+		// Even if our key is missing from this branch we need to
+		// keep iterating down to a leaf. It doesn't matter which
+		// twig we choose since the keys are all the same up to this
+		// index. Note that blindly using twigoff(t, b) can cause
+		// an out-of-bounds index if it equals twigmax(t).
+		uint s = hastwig(i, b) ? twigoff(i, b) : 0;
+		t = Tbranch_twigs(t) + s;
 	}
 	// Do the keys differ, and if so, where?
 	uint off, xor, shf;
