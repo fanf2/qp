@@ -18,26 +18,29 @@ bool
 Tgetkv(Tbl *t, const char *key, size_t len, const char **pkey, void **pval) {
 	if(t == NULL)
 		return(false);
-	Tindex i = t->index;
-	Trie *twigs = t->ptr;
-	__builtin_prefetch(twigs);
-	while(Tindex_branch(i)) {
-		byte n = nibble(i, key, len);
-		Tbitmap b = 1U << n;
-		if(hastwig(i, b)) {
-			t = twigs + twigoff(i, b);
-			i = t->index;
-			twigs = t->ptr;
-			__builtin_prefetch(twigs);
-		} else if(Tindex_concat(i) == n) {
-			uint max = popcount(Tindex_bitmap(i));
-			Tindex *ip = (void*)(twigs + max);
-			t = NULL;
-			i = *ip;
-			twigs = (void*)(ip+1);
-			assert(Tindex_branch(i));
-		} else {
-			return(false);
+	while(isbranch(t)) {
+		// step into next trunk
+		Tindex i = t->index;
+		Trie *twigs = t->ptr;
+		t = NULL;
+		__builtin_prefetch(twigs);
+		for(;;) {
+			// examine this branch
+			byte n = nibble(i, key, len);
+			Tbitmap b = 1U << n;
+			if(hastwig(i, b)) {
+				t = twigs + twigoff(i, b);
+				break; // to outer loop
+			} else if(Tindex_concat(i) == n) {
+				uint max = popcount(Tindex_bitmap(i));
+				// step along trunk
+				Tindex *ip = (void*)(twigs + max); i = *ip;
+				twigs = (void*)(ip+1);
+				assert(Tindex_branch(i));
+				continue; // inner loop
+			} else {
+				return(false);
+			}
 		}
 	}
 	if(strcmp(key, Tleaf_key(t)) != 0)
@@ -163,7 +166,6 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 	Tindex *pip = NULL;
 	// t is a twig of the current branch we might delete or follow
 	Trie *t = tbl;
-	goto start;
 	while(isbranch(t)) {
 		// step into next trunk
 		gp = p; p = t; t = NULL;
@@ -177,16 +179,16 @@ Tdelkv(Tbl *tbl, const char *key, size_t len, const char **pkey, void **pval) {
 			if(hastwig(i, b)) {
 				t = twigs + twigoff(i, b);
 				break; // to outer loop
-			}
-			if(Tindex_concat(i) == n) {
+			} else if(Tindex_concat(i) == n) {
 				uint max = popcount(Tindex_bitmap(i));
 				// step along trunk
 				pip = ip; ip = (void*)(twigs + max); i = *ip;
 				twigs = (void*)(ip+1);
 				assert(Tindex_branch(i));
 				continue; // inner loop
+			} else {
+				return(tbl);
 			}
-			return(tbl);
 		}
 	}
 	if(strcmp(key, Tleaf_key(t)) != 0)
