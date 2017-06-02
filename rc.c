@@ -318,16 +318,34 @@ Tsetl(Tbl *tbl, const char *key, size_t len, void *val) {
 	// which can be at a lower index than the point at which we
 	// detect a difference.
 	while(isbranch(t)) {
-		__builtin_prefetch(t->ptr);
+		// step into next trunk
 		Tindex i = t->index;
-		Tbitmap b = 1U << nibble(i, key, len);
-		// Even if our key is missing from this branch we need to
-		// keep iterating down to a leaf. It doesn't matter which
-		// twig we choose since the keys are all the same up to this
-		// index. Note that blindly using twigoff(t, b) can cause
-		// an out-of-bounds index if it equals twigmax(t).
-		uint s = hastwig(i, b) ? twigoff(i, b) : 0;
-		t = Tbranch_twigs(t) + s;
+		Trie *twigs = t->ptr;
+		t = NULL;
+		__builtin_prefetch(twigs);
+		for(;;) {
+			// examine this branch
+			byte n = nibble(i, key, len);
+			Tbitmap b = 1U << n;
+			if(hastwig(i, b)) {
+				t = twigs + twigoff(i, b);
+				break; // to outer loop
+			} else if(Tindex_concat(i) == n) {
+				uint max = popcount(Tindex_bitmap(i));
+				// step along trunk
+				Tindex *ip = (void*)(twigs + max); i = *ip;
+				twigs = (void*)(ip+1);
+				assert(Tindex_branch(i));
+				continue; // inner loop
+			} else {
+				// Even if our key is missing from this branch
+				// we need to keep iterating down to a leaf. It
+				// doesn't matter which twig we choose since the
+				// keys are all the same up to this index.
+				t = twigs;
+				break; // to outer loop
+			}
+		}
 	}
 	// Do the keys differ, and if so, where?
 	uint off, xor, shf;
