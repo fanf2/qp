@@ -1,8 +1,9 @@
 # You may need -mpopcnt to get the compiler to emit POPCNT instructions
-CFLAGS= -O3 -std=gnu99 -Wall -Wextra
+CFLAGS= -std=gnu99 -Wall -Wextra -g -O3 -march=native
+#CFLAGS= -std=gnu99 -Wall -Wextra -g -fsanitize=undefined -fsanitize=address
 
 # implementation codes
-XY=	cb qp qs qn fp fs fc wp ws rc # ht
+XY=	cb qp qs qn fp fs fc wp ws # ht rc
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 
