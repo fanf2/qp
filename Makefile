@@ -135,7 +135,7 @@ tex:
 	sed '/\\tinybody{/,/}$$/!d;s/\\tinybody{//;s/}$$//;s/\\\\$$//' tinytocs.tex | wc -c
 
 bind9:
-	git clone https://source.isc.org/git/bind9.git
+	git clone https://gitlab.isc.org/isc-projects/bind9.git
 
 html:
 	for f in *.md; do markdown <$$f | ./entities >$${f%md}html; done
