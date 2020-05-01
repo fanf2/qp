@@ -74,3 +74,9 @@ the trie.
 
 Using 32-wide nodes allows keys of up to 2^27 bytes, which should be
 enough.
+
+---------------------------------------------------------------------------
+
+Written by Tony Finch <dot@dotat.at> <https://dotat.at/>;
+You may do anything with this. It has no warranty.
+<https://creativecommons.org/publicdomain/zero/1.0/>

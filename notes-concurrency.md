@@ -64,3 +64,9 @@ is relatively complicated and needs to support concurrent updates.
 Since that is the case, it is probably OK if the per-name record is
 moved from the hashmap to the qp trie by the cleaner, even if resolver
 jobs are in progress.
+
+---------------------------------------------------------------------------
+
+Written by Tony Finch <dot@dotat.at> <https://dotat.at/>;
+You may do anything with this. It has no warranty.
+<https://creativecommons.org/publicdomain/zero/1.0/>
