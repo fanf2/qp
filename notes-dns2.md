@@ -1,7 +1,7 @@
 More thoughts on DNS and [qp tries](https://dotat.at/prog/qp)
 ===================================
 
-I previously wrote down a couple of ideas for [DNS and qp-tries](notes-dns.html):
+I previously wrote down a couple of ideas for [DNS and qp-tries](notes-dns.md):
 
   * two kinds of branch nodes, for common and unusual name octets
 

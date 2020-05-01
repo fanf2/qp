@@ -230,6 +230,8 @@ notes
 * [buffered writes and compressed spines](notes-write-buffer.md)
 * [jumbo branches](notes-jumbo.md)
 * [DNS names](notes-dns.md)
+* [DNS names and other keys](notes-dns2.md)
+* [concurrent cache updates](notes-concurrency.md)
 * [todo](notes-todo.md)
 
 ---------------------------------------------------------------------------
