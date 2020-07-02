@@ -231,6 +231,7 @@ notes
 * [jumbo branches](notes-jumbo.md)
 * [DNS names](notes-dns.md)
 * [concurrent cache updates](notes-concurrency.md)
+* [mistakes](notes-mistakes.md)
 * [todo](notes-todo.md)
 
 ---------------------------------------------------------------------------

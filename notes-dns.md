@@ -1,5 +1,5 @@
-Storing DNS host names in [qp tries](https://dotat.at/prog/qp)
-====================================
+Storing DNS host names in a [qp trie](https://dotat.at/prog/qp)
+=====================================
 
 A few thoughts on tuning qp tries for storing DNS names, inspired by
 Knot DNS. They found that HAT tries were faster than qp tries, mainly

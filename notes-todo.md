@@ -1,3 +1,9 @@
+* fix union / bit-field portability mistake
+
+* public-domain version of concurrent qp-trie
+
+* DNS-trie
+
 * finish HAMT implementation
 
 * revise API to add Tsetkv() which returns the key pointer and
