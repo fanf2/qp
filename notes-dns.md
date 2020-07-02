@@ -35,60 +35,70 @@ lower nybble of qp-tries, except the split is more cunning.
 ### upper node
 
 Some of the bits in the upper node bitmap are allocated to whole byte
-values. If the byte at the offset is in the usual hostname alphabet,
-it is handled by this upper node with one indirection.
+values. If the byte at the offset is in the usual hostname alphabet, it
+is handled by this upper node, with at most one indirection per byte.
 
-* 26 case-insensitive letters
+  * 26 case-insensitive letters
 
-* 10 digits
+  * 10 digits
 
-* hyphen and underscore
+  * hyphen and underscore
 
-* end-of-label
+  * end-of-label
 
-(39 bits)
+  * (39 bits so far)
 
 If a byte in the name isn't in the usual alphabet, then it is split
 into its upper 3 bits and lower 5 bits. Therefore the upper node
 bitmap also contains:
 
-* 8 for upper 3 bits of non-hostname bytes
+  * 8 for upper 3 bits of non-hostname bytes
 
-(47 bits)
+  * (47 bits so far)
 
 The rest of the index word has:
 
-* 2 bit node type
+  * 2 bit node type
 
-* mark bit
+  * mark bit
 
-* 14 spare bits for the offset
+  * 14 spare bits for the offset
 
 
 ### lower node
 
-If the byte at the offset is a non-hostname value, it needs a second
+If the byte at the offset is a non-hostname value, it can need a second
 branch node for its lower 5 bits. This lower node has a more simple
 layout:
 
-* 32 for lower 5 bits of non-hostname bytes
+  * 32 for lower 5 bits of non-hostname bytes
 
-* end-of-label
+  * end-of-label
 
-* 2 bit node type
+  * 2 bit node type
 
-* mark bit
+  * mark bit
 
-* 28 spare bits for the index
+  * 28 spare bits for the index
 
 
 ### iteration order
 
-The tricky bit of this scheme is iterating in lexical order. For
-example, if the upper 3 bits of an octet are 001 (hex values 0x20 -
-0x3F) the order of iteration has to switch back and forth between
-parent and child node depending on whether the octet is a hyphen or
-digit or not.
+The tricky bit of this scheme is iterating the trie in lexical order.
+For example, if the upper 3 bits of an octet are 001 (hex values 0x20 -
+0x3F) the order of iteration has to switch back and forth between parent
+and child node depending on whether the octet is a hyphen or digit or
+not.
+
+  * 0x20 - 0x2c: iterate children of child node for upper bits 001
+
+  * 0x2d: iterate child node for `-`
+
+  * 0x2e - 0x2f: iterate children of child node for upper bits 001
+
+  * 0x30 - 0x39: iterate child nodes for `0` - `9`
+
+  * 0x3a - 0x3f: iterate children of child node for upper bits 001
 
 The non-byte end-of-label value has to sort before other values.
 
@@ -146,11 +156,11 @@ node.
 Example code to get an byte from a name, given label and byte offsets,
 the same descriptor as before, and a descriptor length:
 
-	if(label >= desclen)
-		return(-1);
-	if(byte >= name[desc[label+1]])
-		return(-1);
-	return(name[desc[label+1]+byte+1]);
+		if(label >= desclen)
+			return(-1);
+		if(byte >= name[desc[label+1]])
+			return(-1);
+		return(name[desc[label+1]+byte+1]);
 
 The dope vector is one element longer than the number of labels since
 it includes the root terminator. In a bare name this can double as the
@@ -249,30 +259,30 @@ trade-offs that we can see without code.
 
     Dope vectors are the simplest.
 
-	Stringifying and bit index vectors are probably the same effort,
+    Stringifying and bit index vectors are probably the same effort,
     because case-squashing and escaping are about as expensive as
     conversion to bit indexes.
 
-	There's a trade-off in stringifying between squashing case up front,
+    There's a trade-off in stringifying between squashing case up front,
     or doing it as part of the byte-to-bit conversion in the traversal loop.
 
   * traversal loop
 
-	Bit index vectors are the simplest.
+    Bit index vectors are the simplest.
 
-	For dope vectors and stringified lookups, it would be interesting to
+    For dope vectors and stringified lookups, it would be interesting to
     find out whether byte-to-bit conversion is faster in code (if 65 <=
     byte && byte <= 90, etc.) or with a lookup table (ctype style).
 
-	Dope vectors require an extra indirection to access the key, but it
+    Dope vectors require an extra indirection to access the key, but it
     should a fast access to the L1 cache. How much slowdown will it cause?
 
   * polymorphism
 
-	Stringifying allows one trie implementation to be used for many
+    Stringifying allows one trie implementation to be used for many
     purposes, not just DNS names. (More on that below.)
 
-	Dope vectors imply three trie implementations, for compressed names
+    Dope vectors imply three trie implementations, for compressed names
     with 2-byte offsets into packets, for 1-byte offsets into
     uncompressed names, and for other strings.
 
