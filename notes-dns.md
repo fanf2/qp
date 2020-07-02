@@ -200,7 +200,7 @@ A stringified domain name can be up to twice as long as a wire format
 domain name. (504 bytes to be precise.)
 
 
-### bit index vector
+### eager byte-to-bit
 
 To look up a domain name in a qp-trie, we need to scan the name twice:
 once to prepare the name, and once while traversing the trie.
@@ -243,7 +243,7 @@ node, and mapping the byte from the key to a bit value - which for an
 upper node might involve testing whether it is a laetter or a digit, or
 doing a table lookup.
 
-If the key is converted to a bit index vector then the simplified
+If the key is eagerly converted to bit indexes then the simplified
 traversal loop can be used pretty much verbatim. As a consequence the
 distinction between upper and lower branch nodes disappears, and becomes
 a matter of how bytes are mapped to bit indexes during name preparation.
@@ -259,16 +259,16 @@ trade-offs that we can see without code.
 
     Dope vectors are the simplest.
 
-    Stringifying and bit index vectors are probably the same effort,
+    Stringifying and eager byte-to-bit are probably the same effort,
     because case-squashing and escaping are about as expensive as
-    conversion to bit indexes.
+    byte-to-bit conversion.
 
     There's a trade-off in stringifying between squashing case up front,
     or doing it as part of the byte-to-bit conversion in the traversal loop.
 
   * traversal loop
 
-    Bit index vectors are the simplest.
+    Eager byte-to-bit is the simplest.
 
     For dope vectors and stringified lookups, it would be interesting to
     find out whether byte-to-bit conversion is faster in code (if 65 <=
@@ -301,8 +301,8 @@ It's undesirable to do name preparation for long keys, because of the
 cost of copying the key (which is likely to bust the L1 cache) and
 because the trie traversal loop is not going to need to examine all the
 bytes in the key, so much of the effort would be wasted. This implies
-that it doesn't make sense to try to convert long string keys into bit
-index vectors.
+that it doesn't make sense to eagerly convert long string keys into bit
+indexes.
 
 
 Key comparisons
@@ -320,8 +320,8 @@ With dope-vector name preparation it's necessary to have both the
 wire-format name and the dope vector to traverse the trie so this
 happens automatically.
 
-With bit index vector preparation, it isn't hard to keep hold of the
-wire-format name for the final comparison.
+With eager byte-to-bit, it isn't hard to keep hold of the wire-format
+name for the final comparison.
 
 With stringified keys and a general-purpose trie implementation, it is
 weird to have a second form of the key for the final comparison. (More
