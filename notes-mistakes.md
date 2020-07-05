@@ -14,8 +14,8 @@ I originally used "index" to refer to the position of a nybble in a
 key, but that didn't leave me with a good word to describe the word
 that summarizes a node. Using "offset" for the position of a nybble
 allows me to use "index" for the word as a whole, which I like better
-because it's like a miniature database index, where a node is like a
-miniature database table.
+because it's like a miniature database index, where a twigs vector
+is like a miniature database table.
 
   * word
 
@@ -23,7 +23,7 @@ miniature database table.
 
   * index word
 
-    contains metadata about a twig array, including key offset and bitmap
+    contains metadata about a twig vector, including key offset and bitmap
 
   * key offset
 
@@ -33,7 +33,7 @@ miniature database table.
 
     originally a string of 4 bits but now 5 bits from the key
 
-  * twig
+  * node
 
     either a leaf or a branch
 
@@ -43,11 +43,11 @@ miniature database table.
 
   * branch
 
-	a pair of an index word and a pointer to a node
+	a pair of an index word and a pointer to twigs
 
-  * node
+  * twigs
 
-    a vector of twigs
+    a vector of nodes
 
 
 Unions and bit fields
