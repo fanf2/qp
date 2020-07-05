@@ -142,7 +142,7 @@ You can clone or browse the repository from:
 * git://dotat.at/qp.git
 * <https://dotat.at/cgi/git/qp.git>
 * <https://github.com/fanf2/qp.git>
-* <https://git.csx.cam.ac.uk/x/ucs/u/fanf2/radish.git>
+* <https://git.uis.cam.ac.uk/x/uis/u/fanf2/radish.git>
 
 
 roadmap
