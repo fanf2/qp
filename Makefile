@@ -3,7 +3,9 @@ CFLAGS= -std=gnu99 -Wall -Wextra -g -O3 -march=native
 #CFLAGS= -std=gnu99 -Wall -Wextra -g -fsanitize=undefined -fsanitize=address
 
 # implementation codes
-XY=	cb qp qs qn fp fs fc wp ws # ht rc
+#XY=	cb qp qs qn fp fs fc wp ws rc # ht
+XY= qp fp fn dns
+
 TEST=	$(addprefix ./test-,${XY})
 BENCH=  $(addprefix ./bench-,${XY})
 
@@ -55,6 +57,7 @@ fn.o: fn.c fn.h Tbl.h
 wp.o: wp.c wp.h Tbl.h
 rc.o: rc.c rc.h Tbl.h
 ht.o: ht.c ht.h Tbl.h
+dns.o: dns.c dns.h Tbl.h
 cb-debug.o: cb-debug.c cb.h Tbl.h
 qp-debug.o: qp-debug.c qp.h Tbl.h
 fp-debug.o: fp-debug.c fp.h Tbl.h
@@ -62,6 +65,7 @@ fn-debug.o: fn-debug.c fn.h Tbl.h
 wp-debug.o: wp-debug.c wp.h Tbl.h
 rc-debug.o: rc-debug.c rc.h Tbl.h
 ht-debug.o: ht-debug.c ht.h Tbl.h
+dns-debug.o: dns-debug.c dns.h Tbl.h
 
 # no cache prefetch
 qc.o: qp.c qp.h Tbl.h
