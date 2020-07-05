@@ -806,4 +806,48 @@ growbranch:;
 	return(tbl);
 }
 
+// This needs reworking: what I want is an iterative traversal that
+// keeps track of the nearest predecessor and successor nodes as it
+// walks down the trie.
+
+static bool
+next_rec(Node *n, const char **pkey, size_t *plen, void **pval) {
+	if(isbranch(n)) {
+		// Recurse to find either this leaf (*pkey != NULL)
+		// or the next one (*pkey == NULL).
+		Shift bit = twigbit(n, (const byte *)*pkey, *plen);
+		Weight s = twigoff(n, bit);
+		Weight m = twigmax(n);
+		for(; s < m; s++)
+			if(next_rec(twig(n, s), pkey, plen, pval))
+				return(true);
+		return(false);
+	}
+	// We have found the next leaf.
+	if(*pkey == NULL) {
+		*pkey = n->ptr;
+		*plen = strlen(*pkey); /////
+		*pval = (void *)n->index;
+		return(true);
+	}
+	// We have found this leaf, so start looking for the next one.
+	if(strcmp(*pkey, n->ptr) == 0) {
+		*pkey = NULL;
+		*plen = 0;
+		return(false);
+	}
+	// No match.
+	return(false);
+}
+
+bool
+Tnextl(Tbl *tbl, const char **pkey, size_t *plen, void **pval) {
+	if(tbl == NULL) {
+		*pkey = NULL;
+		*plen = 0;
+		return(NULL);
+	}
+	return(next_rec(&tbl->root, pkey, plen, pval));
+}
+
 ////////////////////////////////////////////////////////////////////////
