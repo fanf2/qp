@@ -209,9 +209,9 @@ roadmap
 [cb-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/cb-debug.c
 [cb.c]:           https://github.com/fanf2/qp/blob/HEAD/cb.c
 [cb.h]:           https://github.com/fanf2/qp/blob/HEAD/cb.h
-[dns-debug.c]:    https://github.com/fanf2/qp/blob/HEAD/cb-debug.c
-[dns.c]:          https://github.com/fanf2/qp/blob/HEAD/cb.c
-[dns.h]:          https://github.com/fanf2/qp/blob/HEAD/cb.h
+[dns-debug.c]:    https://github.com/fanf2/qp/blob/HEAD/dns-debug.c
+[dns.c]:          https://github.com/fanf2/qp/blob/HEAD/dns.c
+[dns.h]:          https://github.com/fanf2/qp/blob/HEAD/dns.h
 [qp-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/qp-debug.c
 [qp.c]:           https://github.com/fanf2/qp/blob/HEAD/qp.c
 [qp.h]:           https://github.com/fanf2/qp/blob/HEAD/qp.h
