@@ -173,7 +173,8 @@ roadmap
 
 	A qp-trie variant optimized for domain names. Effectively an 8-bit
     qp-trie for standard hostnames. Even faster and even less memory
-    overhead, but does not support long keys.
+    overhead, but does not support long keys. As well as the comments
+    in [dns.h][] there are [some design notes](notes-dns.md).
 
 * [wp.h][] [wp.c][]
 
@@ -208,6 +209,9 @@ roadmap
 [cb-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/cb-debug.c
 [cb.c]:           https://github.com/fanf2/qp/blob/HEAD/cb.c
 [cb.h]:           https://github.com/fanf2/qp/blob/HEAD/cb.h
+[dns-debug.c]:    https://github.com/fanf2/qp/blob/HEAD/cb-debug.c
+[dns.c]:          https://github.com/fanf2/qp/blob/HEAD/cb.c
+[dns.h]:          https://github.com/fanf2/qp/blob/HEAD/cb.h
 [qp-debug.c]:     https://github.com/fanf2/qp/blob/HEAD/qp-debug.c
 [qp.c]:           https://github.com/fanf2/qp/blob/HEAD/qp.c
 [qp.h]:           https://github.com/fanf2/qp/blob/HEAD/qp.h
