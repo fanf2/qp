@@ -156,8 +156,8 @@ roadmap
 
 * [qp.h][] [qp.c][]
 
-	My qp trie implementation. See qp.h for a longer description
-	of where the data structure comes from.
+	My original qp trie implementation. See qp.h for a longer
+	description of where the data structure comes from.
 
 * [fp.h][] [fp.c][]
 
@@ -166,6 +166,14 @@ roadmap
 * [fn.h][] [fn.c][]
 
 	Newer version of 5-bit qp trie, which should be more portable.
+
+	**This is the version that I recommend - faster and less memory overhead**
+
+* [dns.h][] [dns.c][]
+
+	A qp-trie variant optimized for domain names. Effectively an 8-bit
+    qp-trie for standard hostnames. Even faster and even less memory
+    overhead, but does not support long keys.
 
 * [wp.h][] [wp.c][]
 
