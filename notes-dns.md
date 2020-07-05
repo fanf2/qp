@@ -102,6 +102,14 @@ not.
 
 The non-byte end-of-label value has to sort before other values.
 
+We can avoid this complication by breaking up the bitmap for the top 3
+bits of non-hostname bytes, so that bits appear in the bitmap in
+strictly lexicographic order, which also means that child nodes appear
+in lexicographic order. This requires two more bits in the bitmap
+because of the way the 0x20 - 0x3f block is broken up (as described
+above), plus another for backquote which is sandwiched between
+underscore and lowercase 'a'.
+
 
 Turning domain names into keys
 ------------------------------

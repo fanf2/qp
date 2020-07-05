@@ -98,6 +98,15 @@ typedef unsigned char byte;
 // 32-wide bitmap for the lower node is the same size as a 5-bit
 // qp-trie.
 //
+// The hostname characters are interspersed with the blocks of 32
+// non-hostname characters. The block from 32-63 is broken into 32-44,
+// hyphen, 46, 47, digits, 58-63. This makes it awkward to iterate over
+// the trie in lexical order. So that we don't have to switch back and
+// forth between parent and child nodes, the upper 3 bits of a
+// non-hostname character are not used directly, but instead we assign a
+// bit in the bitmap for each contiguous block of non-hostname
+// characters, and each contiguous block is split on 5 bit boundaries.
+//
 // The index word also needs to contain an offset into the key, so the
 // size of this offset field limits the maximum length of a key. Domain
 // names have a maximum length of 255 bytes, so the large DNS-trie
@@ -198,14 +207,23 @@ enum {
 	SHIFT_BRANCH,		// branch / leaf tag
 	// bitmap
 	SHIFT_NOBYTE,		// label separator has no byte value
-	SHIFT_HYPHEN,
-	SHIFT_UNDER,
+	SHIFT_0,		// block 0, control characters
+	SHIFTa1,		// block 1, before hyphen
+	SHYPHEN,
+	SHIFTb1,		// block 1, between hypen and zero
 	SHIFT_DIGIT,
 	TOP_DIGIT = SHIFT_DIGIT + '9' - '0',
+	SHIFTc1,		// block 1, after nine
+	SHIFT_2,		// block 2, excluding letters
+	UNDERBAR,
+	BACKQUO,		// block 3, backquote
 	SHIFT_LETTER,
 	TOP_LETTER = SHIFT_LETTER + 'z' - 'a',
-	SHIFT_SPLIT,
-	TOP_SPLIT = SHIFT_SPLIT + (255 >> 5),
+	SHIFT_3,		// block 3, curly - del
+	SHIFT_4,		// non-ascii blocks
+	SHIFT_5,
+	SHIFT_6,
+	SHIFT_7,
 	// key byte
 	SHIFT_OFFSET,
 	TOP_OFFSET = SHIFT_OFFSET + KEY_SIZE_LOG2,
@@ -213,15 +231,6 @@ enum {
 
 typedef char static_assert_bitmap_fits_in_word
 	[TOP_OFFSET < 64 ? 1 : -1];
-
-// Position of bitmap in the index word of a node for the less
-// significant part of a split byte.
-//
-#define MASK_FIVE ((1 << 5) - 1)
-#define SHIFT_FIVE SHIFT_UNDER
-
-typedef char static_assert_lower_bitmap_fits_in_upper_bitmap
-	[SHIFT_FIVE + MASK_FIVE < TOP_SPLIT ? 1 : -1];
 
 // The mask covering just the flag bits.
 //
@@ -231,6 +240,40 @@ typedef char static_assert_lower_bitmap_fits_in_upper_bitmap
 // follows the bitmap so we want the offset's lesser bits.
 //
 #define MASK_BITMAP bit_to_mask(SHIFT_OFFSET)
+
+// The mask covering the bits in a bitmap corresponding to split bytes.
+//
+#define MASK_SPLIT ( (W1 << SHIFT_0) |		\
+		     (W1 << SHIFTa1) |		\
+		     (W1 << SHIFTb1) |		\
+		     (W1 << SHIFTc1) |		\
+		     (W1 << SHIFT_2) |		\
+		     (W1 << SHIFT_3) |		\
+		     (W1 << SHIFT_4) |		\
+		     (W1 << SHIFT_5) |		\
+		     (W1 << SHIFT_6) |		\
+		     (W1 << SHIFT_7) )
+
+static inline bool
+byte_is_split(Shift bit) {
+	return(MASK_SPLIT & W1 << bit);
+}
+
+// Position of bitmap in the index word of a node for the less significant
+// 5 bits of a split byte. Aligned so that NOBYTE is never set when there
+// is a byte value.
+//
+#define SHIFT_LOWER SHIFT_0
+
+typedef char static_assert_lower_bitmap_fits_in_upper_bitmap
+	[SHIFT_LOWER + 32 < SHIFT_OFFSET ? 1 : -1];
+
+// Bit position for lower 5 bits of a split byte.
+//
+static inline Shift
+lower_to_bit(byte b) {
+	return(SHIFT_LOWER + b % 32);
+}
 
 // Given a bit number in the bitmap, return a mask covering the lesser
 // bits in the bitmap.
@@ -247,11 +290,8 @@ bit_to_mask(Shift bit) {
 //  |_.__/\_, |\__\___|  \__\___/ |_.__/_|\__|
 //        |__/
 
-#define S(byte) (SHIFT_SPLIT + (byte >> 5))
-#define L(byte) (SHIFT_LETTER + byte - 'a')
-#define D(byte) (SHIFT_DIGIT  + byte - '0')
-#define HYPHEN	SHIFT_HYPHEN
-#define UNDER	SHIFT_UNDER
+#define DD(byte) (SHIFT_DIGIT  + byte - '0')
+#define LL(byte) (SHIFT_LETTER + byte - 'a')
 
 // Map a byte of a key to a bit number in an index word.
 /*
@@ -270,63 +310,74 @@ bit_to_mask(Shift bit) {
     ; indent
     (when (= 0 (% byte 8))
       (insert "\t"))
-    ; letters, digits, hyphens, split
     (cond
-      ((and (>= byte ?a) (<= byte ?z))
-        (insert "L('" (byte-to-string byte) "')"))
-      ((and (>= byte ?A) (<= byte ?Z))
-        (insert "L('" (byte-to-string (+ 32 byte)) "')"))
+      ; hyphen and digits and neighbours
+      ((and (>= byte 32) (< byte ?-))
+        (insert "SHIFTa1"))
+      ((= byte ?-)
+        (insert "SHYPHEN"))
+      ((and (> byte ?-) (< byte ?0))
+        (insert "SHIFTb1"))
       ((and (>= byte ?0) (<= byte ?9))
-        (insert "D('" (byte-to-string byte) "')"))
-      ((= byte ?-) (insert "HYPHEN"))
-      ((= byte ?_) (insert "UNDER"))
-      (t (insert "S(" (number-to-string byte) ")")))
+        (insert "DD('" (byte-to-string byte) "')"))
+      ((and (> byte ?0) (< byte 64))
+        (insert "SHIFTc1"))
+      ; because upper-case letters don't sort here,
+      ; block 2 is effectively contiguous
+      ((and (>= byte ?A) (<= byte ?Z))
+        (insert "LL('" (byte-to-string (+ 32 byte)) "')"))
+      ((= byte ?_)
+        (insert "UNDERBAR"))
+      ; block 3
+      ((= byte ?`)
+        (insert "BACKQUO"))
+      ((and (>= byte ?a) (<= byte ?z))
+        (insert "LL('" (byte-to-string byte) "')"))
+      ; simple blocks
+      (t (insert "SHIFT_" (number-to-string (/ byte 32)))))
     ; separators
     (if (= 7 (% byte 8))
       (insert ",\n")
-      (insert ",\t"))))
+      (insert ", "))))
 
  */
 static const Shift byte_to_bit[256] = {
-	S(0),	S(1),	S(2),	S(3),	S(4),	S(5),	S(6),	S(7),
-	S(8),	S(9),	S(10),	S(11),	S(12),	S(13),	S(14),	S(15),
-	S(16),	S(17),	S(18),	S(19),	S(20),	S(21),	S(22),	S(23),
-	S(24),	S(25),	S(26),	S(27),	S(28),	S(29),	S(30),	S(31),
-	S(32),	S(33),	S(34),	S(35),	S(36),	S(37),	S(38),	S(39),
-	S(40),	S(41),	S(42),	S(43),	S(44),	HYPHEN,	S(46),	S(47),
-	D('0'),	D('1'),	D('2'),	D('3'),	D('4'),	D('5'),	D('6'),	D('7'),
-	D('8'),	D('9'),	S(58),	S(59),	S(60),	S(61),	S(62),	S(63),
-	S(64),	L('a'),	L('b'),	L('c'),	L('d'),	L('e'),	L('f'),	L('g'),
-	L('h'),	L('i'),	L('j'),	L('k'),	L('l'),	L('m'),	L('n'),	L('o'),
-	L('p'),	L('q'),	L('r'),	L('s'),	L('t'),	L('u'),	L('v'),	L('w'),
-	L('x'),	L('y'),	L('z'),	S(91),	S(92),	S(93),	S(94),	UNDER,
-	S(96),	L('a'),	L('b'),	L('c'),	L('d'),	L('e'),	L('f'),	L('g'),
-	L('h'),	L('i'),	L('j'),	L('k'),	L('l'),	L('m'),	L('n'),	L('o'),
-	L('p'),	L('q'),	L('r'),	L('s'),	L('t'),	L('u'),	L('v'),	L('w'),
-	L('x'),	L('y'),	L('z'),	S(123),	S(124),	S(125),	S(126),	S(127),
-	S(128),	S(129),	S(130),	S(131),	S(132),	S(133),	S(134),	S(135),
-	S(136),	S(137),	S(138),	S(139),	S(140),	S(141),	S(142),	S(143),
-	S(144),	S(145),	S(146),	S(147),	S(148),	S(149),	S(150),	S(151),
-	S(152),	S(153),	S(154),	S(155),	S(156),	S(157),	S(158),	S(159),
-	S(160),	S(161),	S(162),	S(163),	S(164),	S(165),	S(166),	S(167),
-	S(168),	S(169),	S(170),	S(171),	S(172),	S(173),	S(174),	S(175),
-	S(176),	S(177),	S(178),	S(179),	S(180),	S(181),	S(182),	S(183),
-	S(184),	S(185),	S(186),	S(187),	S(188),	S(189),	S(190),	S(191),
-	S(192),	S(193),	S(194),	S(195),	S(196),	S(197),	S(198),	S(199),
-	S(200),	S(201),	S(202),	S(203),	S(204),	S(205),	S(206),	S(207),
-	S(208),	S(209),	S(210),	S(211),	S(212),	S(213),	S(214),	S(215),
-	S(216),	S(217),	S(218),	S(219),	S(220),	S(221),	S(222),	S(223),
-	S(224),	S(225),	S(226),	S(227),	S(228),	S(229),	S(230),	S(231),
-	S(232),	S(233),	S(234),	S(235),	S(236),	S(237),	S(238),	S(239),
-	S(240),	S(241),	S(242),	S(243),	S(244),	S(245),	S(246),	S(247),
-	S(248),	S(249),	S(250),	S(251),	S(252),	S(253),	S(254),	S(255),
+	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
+	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
+	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
+	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
+	SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1,
+	SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHYPHEN, SHIFTb1, SHIFTb1,
+	DD('0'), DD('1'), DD('2'), DD('3'), DD('4'), DD('5'), DD('6'), DD('7'),
+	DD('8'), DD('9'), SHIFTc1, SHIFTc1, SHIFTc1, SHIFTc1, SHIFTc1, SHIFTc1,
+	SHIFT_2, LL('a'), LL('b'), LL('c'), LL('d'), LL('e'), LL('f'), LL('g'),
+	LL('h'), LL('i'), LL('j'), LL('k'), LL('l'), LL('m'), LL('n'), LL('o'),
+	LL('p'), LL('q'), LL('r'), LL('s'), LL('t'), LL('u'), LL('v'), LL('w'),
+	LL('x'), LL('y'), LL('z'), SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, UNDERBAR,
+	BACKQUO, LL('a'), LL('b'), LL('c'), LL('d'), LL('e'), LL('f'), LL('g'),
+	LL('h'), LL('i'), LL('j'), LL('k'), LL('l'), LL('m'), LL('n'), LL('o'),
+	LL('p'), LL('q'), LL('r'), LL('s'), LL('t'), LL('u'), LL('v'), LL('w'),
+	LL('x'), LL('y'), LL('z'), SHIFT_3, SHIFT_3, SHIFT_3, SHIFT_3, SHIFT_3,
+	SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4,
+	SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4,
+	SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4,
+	SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4,
+	SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5,
+	SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5,
+	SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5,
+	SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5,
+	SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6,
+	SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6,
+	SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6,
+	SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6,
+	SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7,
+	SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7,
+	SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7,
+	SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7,
 };
 
-#undef S
-#undef L
-#undef D
-#undef HYPHEN
-#undef UNDER
+#undef DD
+#undef LL
 
 ////////////////////////////////////////////////////////////////////////
 //      _                _
@@ -395,9 +446,8 @@ wire_to_key(const byte *name, Key key) {
 		for(byte j = dope[label]; j > 0; i++, j--) {
 			byte bit = byte_to_bit[name[i]];
 			key[off++] = bit;
-			if(SHIFT_SPLIT <= bit && bit <= TOP_SPLIT)
-				key[off++] = (name[i] & MASK_FIVE)
-					+ SHIFT_FIVE;
+			if(byte_is_split(bit))
+				key[off++] = lower_to_bit(name[i]);
 		}
 		key[off++] = SHIFT_NOBYTE;
 	}
@@ -511,23 +561,23 @@ text_to_key(const byte *name, Key key) {
 		i = lpos[label];
 		j = lend[label];
 		while(i < j) {
-			byte b;
+			byte ch;
 			if(name[i] != '\\') {
-				b = name[i++];
+				ch = name[i++];
 			} else if(ISDIGIT(name[i+1])) {
-				b = (name[i+1] - '0') * 100
-				  + (name[i+2] - '0') * 10
-				  + (name[i+3] - '0') * 1;
+				ch = (name[i+1] - '0') * 100
+				   + (name[i+2] - '0') * 10
+				   + (name[i+3] - '0') * 1;
 				i += 4;
 			} else {
-				b = name[i+1];
+				ch = name[i+1];
 				i += 2;
 			}
-			byte bit = byte_to_bit[b];
+			byte bit = byte_to_bit[ch];
 			assert(off < sizeof(Key));
 			key[off++] = bit;
-			if(SHIFT_SPLIT <= bit && bit <= TOP_SPLIT)
-				key[off++] = (b & MASK_FIVE) + SHIFT_FIVE;
+			if(byte_is_split(bit))
+				key[off++] = lower_to_bit(ch);
 		}
 		assert(off < sizeof(Key));
 		key[off++] = SHIFT_NOBYTE;
