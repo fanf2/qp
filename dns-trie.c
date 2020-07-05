@@ -98,14 +98,14 @@ typedef unsigned char byte;
 // 32-wide bitmap for the lower node is the same size as a 5-bit
 // qp-trie.
 //
-// The hostname characters are interspersed with the blocks of 32
+// The hostname characters are interspersed within the blocks of 32
 // non-hostname characters. The block from 32-63 is broken into 32-44,
 // hyphen, 46, 47, digits, 58-63. This makes it awkward to iterate over
 // the trie in lexical order. So that we don't have to switch back and
 // forth between parent and child nodes, the upper 3 bits of a
 // non-hostname character are not used directly, but instead we assign a
 // bit in the bitmap for each contiguous block of non-hostname
-// characters, and each contiguous block is split on 5 bit boundaries.
+// characters, and each contiguous block is split on mod 32 boundaries.
 //
 // The index word also needs to contain an offset into the key, so the
 // size of this offset field limits the maximum length of a key. Domain
@@ -113,11 +113,11 @@ typedef unsigned char byte;
 // bitmap is not a problem.
 
 ////////////////////////////////////////////////////////////////////////
-//   _         _                             _
-//  (_)_ _  __| |_____ __ __ __ _____ _ _ __| |
-//  | | ' \/ _` / -_) \ / \ V  V / _ \ '_/ _` |
-//  |_|_||_\__,_\___/_\_\  \_/\_/\___/_| \__,_|
-//
+//                _       _
+//   _ _  ___  __| |___  | |_ _  _ _ __  ___ ___
+//  | ' \/ _ \/ _` / -_) |  _| || | '_ \/ -_|_-<
+//  |_||_\___/\__,_\___|  \__|\_, | .__/\___/__/
+//                            |__/|_|
 
 // Type-punned words, that can be a 64-bit integer or a pointer.
 //
@@ -145,6 +145,12 @@ typedef uintptr_t word;
 #endif
 
 #define W1 ((word)1)
+
+// Type of the number of bits set in a word (as in Hamming Weight or
+// popcount) which is used as the position of a node in the sparse
+// vector of twigs.
+//
+typedef byte Weight;
 
 // Type of the number of a bit inside a word (0..63).
 //
@@ -188,7 +194,16 @@ struct Tbl {
 	Node root;
 };
 
+////////////////////////////////////////////////////////////////////////
+//   _         _                             _
+//  (_)_ _  __| |_____ __ __ __ _____ _ _ __| |
+//  | | ' \/ _` / -_) \ / \ V  V / _ \ '_/ _` |
+//  |_|_||_\__,_\___/_\_\  \_/\_/\___/_| \__,_|
+//
+
 // Index word layout.
+//
+// This enum sets up the bit positions of the parts of the index word.
 //
 // When an index word contains a pointer it must be word-aligned so that
 // the tag and mark bits are zero.
@@ -197,6 +212,9 @@ struct Tbl {
 // work directly against the index word; we don't need to extract the
 // bitmap before testing a bit, but we do need to mask the bitmap before
 // calling popcount.
+//
+// Each block in the bitmap corresponds to up to 32 non-hostname
+// character values, which can hang off a child node.
 //
 // The key byte offset is at the top of the word, so that it can be
 // extracted with just a shift, with no masking needed.
@@ -214,12 +232,12 @@ enum {
 	SHIFT_DIGIT,
 	TOP_DIGIT = SHIFT_DIGIT + '9' - '0',
 	SHIFTc1,		// block 1, after nine
-	SHIFT_2,		// block 2, excluding letters
+	SHIFT_2,		// block 2, excluding uppercase
 	UNDERBAR,
 	BACKQUO,		// block 3, backquote
 	SHIFT_LETTER,
 	TOP_LETTER = SHIFT_LETTER + 'z' - 'a',
-	SHIFT_3,		// block 3, curly - del
+	SHIFT_3,		// block 3, after 'z'
 	SHIFT_4,		// non-ascii blocks
 	SHIFT_5,
 	SHIFT_6,
@@ -236,8 +254,8 @@ typedef char static_assert_bitmap_fits_in_word
 //
 #define MASK_FLAGS ((W1 << SHIFT_COW) | (W1 << SHIFT_BRANCH))
 
-// The mask covering the bitmap part of an index word. The offset
-// follows the bitmap so we want the offset's lesser bits.
+// The mask covering the bitmap part of an index word. The offset is directly
+// after the bitmap so this mask consists of the offset's lesser bits.
 //
 #define MASK_BITMAP bit_to_mask(SHIFT_OFFSET)
 
@@ -280,7 +298,7 @@ lower_to_bit(byte b) {
 //
 static inline word
 bit_to_mask(Shift bit) {
-	return((W1 << bit) - MASK_FLAGS - 1);
+	return((W1 << bit) - 1 - MASK_FLAGS);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -307,35 +325,19 @@ bit_to_mask(Shift bit) {
   (beginning-of-line)
   ; insert a table entry for each possible byte value
   (dotimes (byte 256)
-    ; indent
-    (when (= 0 (% byte 8))
+    (if (= 0 (% byte 8))
       (insert "\t"))
     (cond
-      ; hyphen and digits and neighbours
-      ((and (>= byte 32) (< byte ?-))
-        (insert "SHIFTa1"))
-      ((= byte ?-)
-        (insert "SHYPHEN"))
-      ((and (> byte ?-) (< byte ?0))
-        (insert "SHIFTb1"))
-      ((and (>= byte ?0) (<= byte ?9))
-        (insert "DD('" (byte-to-string byte) "')"))
-      ((and (> byte ?0) (< byte 64))
-        (insert "SHIFTc1"))
-      ; because upper-case letters don't sort here,
-      ; block 2 is effectively contiguous
-      ((and (>= byte ?A) (<= byte ?Z))
-        (insert "LL('" (byte-to-string (+ 32 byte)) "')"))
-      ((= byte ?_)
-        (insert "UNDERBAR"))
-      ; block 3
-      ((= byte ?`)
-        (insert "BACKQUO"))
-      ((and (>= byte ?a) (<= byte ?z))
-        (insert "LL('" (byte-to-string byte) "')"))
-      ; simple blocks
-      (t (insert "SHIFT_" (number-to-string (/ byte 32)))))
-    ; separators
+      ((and (>= byte 32) (<  byte ?-))	(insert "SHIFTa1"))
+      ((= byte ?-)			(insert "SHYPHEN"))
+      ((and (>  byte ?-) (<  byte ?0))	(insert "SHIFTb1"))
+      ((and (>= byte ?0) (<= byte ?9))	(insert "DD('" (byte-to-string byte) "')"))
+      ((and (>  byte ?9) (<  byte 64))	(insert "SHIFTc1"))
+      ((and (>= byte ?A) (<= byte ?Z))	(insert "LL('" (byte-to-string (+ 32 byte)) "')"))
+      ((= byte ?_)			(insert "UNDERBAR"))
+      ((= byte ?`)			(insert "BACKQUO"))
+      ((and (>= byte ?a) (<= byte ?z))	(insert "LL('" (byte-to-string byte) "')"))
+      (t				(insert "SHIFT_" (number-to-string (/ byte 32)))))
     (if (= 7 (% byte 8))
       (insert ",\n")
       (insert ", "))))
@@ -386,10 +388,21 @@ static const Shift byte_to_bit[256] = {
 //  \__,_\___/_|_|_\__,_|_|_||_| |_||_\__,_|_|_|_\___/__/
 //
 
+// The code in this section is a bit sketchy. The test and benchmark
+// harnesses don't work well with domain names, so we're using textual
+// names for a proof of concept. We'll do wire format names properly
+// if/when this code is integrated into some less experimental software.
+
 // Type of a domain name dope vector.
 //
 // This is a vector of the index of each label in an uncompressed wire
-// format domain name. There can be at most 127 labels in a domain name.
+// format domain name. Domain names are up to 255 bytes long so a byte is
+// big enough to hold an index. There can be at most 127 labels in a domain
+// name.
+//
+// I'm misusing the term "dope vector", which originally comes from
+// multi-dimensional array implementations in which the dope vecor
+// contains the bounds and stride of each dimension of the array.
 //
 typedef byte Dope[128];
 
@@ -588,16 +601,11 @@ text_to_key(const byte *name, Key key) {
 }
 
 ////////////////////////////////////////////////////////////////////////
-
-// The number of bits set in a word.
+//   _                     _
+//  | |__ _ _ __ _ _ _  __| |_  ___ ___
+//  | '_ \ '_/ _` | ' \/ _| ' \/ -_|_-<
+//  |_.__/_| \__,_|_||_\__|_||_\___/__/
 //
-typedef byte Weight;
-
-static inline Weight
-bmpcount(Node *n, word mask) {
-	unsigned long long bmp = (unsigned long long)(n->index & mask);
-	return((Weight)__builtin_popcountll(bmp));
-}
 
 static inline bool
 isbranch(Node *n) {
@@ -610,7 +618,7 @@ keyoff(Node *n) {
 }
 
 static inline Shift
-twigbit(Node *n, Key key, size_t len) {
+twigbit(Node *n, const Key key, size_t len) {
 	word off = keyoff(n);
 	if(off < len) return(key[off]);
 	else return(SHIFT_NOBYTE);
@@ -622,8 +630,29 @@ hastwig(Node *n, Shift bit) {
 }
 
 static inline Weight
+bmpcount(Node *n, word mask) {
+	unsigned long long bmp = (unsigned long long)(n->index & mask);
+	return((Weight)__builtin_popcountll(bmp));
+}
+
+static inline Weight
+twigmax(Node *n) {
+	return(bmpcount(n, MASK_BITMAP));
+}
+
+static inline Weight
 twigoff(Node *n, Shift bit) {
 	return(bmpcount(n, bit_to_mask(bit)));
+}
+
+// This is used when we need to keep iterating down to a leaf even if
+// our key is missing from this branch. It doesn't matter which twig we
+// choose since the keys are all the same up to this node's offset. Note
+// that blindly using twigoff(n, bit) can cause an out-of-bounds access
+// if our bit is greater than all the set bits in the node.
+static inline Weight
+neartwig(Node *n, Shift bit) {
+	return(hastwig(n, bit) ? twigoff(n, bit) : 0);
 }
 
 static inline Node *
@@ -631,12 +660,12 @@ twig(Node *n, Weight i) {
 	return((Node *)n->ptr + i);
 }
 
-#define TWIGOFFMAX(off, max, n, bit) do {			\
-		off = twigoff(n, bit);				\
-		max = bmpcount(n, MASK_BITMAP);			\
-	} while(0)
-
 ////////////////////////////////////////////////////////////////////////
+//   _        _    _         _   ___ ___
+//  | |_ __ _| |__| |___    /_\ | _ \_ _|
+//  |  _/ _` | '_ \ / -_)  / _ \|  _/| |
+//   \__\__,_|_.__/_\___| /_/ \_\_| |___|
+//
 
 extern bool
 Tgetkv(Tbl *tbl, const char *name, size_t len, const char **pname, void **pval) {
@@ -684,7 +713,8 @@ Tdelkv(Tbl *tbl, const char *name, size_t len, const char **pname, void **pval) 
 	}
 	n = p; p = NULL; // Because n is the usual name
 	assert(bit != 0);
-	Weight s, m; TWIGOFFMAX(s, m, n, bit);
+	Weight s = twigoff(n, bit);
+	Weight m = twigmax(n);
 	Node *twigs = n->ptr;
 	if(m == 2) {
 		// Move the other twig to the parent branch.
@@ -722,24 +752,14 @@ Tsetl(Tbl *tbl, const char *name, size_t len, void *val) {
 	Node *n = &tbl->root;
 	Key newk;
 	size_t newl = text_to_key((const byte *)name, newk);
-	// Find the most similar leaf node in the trie. We will compare
-	// its key with our new key to find the first differing byte,
-	// which can be at a lower index than the point at which we
-	// detect a difference.
+	// Find the most similar leaf node in the trie.
 	while(isbranch(n)) {
 		__builtin_prefetch(n->ptr);
-		Shift bit = twigbit(n, newk, newl);
-		// Even if our key is missing from this branch we need to
-		// keep iterating down to a leaf. It doesn't matter which
-		// twig we choose since the keys are all the same up to this
-		// index. Note that blindly using twigoff(n, bit) can cause
-		// an out-of-bounds index if all set bits are less than bit.
-		Weight i = hastwig(n, bit) ? twigoff(n, bit) : 0;
-		n = twig(n, i);
+		n = twig(n, neartwig(n, twigbit(n, newk, newl)));
 	}
 	// Do the keys differ, and if so, where?
 	Key oldk;
-	text_to_key((const byte *)n->ptr, oldk);
+	text_to_key(n->ptr, oldk);
 	size_t off;
 	for(off = 0; off <= newl; off++) {
 		if(newk[off] != oldk[off])
@@ -775,7 +795,8 @@ newbranch:;
 	return(tbl);
 growbranch:;
 	assert(!hastwig(n, newb));
-	Weight s, m; TWIGOFFMAX(s, m, n, newb);
+	Weight s = twigoff(n, newb);
+	Weight m = twigmax(n);
 	twigs = realloc(n->ptr, sizeof(Node) * (m + 1));
 	if(twigs == NULL) return(NULL);
 	memmove(twigs+s+1, twigs+s, sizeof(Node) * (m - s));
