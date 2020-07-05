@@ -43,7 +43,9 @@
     (cond
       ((and (>= byte 32) (<  byte ?-))	(insert "SHIFTa1"))
       ((= byte ?-)			(insert "SHYPHEN"))
-      ((and (>  byte ?-) (<  byte ?0))	(insert "SHIFTb1"))
+      ((= byte ?.)			(insert "SHIFDOT"))
+      ((= byte ?/)			(insert "SHSLASH"))
+;;    ((and (>  byte ?-) (<  byte ?0))	(insert "SHIFTb1"))
       ((and (>= byte ?0) (<= byte ?9))	(insert "DD('" (byte-to-string byte) "')"))
       ((and (>  byte ?9) (<  byte 64))	(insert "SHIFTc1"))
       ((and (>= byte ?A) (<= byte ?Z))	(insert "LL('" (byte-to-string (+ 32 byte)) "')"))
@@ -62,13 +64,50 @@ static const Shift byte_to_bit[256] = {
 	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
 	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
 	SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1,
-	SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHYPHEN, SHIFTb1, SHIFTb1,
+	SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHYPHEN, SHIFDOT, SHSLASH,
 	DD('0'), DD('1'), DD('2'), DD('3'), DD('4'), DD('5'), DD('6'), DD('7'),
 	DD('8'), DD('9'), SHIFTc1, SHIFTc1, SHIFTc1, SHIFTc1, SHIFTc1, SHIFTc1,
 	SHIFT_2, LL('a'), LL('b'), LL('c'), LL('d'), LL('e'), LL('f'), LL('g'),
 	LL('h'), LL('i'), LL('j'), LL('k'), LL('l'), LL('m'), LL('n'), LL('o'),
 	LL('p'), LL('q'), LL('r'), LL('s'), LL('t'), LL('u'), LL('v'), LL('w'),
 	LL('x'), LL('y'), LL('z'), SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, UNDERBAR,
+	BACKQUO, LL('a'), LL('b'), LL('c'), LL('d'), LL('e'), LL('f'), LL('g'),
+	LL('h'), LL('i'), LL('j'), LL('k'), LL('l'), LL('m'), LL('n'), LL('o'),
+	LL('p'), LL('q'), LL('r'), LL('s'), LL('t'), LL('u'), LL('v'), LL('w'),
+	LL('x'), LL('y'), LL('z'), SHIFT_3, SHIFT_3, SHIFT_3, SHIFT_3, SHIFT_3,
+	SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4,
+	SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4,
+	SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4,
+	SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4, SHIFT_4,
+	SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5,
+	SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5,
+	SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5,
+	SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5, SHIFT_5,
+	SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6,
+	SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6,
+	SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6,
+	SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6, SHIFT_6,
+	SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7,
+	SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7,
+	SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7,
+	SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7, SHIFT_7,
+};
+
+// Same again, but case-sensitive.
+//
+static const Shift case_byte_to_bit[256] = {
+	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
+	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
+	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
+	SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0, SHIFT_0,
+	SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1,
+	SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHIFTa1, SHYPHEN, SHIFDOT, SHSLASH,
+	DD('0'), DD('1'), DD('2'), DD('3'), DD('4'), DD('5'), DD('6'), DD('7'),
+	DD('8'), DD('9'), SHIFTc1, SHIFTc1, SHIFTc1, SHIFTc1, SHIFTc1, SHIFTc1,
+	SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2,
+	SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2,
+	SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2,
+	SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, SHIFT_2, UNDERBAR,
 	BACKQUO, LL('a'), LL('b'), LL('c'), LL('d'), LL('e'), LL('f'), LL('g'),
 	LL('h'), LL('i'), LL('j'), LL('k'), LL('l'), LL('m'), LL('n'), LL('o'),
 	LL('p'), LL('q'), LL('r'), LL('s'), LL('t'), LL('u'), LL('v'), LL('w'),
@@ -173,7 +212,7 @@ wire_to_key(const byte *name, Key key) {
 			byte bit = byte_to_bit[name[i]];
 			key[off++] = bit;
 			if(byte_is_split(bit))
-				key[off++] = lower_to_bit(name[i]);
+				key[off++] = split_to_bit(name[i]);
 		}
 		key[off++] = SHIFT_NOBYTE;
 	}
@@ -249,14 +288,15 @@ wire_eq(const byte *n, const byte *m) {
 
 #define ISDIGIT(c) ('0' <= (c) && (c) <= '9')
 
-// Convert a presentation format domain name into a trie lookup key.
+// Convert a presentation format domain name into a trie lookup key
+// (in standard lexical order).
 //
 // Should have similar performance to wire_to_key() so we can use the
 // existing test and benchmark harness, and get a reasonable idea of how
 // well this works...
 //
 static size_t
-text_to_key(const byte *name, Key key) {
+stdtext_to_key(const byte *name, Key key) {
 	uint16_t lpos[128];
 	uint16_t lend[128];
 	size_t label = 0;
@@ -303,10 +343,31 @@ text_to_key(const byte *name, Key key) {
 			assert(off < sizeof(Key));
 			key[off++] = bit;
 			if(byte_is_split(bit))
-				key[off++] = lower_to_bit(ch);
+				key[off++] = split_to_bit(ch);
 		}
 		assert(off < sizeof(Key));
 		key[off++] = SHIFT_NOBYTE;
+	}
+	// terminator
+	key[off] = SHIFT_NOBYTE;
+	return(off);
+}
+
+// Convert a presentation format domain name into a trie lookup key
+// (in non-standard case-sensitive left-to-right order).
+//
+// This should produce exactly equal output to other trie implementations.
+//
+static size_t
+text_to_key(const byte *name, Key key) {
+	size_t off = 0;
+	while(*name != '\0') {
+		byte ch = *name++;
+		byte bit = case_byte_to_bit[ch];
+		assert(off < sizeof(Key));
+		key[off++] = bit;
+		if(byte_is_split(bit))
+			key[off++] = split_to_bit(ch);
 	}
 	// terminator
 	key[off] = SHIFT_NOBYTE;
@@ -464,28 +525,28 @@ growbranch:;
 // walks down the trie.
 
 static bool
-next_rec(Node *n, const char **pkey, size_t *plen, void **pval) {
+next_rec(Node *n, Key key, size_t *pklen,
+	 const char **pname, size_t *plen, void **pval) {
 	if(isbranch(n)) {
-		// Recurse to find either this leaf (*pkey != NULL)
-		// or the next one (*pkey == NULL).
-		Shift bit = twigbit(n, (const byte *)*pkey, *plen);
+		Shift bit = twigbit(n, key, *pklen);
 		Weight s = twigoff(n, bit);
 		Weight m = twigmax(n);
 		for(; s < m; s++)
-			if(next_rec(twig(n, s), pkey, plen, pval))
+			if(next_rec(twig(n, s), key, pklen, pname, plen, pval))
 				return(true);
 		return(false);
 	}
 	// We have found the next leaf.
-	if(*pkey == NULL) {
-		*pkey = n->ptr;
-		*plen = strlen(*pkey); /////
+	if(*pname == NULL) {
+		*pname = n->ptr;
+		*plen = strlen(*pname); /////
 		*pval = (void *)n->index;
 		return(true);
 	}
 	// We have found this leaf, so start looking for the next one.
-	if(strcmp(*pkey, n->ptr) == 0) { /////
-		*pkey = NULL;
+	if(strcmp(*pname, n->ptr) == 0) { /////
+		*pklen = text_to_key((const byte *)"", key);
+		*pname = NULL;
 		*plen = 0;
 		return(false);
 	}
@@ -494,13 +555,20 @@ next_rec(Node *n, const char **pkey, size_t *plen, void **pval) {
 }
 
 bool
-Tnextl(Tbl *tbl, const char **pkey, size_t *plen, void **pval) {
+Tnextl(Tbl *tbl, const char **pname, size_t *plen, void **pval) {
 	if(tbl == NULL) {
-		*pkey = NULL;
+		*pname = NULL;
 		*plen = 0;
 		return(NULL);
 	}
-	return(next_rec(&tbl->root, pkey, plen, pval));
+	size_t klen;
+	Key key;
+	if(*pname != NULL)
+		klen = text_to_key((const byte *)*pname, key);
+	else
+		klen = text_to_key((const byte *)"", key);
+
+	return(next_rec(&tbl->root, key, &klen, pname, plen, pval));
 }
 
 ////////////////////////////////////////////////////////////////////////

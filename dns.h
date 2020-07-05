@@ -101,6 +101,14 @@
 // size of this offset field limits the maximum length of a key. Domain
 // names have a maximum length of 255 bytes, so the large DNS-trie
 // bitmap is not a problem.
+//
+// TESTING AND PROOF OF CONCEPT
+//
+// At the moment this code is bodged so that it matches the behaviour of
+// the non-DNS trie implementations, which means we are examining
+// strings left-to-right (instead of labels right-to-left and characters
+// left-to-right) and we are case sensitive (instead of insensitive) and
+// we're treating '.' as a common character instead of a label separator.
 
 ////////////////////////////////////////////////////////////////////////
 //                _       _
@@ -220,7 +228,9 @@ enum {
 	SHIFT_0,		// block 0, control characters
 	SHIFTa1,		// block 1, before hyphen
 	SHYPHEN,
-	SHIFTb1,		// block 1, between hypen and zero
+	SHIFDOT,
+	SHSLASH,
+//	SHIFTb1,		// block 1, between hypen and zero
 	SHIFT_DIGIT,
 	TOP_DIGIT = SHIFT_DIGIT + '9' - '0',
 	SHIFTc1,		// block 1, after nine
@@ -255,7 +265,7 @@ typedef char static_assert_bitmap_fits_in_word
 //
 #define MASK_SPLIT ( (W1 << SHIFT_0) |		\
 		     (W1 << SHIFTa1) |		\
-		     (W1 << SHIFTb1) |		\
+		     /* (W1 << SHIFTb1) | */	\
 		     (W1 << SHIFTc1) |		\
 		     (W1 << SHIFT_2) |		\
 		     (W1 << SHIFT_3) |		\
@@ -281,7 +291,7 @@ typedef char static_assert_lower_bitmap_fits_in_upper_bitmap
 // Bit position for lower 5 bits of a split byte.
 //
 static inline Shift
-lower_to_bit(byte b) {
+split_to_bit(byte b) {
 	return(SHIFT_LOWER + b % 32);
 }
 

@@ -18,7 +18,9 @@ print_bit(Shift bit) {
 	if(bit == SHIFT_0) printf("^0/");
 	if(bit == SHIFTa1) printf("^1a/");
 	if(bit == SHYPHEN) printf("-/");
-	if(bit == SHIFTb1) printf("^1b/");
+	if(bit == SHIFDOT) printf("./");
+	if(bit == SHSLASH) printf("//");
+//	if(bit == SHIFTb1) printf("^1b/");
 	if(SHIFT_DIGIT <= bit && bit <= TOP_DIGIT)
 		printf("%c/", '0' + bit - SHIFT_DIGIT);
 	if(bit == SHIFTc1) printf("^1c/");
@@ -59,7 +61,7 @@ dump_rec(Node *n, int d) {
 		printf("Tdump%*s branch %p %zu %zu", d, "", n,
 		       (size_t)n->index & MASK_FLAGS, keyoff(n));
 		print_bitmap(n);
-		int dd = (int)keyoff(n) * 2;
+		int dd = (int)keyoff(n) * 2 + 2;
 		assert(dd > d);
 		for(Shift bit = SHIFT_NOBYTE; bit < SHIFT_OFFSET; bit++) {
 			if(hastwig(n, bit)) {
