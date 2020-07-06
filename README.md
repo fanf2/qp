@@ -120,6 +120,9 @@ articles
 * [2017-01-09](blog-2017-01-09.md) -
 	qp trie news roundup
 
+* [2020-07-05](blog-2020-07-05.md) -
+    A compelling idea: the genesis of my DNS-trie
+
 
 thanks
 ------
