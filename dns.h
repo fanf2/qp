@@ -351,8 +351,8 @@ twigoff(Node *n, Shift bit) {
 // This is used when we need to keep iterating down to a leaf even if
 // our key is missing from this branch. It doesn't matter which twig we
 // choose since the keys are all the same up to this node's offset. Note
-// that blindly using twigoff(n, bit) can cause an out-of-bounds access
-// if our bit is greater than all the set bits in the node.
+// that obliviously using twigoff(n, bit) can cause an out-of-bounds
+// access if our bit is greater than all the set bits in the node.
 static inline Weight
 neartwig(Node *n, Shift bit) {
 	return(hastwig(n, bit) ? twigoff(n, bit) : 0);

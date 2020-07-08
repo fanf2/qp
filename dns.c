@@ -466,7 +466,7 @@ Tsetl(Tbl *tbl, const char *name, size_t len, void *val) {
 	Node *n = &tbl->root;
 	Key newk;
 	size_t newl = text_to_key((const byte *)name, newk);
-	// Find the most similar leaf node in the trie.
+	// Find a nearby leaf node in the trie.
 	while(isbranch(n)) {
 		__builtin_prefetch(n->ptr);
 		n = twig(n, neartwig(n, twigbit(n, newk, newl)));
@@ -520,55 +520,71 @@ growbranch:;
 	return(tbl);
 }
 
-// This needs reworking: what I want is an iterative traversal that
-// keeps track of the nearest predecessor and successor nodes as it
-// walks down the trie.
-
-static bool
-next_rec(Node *n, Key key, size_t *pklen,
-	 const char **pname, size_t *plen, void **pval) {
-	if(isbranch(n)) {
-		Shift bit = twigbit(n, key, *pklen);
-		Weight s = twigoff(n, bit);
-		Weight m = twigmax(n);
-		for(; s < m; s++)
-			if(next_rec(twig(n, s), key, pklen, pname, plen, pval))
-				return(true);
-		return(false);
-	}
-	// We have found the next leaf.
-	if(*pname == NULL) {
-		*pname = n->ptr;
-		*plen = strlen(*pname); /////
-		*pval = (void *)n->index;
-		return(true);
-	}
-	// We have found this leaf, so start looking for the next one.
-	if(strcmp(*pname, n->ptr) == 0) { /////
-		*pklen = text_to_key((const byte *)"", key);
-		*pname = NULL;
-		*plen = 0;
-		return(false);
-	}
-	// No match.
-	return(false);
-}
-
 bool
 Tnextl(Tbl *tbl, const char **pname, size_t *plen, void **pval) {
 	if(tbl == NULL) {
 		*pname = NULL;
 		*plen = 0;
-		return(NULL);
+		return(false);
 	}
-	size_t klen;
-	Key key;
-	if(*pname != NULL)
-		klen = text_to_key((const byte *)*pname, key);
+	Node *n = &tbl->root;
+	Key newk;
+	size_t newl;
+	if(*pname == NULL)
+		newl = text_to_key((const byte *)"", newk);
 	else
-		klen = text_to_key((const byte *)"", key);
-
-	return(next_rec(&tbl->root, key, &klen, pname, plen, pval));
+		newl = text_to_key((const byte *)*pname, newk);
+	// Find a nearby leaf node in the trie.
+	while(isbranch(n)) {
+		__builtin_prefetch(n->ptr);
+		n = twig(n, neartwig(n, twigbit(n, newk, newl)));
+	}
+	// Do the keys differ, and if so, where?
+	Key oldk;
+	text_to_key(n->ptr, oldk);
+	size_t off;
+	for(off = 0; off <= newl; off++) {
+		if(newk[off] != oldk[off])
+			break;
+	}
+	// Walk down again and this time keep track of adjacent nodes
+	n = &tbl->root;
+	Node *prev, *next;
+	if(*pname == NULL)
+		next = prev = n;
+	else
+		next = prev = NULL;
+	while(isbranch(n)) {
+		__builtin_prefetch(n->ptr);
+		if(off <= keyoff(n))
+			break;
+		Shift newb = twigbit(n, newk, newl);
+		assert(hastwig(n, newb));
+		Weight s = twigoff(n, newb);
+		Weight m = twigmax(n) - 1;
+		if(s > 0) prev = twig(n, s - 1);
+		if(s < m) next = twig(n, s + 1);
+		n = twig(n, s);
+	}
+	// walk prev and next nodes down to their leaves
+	while(prev != NULL && isbranch(prev)) {
+		__builtin_prefetch(prev->ptr);
+		prev = twig(prev, twigmax(prev) - 1);
+	}
+	while(next != NULL && isbranch(next)) {
+		__builtin_prefetch(next->ptr);
+		next = twig(next, 0);
+	}
+	if(next != NULL) {
+		*pname = next->ptr;
+		*plen = strlen(*pname); /////
+		*pval = (void *)next->index;
+		return(true);
+	} else {
+		*pname = NULL;
+		*plen = 0;
+		return(false);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////
