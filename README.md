@@ -67,6 +67,8 @@ more clever about handling string termination.
 articles
 --------
 
+Newest at the bottom, scroll down...
+
 * [QP TRIE HOME PAGE](https://dotat.at/prog/qp)
 
 * [2015-10-04](blog-2015-10-04.md) -
@@ -123,6 +125,11 @@ articles
 * [2020-07-05](blog-2020-07-05.md) -
     A compelling idea: the genesis of my DNS-trie
 
+* 2020-07-20 - <https://github.com/fanf2/nsd>
+
+	A fork of NSD that uses my DNS-trie code. It is significantly
+    faster and much smaller than NSD's default radix tree.
+
 
 thanks
 ------
@@ -174,10 +181,11 @@ roadmap
 
 * [dns.h][] [dns.c][]
 
-	A qp-trie variant optimized for domain names. Effectively an 8-bit
-    qp-trie for standard hostnames. Even faster and even less memory
-    overhead, but does not support long keys. As well as the comments
-    in [dns.h][] there are [some design notes](notes-dns.md).
+	A qp-trie variant optimized for domain names. As well as the
+    comments in [dns.h][] there are [some design notes](notes-dns.md).
+    The DNS-trie implementation in this repository is heavily bodged
+    to fit into my test / benchmark harness so it can be directly
+    compared with the other qp-trie versions.
 
 * [wp.h][] [wp.c][]
 

@@ -1,8 +1,29 @@
 // dns-trie.c: a qp trie tuned for domain names
 //
 // Written by Tony Finch <dot@dotat.at>
-// You may do anything with this. It has no warranty.
+//
+// WARNING!
+//
+// DO NOT USE THIS PROGRAM.
+//
+// This program is not a program of honor.
+//
+// No highly esteemed function is executed here.
+//
+// What is here is dangerous and repulsive to us.
+//
+// The danger is still present, in your time, as it was in ours,
+// without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.
+//
+// This program is best shunned and left uninvoked
+// (but if you must, you may redistribute and use it freely).
+//
 // <http://creativecommons.org/publicdomain/zero/1.0/>
+//
+// DO NOT USE THIS PROGRAM.
+//
+// Look at https://github.com/fanf2/nsd instead
 
 // WHAT IS A TRIE?
 //
