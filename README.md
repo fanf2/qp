@@ -130,6 +130,9 @@ Newest at the bottom, scroll down...
 	A fork of NSD that uses my DNS-trie code. It is significantly
     faster and much smaller than NSD's default radix tree.
 
+	<https://twitter.com/fanf/status/1285181266850205696> -
+	a thread about how to optimize a qp-trie for the DNS
+
 
 thanks
 ------
