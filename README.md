@@ -8,14 +8,18 @@ wasting memory.
 My best solution so far is the "qp trie", short for quelques-bits
 popcount patricia trie. (Nothing to do with cutie cupid dolls or
 Japanese mayonnaise!) A qp trie is like a crit-bit trie (aka patricia
-trie) except each branch is indexed by a few bits at a time
-instead of one bit. The array of sub-tries at a branch node is
-compressed using the popcount trick to omit unused branches.
+trie) except each branch is indexed by a few bits at a time instead of
+one bit. The array of sub-tries at a branch node is compressed using
+the popcount trick to omit unused branches, saving memory. When
+searching a qp trie, the child nodes are prefetched from memory while
+the CPU works out which child is next.
 
 The original version of qp tries used 4 bits at a time, so it was a
-quadbit popcount patricia trie; I also have a 5 bit version, a
-quintuple-bit popcount patricia trie, which generally outperforms the
-4 bit version; and a 6 bit version which doesn't quite have a name.
+quadbit popcount patricia trie. There is a faster (but slightly more
+complicated) version that uses 5 bits at a time, a quintuple-bit
+popcount patricia trie. There is a faster, smaller, and simpler
+DNS-optimized version that uses a byte at a time for standard
+hostnames.
 
 Based on a few benchmarks, qp tries have about 1/3 less memory
 overhead of crit-bit tries, 1.3 words vs 2 words of overhead per item;
