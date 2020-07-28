@@ -55,7 +55,7 @@ caveats
 Most of the code has only been tested on 64-bit little endian
 machines. It might work on 32-bit machines (provided the compiler
 supports 64 bit integers) and probably won't work on a big-endian
-machine. The "fn" (five-bit new) variation should be more portable
+machine. The "`fn`" (five-bit new) variation should be more portable
 since it avoids the mistakes of the earlier code.
 
 Key strings can be byte-aligned but values must be word-aligned; you
@@ -247,7 +247,8 @@ roadmap
 [test-once.sh]:   https://github.com/fanf2/qp/blob/HEAD/test-once.sh
 [test.c]:         https://github.com/fanf2/qp/blob/HEAD/test.c
 [test.pl]:        https://github.com/fanf2/qp/blob/HEAD/test.pl
-[bench-more.pl]:  https://github.com/fanf2/qp/blob/HEAD/bench-multi.pl
+[bench-cross.pl]: https://github.com/fanf2/qp/blob/HEAD/bench-multi.pl
+[bench-more.pl]:  https://github.com/fanf2/qp/blob/HEAD/bench-more.pl
 [bench-multi.pl]: https://github.com/fanf2/qp/blob/HEAD/bench-multi.pl
 [bench.c]:        https://github.com/fanf2/qp/blob/HEAD/bench.c
 
