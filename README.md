@@ -52,10 +52,11 @@ otherwise the same as test-qp and bench-qp.
 caveats
 -------
 
-The code has only been tested on 64-bit little endian machines. It
-might work on 32-bit machines (provided the compiler supports 64 bit
-integers) and probably won't work on a big-endian machine. It should
-be easy to port by tweaking the struct bit-field layouts.
+Most of the code has only been tested on 64-bit little endian
+machines. It might work on 32-bit machines (provided the compiler
+supports 64 bit integers) and probably won't work on a big-endian
+machine. The "fn" (five-bit new) variation should be more portable
+since it avoids the mistakes of the earlier code.
 
 Key strings can be byte-aligned but values must be word-aligned; you
 can swap this restriction (e.g. if you want to map from strings to
