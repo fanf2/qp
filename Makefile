@@ -147,5 +147,4 @@ html:
 upload: html
 	git push chiark:public-git/qp.git
 	git push git@github.com:fanf2/qp.git
-	git push ucs@git.csx.cam.ac.uk:u/fanf2/radish.git
 	ssh chiark public-html/prog/qp/.htupdate
