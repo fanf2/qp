@@ -138,6 +138,17 @@ Newest at the bottom, scroll down...
 	<https://twitter.com/fanf/status/1285181266850205696> -
 	a thread about how to optimize a qp-trie for the DNS
 
+* [2021-06-23](blog-2021-06-23.md) -
+    Page-based GC for qp-trie RCU
+
+    Memory management to support multithreaded readers
+
+* [2022-06-22](blog-2022-06-22.md) -
+    Compacting a qp-trie
+
+    notes on several experiments
+
+
 
 thanks
 ------
