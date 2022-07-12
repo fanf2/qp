@@ -1,4 +1,5 @@
-#!/bin/sh -e
+#!/bin/sh
+set -eux
 cd public-html/prog/qp
-git pull
+git pull --ff-only
 make html
