@@ -143,6 +143,12 @@ Newest at the bottom, scroll down...
 
     Memory management to support multithreaded readers
 
+* [2022-05-23](2022-05-23-qp-api.pdf)
+* [2022-05-23](2022-05-23-qp-guts.pdf) -
+    a couple of qp-trie presentations I gave
+    at the 2022 isc.org all-hands meeting;
+    the PDFs have the slides with speaker notes
+
 * [2022-06-22](blog-2022-06-22.md) -
     Compacting a qp-trie
 
